@@ -1,0 +1,265 @@
+#!/usr/bin/env python 
+"""
+Tool to manage growing number of datasets and versions 
+"""
+
+import os, sys, tempfile
+import json
+import getpass 
+import traceback 
+import click 
+from distutils.spawn import find_executable
+from dgitcore import plugins 
+from dgitcore import config, datasets, helper 
+
+# 
+thisdir=os.path.realpath(os.path.dirname(__file__))
+libdir = os.path.realpath(os.path.join(thisdir,"../thirdparty"))
+sys.path.append(libdir)
+
+
+@click.group()
+def process(standlone_mode=False):
+    """
+    git wrapper for datasets
+    """
+    pass
+
+@process.command('config')
+@click.argument('action',
+                type=click.Choice(['update', 'init', 'show']))
+@click.option('-g',
+              "--globalvar",
+              nargs=2, 
+              multiple=1,
+              type=click.Tuple([str,str]),
+              help="Update profile variables")
+def profile(action, globalvar): 
+    """
+    Create configuration file (~/.dgit.ini) 
+    """
+    if action in ["update", "init"]:
+        config.update(globalvar)
+    elif action == "show":
+        config.init(globalvar, show=True)
+
+
+
+@process.command('init', context_settings=dict(
+    ignore_unknown_options=True,
+))
+@click.argument('dataset')
+@click.option("--setup",
+              type=click.Choice(['git+s3', 'git']),
+              default='git+s3',
+              help="What is the backend for this repo")
+@click.option("--force",
+              default=False,
+              is_flag=True,
+              help="Force overwriting the directory")
+def init(dataset, setup, force): 
+    """
+    Bootstrap a new dataset (a git repo+s3 backup)
+    
+    Example: 
+
+    # Create a local repo with s3 backend 
+    dgit init --setup git+s3 pingali/hello 
+
+    # Create a local repo with no backends 
+    dgit init --setup git pingali/hello 
+    """
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None: 
+        return
+
+    # Get the command that must be run 
+    datasets.init(username, dataset, setup, force)
+
+@process.command('commit')
+@click.argument('dataset')
+@click.option("--message", help="Commit message")
+def commit(dataset, message): 
+    """
+    Commit the changes made to a dataset 
+    """
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None: 
+        return
+
+    if message is None: 
+        print("A commit message is necessary") 
+        return 
+
+    # Get the command that must be run 
+    datasets.commit(username, dataset, message)
+
+@process.command('log')
+@click.argument('dataset')
+def log(dataset): 
+    """
+    Commit the changes made to a dataset 
+    """
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None: 
+        return
+
+    # Get the command that must be run 
+    datasets.log(username, dataset)
+
+
+
+@process.command('add', context_settings=dict(
+    ignore_unknown_options=True,
+))
+@click.argument('dataset')
+@click.option("--include", '-i', 
+              multiple=True,
+              help="File patterns to include")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@click.option("--execute/--no-execute",
+              default=False,
+              help="Execute the filename specified")
+@click.option("--script",
+              default=False,
+              help="Execute the filename specified")
+def add(dataset, args, execute, include, script):
+    """
+    Add content to a dataset 
+    """
+
+    # Extract the correct dataset name
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None: 
+        return
+
+    args = helper.clean_args(args, execute) 
+    if args is None: 
+        return 
+
+    # Cleanup includes 
+    includes = []
+    for i in include:
+        includes.extend(i.split(","))
+
+    datasets.add(username, dataset, args, 
+                 execute, includes, script) 
+
+
+@process.command()
+@click.argument('dataset')
+def stash(dataset): 
+    """
+    Trash all the changes for a given dataset
+    """
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None or username is None: 
+        print("Could not find the dataset. Please specify exact repo to be stashed")
+        return
+
+    datasets.stash(username, dataset) 
+    return 
+
+
+@process.command()
+@click.option("--dataset", '-d', default=None)
+def status(dataset): 
+    """
+    Show all the datasets available
+    """
+    if dataset is not None: 
+        (username, dataset) = helper.parse_dataset_name(dataset)    
+        if dataset is None or username is None: 
+            print("Could not find the dataset. Please specify exact repo to be stashed")
+            return
+    else: 
+        username = None 
+
+    datasets.status(username, dataset) 
+    return 
+
+@process.command()
+@click.argument("url")
+def clone(url): 
+    """
+    Clone a git URL 
+    """
+    datasets.clone(url) 
+    return 
+
+
+@process.command()
+@click.argument("op",
+                type=click.Choice(['add', 'rm', 'rename', 'show']))
+@click.argument("dataset")
+@click.argument("shortname")
+@click.argument("url")
+def remote(op, dataset, shortname, url): 
+    """
+    Manage remote 
+    """
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None or username is None: 
+        print("Could not find the dataset. Please specify exact repo to be stashed")
+        return
+    
+    
+    # git remote add pb https://github.com/paulboone/ticgit
+    datasets.remote(op, username, dataset, shortname, url) 
+    return 
+
+
+@process.command()
+@click.argument('name')
+def drop(name): 
+    """
+    Drop a dataset
+    """
+    datasets.drop(name)
+
+@process.command()
+@click.argument('dataset')
+def push(dataset): 
+    """
+    Upload a dataset to origin (github/s3/local)
+    """
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None or username is None: 
+        print("Could not find the dataset. Please specify exact repo to be stashed")
+        return
+
+    datasets.push(username, dataset) 
+
+
+
+@process.command('plugins')
+@click.argument('action',
+                type=click.Choice(['list', 'show', 'new']))
+@click.option('--what',
+                type=click.Choice(['backend', 'instrumentation', 'repomanager']))
+@click.option('--name')              
+@click.option('--version')              
+def plugin_cmd(action, what, name, version): 
+    """
+    Plugin management
+    """
+    if action == "show":
+        plugins.show(what, name, version, details=True)
+    elif action == "list":
+        plugins.show(what, name, version, details=False)
+    elif action == "new":
+        plugins.generate(what, name, version)
+
+if __name__ == "__main__": 
+    
+    plugins.load() 
+    try: 
+        config.init()
+        process() 
+    except Exception as e: 
+        traceback.print_exc() 
+    plugins.close() 
