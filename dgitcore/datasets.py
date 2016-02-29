@@ -2,7 +2,7 @@
 """
 This is the core module for manipulating the dataset metadata 
 """
-import os, sys, copy, fnmatch, re  
+import os, sys, copy, fnmatch, re, shutil 
 import yaml, json, tempfile 
 import webbrowser 
 import subprocess, string, random 
@@ -18,7 +18,7 @@ from dateutil import parser
 from .config import get_config
 from .aws import get_session 
 from .plugins import get_plugin_mgr 
-from .helper import bcolors, clean_str 
+from .helper import bcolors, clean_str, cd 
 
 def clean_name(n): 
     n = "".join([x if (x.isalnum() or x == "-") else "_" for x in n])    
@@ -41,16 +41,12 @@ def check_datapackage(repo):
     rootdir = repo['rootdir']
     datapath = os.path.join(rootdir,"datapackage.json")
     return os.path.exists(os.path.dirname(datapath))
-
     
 def bootstrap_datapackage(repo, force=False): 
     """ 
     Create the datapackage file..
     """
     
-    print("Bootstrapping datapackage") 
-    print(json.dumps(repo, indent=4))
-
     # get the directory 
     tsprefix = datetime.now().date().isoformat()  
 
@@ -72,7 +68,6 @@ def bootstrap_datapackage(repo, force=False):
 
     # Get user input...
     with tempfile.NamedTemporaryFile(suffix=".tmp") as temp:
-        print("Name of file", temp.name)
         temp.write(yaml.dump(package, default_flow_style=False).encode('utf-8'))
         temp.flush()
         EDITOR = os.environ.get('EDITOR','/usr/bin/vi')
@@ -82,17 +77,13 @@ def bootstrap_datapackage(repo, force=False):
         conf = yaml.load(data) 
 
     # Now store the package...
-    rootdir = repo['rootdir']
-    datapath = os.path.join(rootdir,"datapackage.json")
-    if os.path.exists(datapath) and not force:
-        print("A bootstrapping directory already exists for the dataset:")
-        print(os.path.dirname(datapath))
-        sys.exit()     
-
-    with open(datapath, 'w') as fd: 
+    (handle, filename) = tempfile.mkstemp()    
+    with open(filename, 'w') as fd: 
         fd.write(json.dumps(conf, indent=4))
 
-    return 
+    print("Bootstrapping", filename) 
+
+    return filename 
 
 def init(username, dataset, setup, force):
     """
@@ -110,8 +101,15 @@ def init(username, dataset, setup, force):
 
     # Now bootstrap the datapackage.json metadata file...
     repo = repomgr.lookup(key=key)
-    bootstrap_datapackage(repo)
-    repomgr.add_files(key, ['datapackage.json'])
+    filename = bootstrap_datapackage(repo)
+    repomgr.add_files(key, [
+        { 
+            'relativepath': 'datapackage.json',
+            'localfullpath': filename, 
+        }
+    ])
+
+    os.unlink(filename) 
     repomgr.commit(key, message="Bootstrapped the datapackage")
 
                    
@@ -148,7 +146,7 @@ def push(username, dataset):
     repomgr.push(key)
 
 
-def add_files(args, script):
+def add_files(args, generator, script):
         
     files = []
 
@@ -158,11 +156,13 @@ def add_files(args, script):
     for f in args: 
         basename = os.path.basename(f)
         change = 'update' if basename in files else 'add'
+        
         update = {
             'change': change,
             'type': 'data' if not script else 'script',
+            'generator': True if (script and generator) else False,
             'uuid': str(uuid.uuid1()),
-            'filename': basename, 
+            'relativepath': basename, 
             'mimetypes': mimetypes.guess_type(f)[0],
             'sha1': compute_sha1(f),
             'ts': ts, 
@@ -175,7 +175,7 @@ def add_files(args, script):
         
     return files
     
-def add(username, dataset, args, 
+def add(username, dataset, args, generator, 
         execute, includes, script=False): 
     """
     Given a filename, prepare a manifest for each dataset.
@@ -188,13 +188,25 @@ def add(username, dataset, args,
 
     # Gather the files...
     if not execute: 
-        files = add_files(args, script) 
+        files = add_files(args, generator, script) 
     else: 
         files = run_executable(args, includes)
 
     if files is not None and len(files) > 0: 
+
+        # Copy the files 
         repomanager.add_files(repo, files) 
 
+        # Update the package.json 
+        repo = repomanager.lookup(key=repo)
+        rootdir = repo['rootdir']
+        with cd(rootdir): 
+            datapath = "datapackage.json"
+            package = json.loads(open(datapath).read()) 
+            package['resources'].extend(files) 
+            with open(datapath, 'w') as fd: 
+                fd.write(json.dumps(package, indent=4))
+        
     return 
 
 def stash(username, dataset): 
@@ -208,29 +220,6 @@ def stash(username, dataset):
         raise Exception("Invalid repo") 
         
     repomanager.stash(repo) 
-
-def stash1(username, dataset): 
-    state = get_state()
-
-    repo = state['datasets'][username][dataset]
-    metadata = repo['metadata']
-    commits = repo['commits']
-
-    # Cleanup metadata
-    if 'changes' in metadata and len(metadata['changes']['files']) > 0: 
-        metadata['changes']['files'] = []
-
-    # Cleanup the directory...
-    workspace = state['config']['Local']['workspace']
-                
-    # Cleanup files on disk as well as json 
-    try: 
-        tmpdir = os.path.join(workspace, "tmp", username, dataset) 
-        shutil.rmtree(tmpdir)
-    except:
-        pass 
-    
-    state.sync() 
 
 def status(name, details): 
 
@@ -276,58 +265,6 @@ def status(name, details):
 
     
     
-def status1(name, details): 
-    """
-    Show all datasets available locally along with changes 
-    """
-
-    state = get_state()
-    workspace = state['config']['Local']['workspace']
-
-    for username in state['datasets']: 
-        for dataset in state['datasets'][username]: 
-            if ((name is None) or
-                (name == username) or 
-                (name == dataset)):               
-                repo = state['datasets'][username][dataset]
-
-                metadata = repo['metadata']
-                commits = repo['commits']                
-                trackedfiles = []
-                print("%s/%s : %s" %(username, dataset, 
-                                     metadata['title']))
-                if 'changes' in metadata: 
-                    for c in metadata['changes']['files']: 
-                        trackedfiles.append(c['filename'])
-                        if c['change'] == 'add': 
-                            print("      New file: (%s) " %(c['type']) 
-                                  + bcolors.OKGREEN + c['filename'] + bcolors.ENDC)
-                        elif c['change'] == 'update': 
-                            print("  Updated file: (%s) "  %(c['type'])
-                                  + bcolors.WARNING + c['filename'] + bcolors.ENDC)
-                        elif c['change'] == 'delete': 
-                            print("  Deleted file: (%s) " %(c['type']) 
-                                  + bcolors.FAIL + c['filename'] + bcolors.ENDC)
-                        else: 
-                            print("    Error file: " + 
-                                  bcolors.OKBLUE + c['filename'] + 
-                                  bcolors.ENDC)
-
-                # Find extra unaccounted for files...
-                tmpdir = os.path.join(workspace, "tmp", username, dataset) 
-                msg = ""
-                paths = glob2.glob(os.path.join(tmpdir, '**', '*'))
-                for p in paths: 
-                    if os.path.isfile(p) and os.path.relpath(p, tmpdir) not in trackedfiles:
-                        print("  Untracked file: " + bcolors.FAIL + p + bcolors.ENDC)                
-                            
-                if details: 
-                    data = json.dumps(repo, indent=4)
-                    lines = data.split("\n")
-                    for l in lines: 
-                        sys.stdout.write('     {l}\n'.format(l=l))
-
-    return 
 
 def log(username, dataset): 
     """
@@ -354,116 +291,6 @@ def commit(username, dataset, message):
         raise Exception("Invalid repo") 
 
     repomanager.commit(repo, message) 
-
-def commit1(username, dataset, message): 
-    # No files to commit
-    if 'changes' in metadata and len(metadata['changes']['files']) == 0: 
-        print("No changes to commit")
-        return 
-        
-    commitid = str(uuid.uuid1())
-
-    # Take the last commit and update it with new values...
-    commit = {
-        'id': commitid, 
-        'createdat': datetime.now().isoformat(),
-        'user': getpass.getuser(),
-        'message': message,
-        'changed-files': [],
-        'status': {}
-    }
-
-    workspace = state['config']['Local']['workspace']    
-    rootpath = os.path.join(workspace, 'datasets', 
-                            username, dataset)
-    filesdir = os.path.join(rootpath, commitid)
-    try: 
-        os.makedirs(filesdir)
-    except:
-        pass 
-
-    # Go through each file to see what is to be done...
-    # Compute target path
-    # Copy file/delete file 
-    # construct status 
-    # Update the metadata 
-    for c in metadata['changes']['files']: 
-        if c['change'] == 'add': 
-            targetpath = os.path.join(filesdir, c['filename'])
-            try:
-                os.makedirs(os.path.dirname(targetpath))
-            except:
-                pass 
-            shutil.copy(c['localfullpath'], targetpath)
-            metadata['files'].append(c) 
-            status = { 
-                'status': 'added',
-                'commitid': commitid,
-                'hash': compute_sha1(targetpath)
-            }
-            commit['changed-files'].append(c['filename'])
-            commit['status'][c['filename']] = status
-        elif c['change'] == 'update': 
-            targetpath = os.path.join(filesdir, c['filename'])
-            try:
-                os.makedirs(os.path.dirname(targetpath))
-            except:
-                pass  
-            shutil.copy(c['localfullpath'], targetpath)
-            for i in range(len(metadata['files'])): 
-                if metadata['files'][i]['filename'] == c['filename']:
-                    metadata['files'][i] = c 
-                    break                 
-            status = { 
-                'status': 'updated',
-                'commitid': commitid,
-                'hash': compute_sha1(targetpath)
-            }
-            commit['changed-files'].append(c['filename'])
-            commit['status'][c['filename']] = status
-        elif c['change'] == 'delete': 
-            for i in range(len(metadata['files'])): 
-                if metadata['files'][i]['filename'] == c['filename']:
-                    metadata['files'].pop(i)
-
-    metadata['changes']['files'] = [] 
-
-    # Save the datapackage.json.
-    datapath = os.path.join(rootpath,commitid,"datapackage.json")
-    with open(datapath, 'w') as fd: 
-        fd.write(json.dumps(metadata, indent=4))
-
-    # add datapackage.json to the list of updated files...
-    ts = datetime.now().isoformat()  
-    commit['changed-files'].append('datapackage.json')
-    commit['status']['datapackage.json'] = {
-        "mimetype": "application/json",
-        "type": "package",
-        "createdat": ts, 
-        "filename": "datapackage.json",
-        "path": "%s/datapackage.json" %(commitid)
-    }
-    # Update the metadata 
-    for i in range(len(metadata['files'])): 
-        if metadata['files'][i]['filename'] == 'datapackage.json': 
-            metadata['files'][i] = commit['status']['datapackage.json'] 
-
-    commits.insert(0, commit) # Insert the new commit 
-    
-
-    # Save the commits 
-    commitspath = os.path.join(rootpath,"commits.json")
-    with open(commitspath, 'w') as fd: 
-        fd.write(json.dumps(commits, indent=4))
-
-    state['datasets'][username][dataset] = { 
-        'metadata': metadata,
-        'commits': commits
-    }
-
-    state.sync() 
-
-    return 
 
 
 def drop(name): 

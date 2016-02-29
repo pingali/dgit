@@ -120,16 +120,22 @@ def log(dataset):
               multiple=True,
               help="File patterns to include")
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@click.option("--generator/--no-generator",
+              default=False,
+              help="Generator script")
+@click.option("--script",
+              default=False,
+              help="Mark the script file as executable")
 @click.option("--execute/--no-execute",
               default=False,
               help="Execute the filename specified")
-@click.option("--script",
-              default=False,
-              help="Execute the filename specified")
-def add(dataset, args, execute, include, script):
+def add(dataset, args, execute, generator, include, script):
     """
     Add content to a dataset 
     """
+
+    if generator and execute: 
+        print("Generator and execute are mutually exclusive") 
 
     # Extract the correct dataset name
     (username, dataset) = helper.parse_dataset_name(dataset)    
@@ -145,8 +151,10 @@ def add(dataset, args, execute, include, script):
     for i in include:
         includes.extend(i.split(","))
 
-    datasets.add(username, dataset, args, 
-                 execute, includes, script) 
+    datasets.add(username, dataset, 
+                 args, 
+                 execute, generator, 
+                 includes, script) 
 
 
 @process.command()

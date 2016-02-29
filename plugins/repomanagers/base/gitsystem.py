@@ -236,9 +236,8 @@ class GitRepoManager(RepoManagerBase):
         repo = self.lookup(key=key)
         rootdir = repo['rootdir']
         for f in files: 
-            relativepath = f['filename']
-            sourcepath = f['localfullpath'] 
-            
+            relativepath = f['relativepath']                        
+            sourcepath = f['localfullpath']             
             # Prepare the target path
             targetpath = os.path.join(rootdir, relativepath) 
             try: 
@@ -311,9 +310,3 @@ def setup(mgr):
     obj = GitRepoManager()
     mgr.register('repomanager', obj)
 
-
-if __name__ == "__main__":
-    from git import Repo
-    repo = Repo('/home/pingali/analytics')
-    print(repo) 
-    print(repo.untracked_files)
