@@ -1,21 +1,19 @@
-dgit - Lightweight "Git for Datasets"
-=====================================
+dgit - Lightweight "Git Wrapper for Datasets"
+=============================================
 
-dgit is git for datasets. It has a familiar git-like interface, and
-enables dataset tracking and version management. 
+dgit is git wrapper for datasets. It currently uses git for version
+management but structures the repositories, content, and interface to
+suit data science tasks.
 
 A lot of data-scientists' time goes towards generating, shaping, and
-using datasets. This tool is aimed at reducing the cost and complexity
-of data management. 
+using datasets. dgit enables organizing and using datasets with
+minimal effort. dgit leverages the versioning capability from git. Git
+can be replaced with other versioning backends such as instabase (as
+and when it is released) as needed. 
 
 dgit is agnostic to form and content of the datasets and
 post-processing scripts. It tries to adher to `best available dataset
 standards <http://dataprotocols.org>`_
-
-dgit focuses more on application of data repositories and versioning
-within the datascience processes than optimal storage of the
-versions. dgit will support multiple backends to address the latter
-including git and instabase (as and when their API is announced)
 
 Read `documentation <https://dgit.readthedocs.org>`_ 
 
