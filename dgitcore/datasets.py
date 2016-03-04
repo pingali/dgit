@@ -532,13 +532,13 @@ def run_executable(repomanager, repo,
     
     # Now insert the execution metadata 
     execution_metadata = { 
-        'likely-executable': executable,
-        'commit-path': commiturl, 
+        'likelyexecutable': executable,
+        'commitpath': commiturl, 
         'args': args,
     }
     execution_metadata.update(platform_metadata)
 
     for i in range(len(files)):
-        files[i]['execution-details'] = execution_metadata
+        files[i]['execution_metadata'] = execution_metadata
 
     return files 

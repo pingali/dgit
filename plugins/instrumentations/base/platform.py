@@ -20,7 +20,7 @@ class PlatformInstrumentation(InstrumentationBase):
             'client': {
                 'name': platform.node(),
                 'os': platform.system(),
-                'os-release': platform.release(),
+                'release': platform.release(),
                 'processor': platform.processor(),
                 'python': platform.python_version(),
                 'distribution': platform.linux_distribution()
