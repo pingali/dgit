@@ -8,14 +8,13 @@ from dgitcore.helper import cd
 from dgitcore.instrumentation import InstrumentationBase, InstrumentationHelper
 from dgitcore.config import get_config 
 
-
-    
     
 def run(cmd):
     output = subprocess.check_output(cmd, 
                                      stderr=subprocess.STDOUT, 
                                      shell=True)
     output = output.decode('utf-8')
+    output = output.strip() 
     return output
 
 def repo_origin(filename, what=['Push  URL']):
@@ -92,7 +91,7 @@ def executable_filetype(filename):
             'filetype': output 
         }
 
-def run_executable(args):
+def get_metadata(args):
     filename = args[0] 
     metadata = {'cmd': ' '.join(args) }
     metadata.update(repo_remote_url(filename))
@@ -108,13 +107,13 @@ class ExecutableInstrumentation(InstrumentationBase):
     def __init__(self): 
         super(ExecutableInstrumentation, self).__init__('executable', 
                                                         'v0', 
-                                                        "Exeutable analysis")
+                                                        "Executable analysis")
             
     def update(self, config): 
         if 'executables' in config: 
             for i in range(len(config['executables'])):
                 args = config['executable'][i]['args']
-                metadata = run_executable(args) 
+                metadata = get_metdata(args) 
                 config['executable'][i].update(metadata)
 
         return config 

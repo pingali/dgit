@@ -8,7 +8,7 @@ import webbrowser
 import subprocess, string, random 
 import shelve, getpass
 from datetime import datetime
-from hashlib import sha1 
+from hashlib import sha256
 import mimetypes
 import platform
 import uuid, shutil 
@@ -24,8 +24,8 @@ def clean_name(n):
     n = "".join([x if (x.isalnum() or x == "-") else "_" for x in n])    
     return n
 
-def compute_sha1(filename):    
-    h = sha1()
+def compute_sha256(filename):    
+    h = sha256()
     fd = open(filename) 
     while True: 
         buf = fd.read(0x1000000)
@@ -146,7 +146,7 @@ def push(username, dataset):
     repomgr.push(key)
 
 
-def add_files(args, generator, script):
+def add_files(args, targetdir, generator, script):
         
     files = []
 
@@ -154,20 +154,20 @@ def add_files(args, generator, script):
     ts = datetime.now().isoformat()     
     
     for f in args: 
-        basename = os.path.basename(f)
+        relativepath = os.path.join(targetdir, os.path.basename(f))
         change = 'update' if basename in files else 'add'
-        
         update = {
             'change': change,
             'type': 'data' if not script else 'script',
             'generator': True if (script and generator) else False,
             'uuid': str(uuid.uuid1()),
-            'relativepath': basename, 
+            'relativepath': relativepath, 
             'mimetypes': mimetypes.guess_type(f)[0],
-            'sha1': compute_sha1(f),
+            'content': open(f).read(512), 
+            'sha256': compute_sha256(f),
             'ts': ts, 
             'localfullpath': f,
-            'localrelativepath': os.path.relpath(f, ".")
+            'localrelativepath': relpath, 
         }
 
         print("Added change:", change, basename)
@@ -175,8 +175,9 @@ def add_files(args, generator, script):
         
     return files
     
-def add(username, dataset, args, generator, 
-        execute, includes, script=False): 
+def add(username, dataset, args,
+        execute, generator,targetdir, 
+        includes, script=False): 
     """
     Given a filename, prepare a manifest for each dataset.
     """
@@ -186,11 +187,14 @@ def add(username, dataset, args, generator,
     if repo is None: 
         raise Exception("Invalid repo") 
 
+
     # Gather the files...
     if not execute: 
         files = add_files(args, generator, script) 
     else: 
-        files = run_executable(args, includes)
+        files = run_executable(repomanager, repo, 
+                               args, includes)
+
 
     if files is not None and len(files) > 0: 
 
@@ -203,7 +207,18 @@ def add(username, dataset, args, generator,
         with cd(rootdir): 
             datapath = "datapackage.json"
             package = json.loads(open(datapath).read()) 
-            package['resources'].extend(files) 
+            
+            # Update the resources 
+            for h in files: 
+                found = False
+                for i, r in  enumerate(package['resources']):
+                    if h['relativepath'] == r['relativepath']: 
+                        package['resources'][i] = h
+                        found = True
+                        break 
+                if not found: 
+                    package['resources'].append(h) 
+
             with open(datapath, 'w') as fd: 
                 fd.write(json.dumps(package, indent=4))
         
@@ -320,46 +335,82 @@ def extract_files(filename, includes):
     Extract the files to be added based on the includes 
     """
 
+    # Load the execution strace log 
     lines = open(filename).readlines() 
 
     # Extract only open files - whether for read or write. You often
-    # want to capture the json/ini configuration file 
-    # 20826 open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
-    files = []
+    # want to capture the json/ini configuration file as well
+    files = {}
     lines = [l.strip() for l in lines if 'open(' in l]
     for l in lines: 
-        try:
-            matchedfile = re.search('open\("(.+?)\"', l).group(1)
-        except AttributeError:
-            matchedfile = None
-                
-        if matchedfile is not None and os.path.isfile(matchedfile) and os.path.exists(matchedfile): 
+
+        # Check both these formats...
+        # 20826 open("/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+        #[28940] access(b'/etc/ld.so.nohwcap', F_OK)      = -2 (No such file or directory)
+        matchedfile = re.search('open\([b]["\'](.+?)["\']', l)
+        if matchedfile is None: 
+            matchedfile = re.search('open\("(.+?)\"', l)
+            
+        if matchedfile is None: 
+            continue 
+
+        matchedfile = matchedfile.group(1) 
+
+        if os.path.exists(matchedfile) and os.path.isfile(matchedfile): 
+            
+            #print("Looking at ", matchedfile) 
+
+            # Check what action is being performed on these 
+            action = 'input' if 'O_RDONLY' in l else 'output'
+
             matchedfile = os.path.relpath(matchedfile, ".")
+            #print("Matched file's relative path", matchedfile) 
+
             for i in includes: 
                 if fnmatch.fnmatch(matchedfile, i):
-                    files.append(matchedfile)
+                    if matchedfile not in files: 
+                        files[matchedfile] = [action] 
+                    else: 
+                        if action not in files[matchedfile]: 
+                            files[matchedfile].append(action) 
 
-    input('Please select files to keep (press ENTER)')
+    # A single file may be opened and closed multiple times 
+
+    if len(files) == 0: 
+        print("No input or output files found that match pattern")
+        return []
+
+    print('We captured files that matched the pattern you specified.')
+    print('Please select files to keep (press ENTER)')
 
     # Let the user have the final say on which files must be included.
+    filenames = list(files.keys())
+    filenames.sort() 
     with tempfile.NamedTemporaryFile(suffix=".tmp") as temp:
-        temp.write(yaml.dump(files, default_flow_style=False).encode('utf-8'))
+        temp.write(yaml.dump(filenames, default_flow_style=False).encode('utf-8'))
         temp.flush()
         EDITOR = os.environ.get('EDITOR','/usr/bin/vi')
         subprocess.call("%s %s" %(EDITOR,temp.name), shell=True)
         temp.seek(0)
         data = temp.read() 
-        files = yaml.load(data) 
+        selected = yaml.load(data) 
 
-    print("You selected", len(files), "file(s)")
+    print("You selected", len(selected), "file(s)")
+    if len(selected) == 0: 
+        return []
+
+    # Get the action corresponding to the selected files
+    filenames = [f for f in filenames if f in selected] 
 
     # Now we know the list of files. Where should they go? 
-    print('Please select target locations for each of the relative paths')
+    print('Please select target locations for the various directories we found')
     print('Please make sure you do not delete any rows or edit the keys.')
     input('(press ENTER)')
     prefixes = {} 
-    for f in files: 
+    for f in filenames: 
         dirname = os.path.dirname(f)
+        if dirname == "":
+            dirname = "."
         prefixes[dirname] = dirname 
 
     while True: 
@@ -373,11 +424,10 @@ def extract_files(filename, includes):
             try: 
                 revised = yaml.load(data) 
             except Exception as e: 
-                print(e) 
                 revised = {} 
 
-            print(list(revised.keys()))
-            print(list(prefixes.keys()))
+            #print(list(revised.keys()))
+            #print(list(prefixes.keys()))
 
             if set(list(revised.keys())) == set(list(prefixes.keys())):
                 prefixes = revised 
@@ -386,35 +436,79 @@ def extract_files(filename, includes):
                 print("Could not process edited file. Either some rows are missing or entry has YAML syntax errors")
                 input("Press ENTER to continue")
 
+    # Add the root directory back 
+    if "." in prefixes: 
+        prefixes[""] = prefixes["."]
+
     result = []
     ts = datetime.now().isoformat()     
-    for f in files: 
+    for f in filenames: 
+        relativepath = prefixes[os.path.dirname(f)]
+        if relativepath == ".": 
+            relativepath = os.path.basename(f)
+        else: 
+            relativepath = os.path.join(relativepath, os.path.basename(f))
+
         result.append({
-            "localfullpath": os.path.abspath(f),
-            "filename": os.path.join(prefixes[os.path.dirname(f)], os.path.basename(f)),
+            "relativepath": relativepath, 
             'type': 'run-output',
+            'actions': files[f],
             'uuid': str(uuid.uuid1()),
             'mimetypes': mimetypes.guess_type(f)[0],
-            'sha1': compute_sha1(f),
+            'content': open(f).read(512), 
+            'sha256': compute_sha256(f),
             'ts': ts, 
-            'localrelativepath': os.path.relpath(f, ".")
+            'localrelativepath': os.path.relpath(f, "."),
+            "localfullpath": os.path.abspath(f),            
         })
         
     print(json.dumps(result, indent=4))
     return result
 
-def run_executable(args, includes): 
+def find_executable_commitpath(repomanager, repo, args): 
+
+    print("Finding executable commit path", args)
+    # Find the first argument that is a file and is part of a repo
+    for f in args: 
+        if os.path.exists(f): 
+
+            # Get full path (to get username)
+            f = os.path.realpath(f) 
+
+            # Try getting the permalink 
+            (relpath, permalink) = repomanager.permalink(repo, f)
+            if permalink is not None: 
+                return (relpath, permalink)
+    
+            # Check if this part of system bin directories 
+            if os.environ['HOME'] in f: 
+                return (f, None) 
+    
+    return (None, None) 
+
+def run_executable(repomanager, repo, 
+                   args, includes): 
     """
     Run the executable and capture the input and output...
     """
-    
+
+    # Get platform information
+    mgr = get_plugin_mgr() 
+    repomgr = mgr.get(what='instrumentation', name='platform') 
+    platform_metadata = repomgr.get_metadata()
+
+    print("Obtaining Commit Information")
+    (executable, commiturl) = \
+            find_executable_commitpath(repomanager, repo, args) 
+
     # Create a local directory 
     tmpdir = tempfile.mkdtemp()
 
     # Construct the strace command
+    print("Running the command")
     strace_filename = os.path.join(tmpdir,'strace.out.txt')
-    cmd = ["/usr/bin/strace", "-f", "-o", strace_filename, 
-           "-s", "1024", "-q"] + args 
+    cmd = ["strace.py", "-f", "-o", strace_filename, 
+           "-s", "1024", "-q", "--"] + args 
     
     # Run the command 
     p = subprocess.Popen(cmd,
@@ -435,5 +529,16 @@ def run_executable(args, includes):
     # Check the strace output 
     files = extract_files(strace_filename, includes) 
 
-    return 
+    
+    # Now insert the execution metadata 
+    execution_metadata = { 
+        'likely-executable': executable,
+        'commit-path': commiturl, 
+        'args': args,
+    }
+    execution_metadata.update(platform_metadata)
 
+    for i in range(len(files)):
+        files[i]['execution-details'] = execution_metadata
+
+    return files 

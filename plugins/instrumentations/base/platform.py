@@ -14,9 +14,9 @@ class PlatformInstrumentation(InstrumentationBase):
         super(PlatformInstrumentation, self).__init__('platform', 
                                                       'v0', 
                                                       "Execution platform information")
-
-    def update(self, config):
-        config['metadata'].update({ 
+        
+    def get_metadata(self): 
+        return { 
             'client': {
                 'name': platform.node(),
                 'os': platform.system(),
@@ -25,11 +25,15 @@ class PlatformInstrumentation(InstrumentationBase):
                 'python': platform.python_version(),
                 'distribution': platform.linux_distribution()
             },
-        })
-        config['ownership'].update({ 
+            'ownership': {
                 'user': getpass.getuser()
-        })
+            }
+        }
 
+    def update(self, config):
+        metadata = self.get_metadata()
+        config['metadata'].update(metadata['client'])
+        config['ownership'].update(metadata['ownership'])
         return config 
     
 def setup(mgr): 

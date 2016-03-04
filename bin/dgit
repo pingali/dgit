@@ -116,10 +116,12 @@ def log(dataset):
     ignore_unknown_options=True,
 ))
 @click.argument('dataset')
+@click.option("--targetdir", '-t', 
+              default=".",
+              help="Directory in repo")
 @click.option("--include", '-i', 
               multiple=True,
               help="File patterns to include")
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @click.option("--generator/--no-generator",
               default=False,
               help="Generator script")
@@ -129,13 +131,20 @@ def log(dataset):
 @click.option("--execute/--no-execute",
               default=False,
               help="Execute the filename specified")
-def add(dataset, args, execute, generator, include, script):
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def add(dataset, targetdir, args, execute, generator, include, script):
     """
     Add content to a dataset 
     """
 
     if generator and execute: 
         print("Generator and execute are mutually exclusive") 
+        return 
+        
+    if execute and len(include) == 0: 
+        print("Files to be included must be specified")
+        return
+
 
     # Extract the correct dataset name
     (username, dataset) = helper.parse_dataset_name(dataset)    
@@ -154,6 +163,7 @@ def add(dataset, args, execute, generator, include, script):
     datasets.add(username, dataset, 
                  args, 
                  execute, generator, 
+                 targetdir, 
                  includes, script) 
 
 
