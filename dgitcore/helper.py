@@ -53,16 +53,16 @@ def find_executable_path(filename):
     return path.strip() 
 
 def parse_dataset_name(dataset): 
-    
-    if dataset.count("/") not in [0,1]: 
-        print("Valid dataset formats are <name> or <user>/<name>") 
+
+    if dataset is None: 
         return (None, None) 
 
-    if "/" not in dataset: 
-        username = getpass.getuser()
-    else: 
-        username = dataset.split("/")[0]
-        dataset = dataset.split("/")[1] 
+    if dataset.count("/") not in [1]: 
+        print("Valid dataset format is <user>/<name>") 
+        return (None, None) 
+
+    username = dataset.split("/")[0]
+    dataset = dataset.split("/")[1] 
     
     return (username, dataset) 
 

@@ -2,8 +2,7 @@
 """
 Configuration parser 
 """
-import os, sys 
-import json
+import os, sys, json
 import shelve 
 import configparser 
 from .plugins import get_plugin_mgr 
@@ -49,7 +48,9 @@ def update(globalvars):
 
     profileini = getprofileini()
     config = configparser.ConfigParser()    
+    config.read(profileini)
     defaults = {}
+
 
     if globalvars is not None: 
         defaults = {a[0]: a[1] for a in globalvars }
@@ -75,12 +76,22 @@ def update(globalvars):
         }
     }]
     
-
-    
     mgr = get_plugin_mgr() 
     extra_configs = mgr.gather_configs()
 
-    for c in generic_configs + extra_configs: 
+    allconfigs = generic_configs + extra_configs 
+    for c in allconfigs: 
+        name = c['name']
+        for v in c['variables']: 
+            print("Looking at ", name, v)
+            try: 
+                c['defaults'][v]['value'] = config[name][v] 
+            except:
+                continue
+
+    print(json.dumps(allconfigs, indent=4))
+
+    for c in allconfigs: 
         name = c['name']
         config[name] = {} 
         config[name]['nature'] = c['nature']
@@ -117,6 +128,35 @@ def get_config():
         init() 
     return config 
 
+def set_default_dataset(dataset): 
+
+    workspace = config['Local']['workspace'] 
+    statefile = os.path.join(workspace, '.default')
+    with open(statefile, 'w') as fd: 
+        fd.write(dataset)
+
+def clear_default_dataset(): 
+
+    workspace = config['Local']['workspace'] 
+    statefile = os.path.join(workspace, '.default')
+    if os.path.exists(statefile): 
+        os.remove(statefile) 
+
+def get_default_dataset(): 
+
+    workspace = config['Local']['workspace'] 
+    statefile = os.path.join(workspace, '.default')    
+
+    dataset = None 
+    if os.path.exists(statefile): 
+        dataset = open(statefile).read()         
+        if dataset == "":
+            dataset = None 
+
+    return dataset 
+
+        
+    
 def get_state():
     
     config = get_config()

@@ -22,11 +22,14 @@ class GitRepoManager(RepoManagerBase):
 
     def run(self, cmd):
         cmd = " ".join(cmd) 
-        output = subprocess.check_output(cmd, 
-                                         stderr=subprocess.STDOUT, 
+        cmd += "; exit 0"
+        #print("Running command", cmd)
+        output = subprocess.check_output(cmd,
+                                         stderr=subprocess.STDOUT,
                                          shell=True)
         output = output.decode('utf-8')
         output = output.strip() 
+        #print("Output of command", output)
         return output
 
     def init(self, username, reponame, force, backend=None): 
@@ -56,8 +59,7 @@ class GitRepoManager(RepoManagerBase):
             backend.init_repo(server_repodir)
 
         # Now clone the filesystem-based repo 
-        repodir = self.rootdir(username, reponame, 
-                               create=False) 
+        repodir = self.rootdir(username, reponame, create=False) 
 
         # Prepare it if needed 
         if os.path.exists(repodir) and not force: 
@@ -79,7 +81,6 @@ class GitRepoManager(RepoManagerBase):
                      'username': username,
                      'reponame': reponame,
                      'rootdir': self.rootdir(username, reponame),
-                     'remote-url': url
                  })
 
         return key 
@@ -122,7 +123,6 @@ class GitRepoManager(RepoManagerBase):
                      'username': username,
                      'reponame': reponame,
                      'rootdir': self.rootdir(username, reponame),
-                     'remote-url': url 
                  })
 
     def push(self, key): 
@@ -167,6 +167,34 @@ class GitRepoManager(RepoManagerBase):
                 }
 
         return result 
+
+    def delete(self, key, force, files): 
+        """
+        """
+
+        # print("Delete", files)
+        repo = self.lookup(key=key)
+        result = None
+        with cd(repo['rootdir']):             
+            for f in files: 
+                if not os.path.exists(f): 
+                    raise Exception("Missing file" + f) 
+
+            try: 
+                cmd = ['/usr/bin/git', 'rm'] + list(files)
+                # print("Command = ", cmd) 
+                result = {
+                    'status': 'success',
+                    'message': self.run(cmd)
+                }
+            except Exception as e: 
+                result = {
+                    'status': 'error',
+                    'message': str(e) 
+                }
+
+            # print(result) 
+            return result 
 
     def permalink(self, key, path):        
         """

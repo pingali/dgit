@@ -14,8 +14,6 @@ from dgitcore import config, datasets, helper
 
 # 
 thisdir=os.path.realpath(os.path.dirname(__file__))
-libdir = os.path.realpath(os.path.join(thisdir,"../thirdparty"))
-sys.path.append(libdir)
 
 
 @click.group()
@@ -78,15 +76,22 @@ def init(dataset, setup, force):
     datasets.init(username, dataset, setup, force)
 
 @process.command('commit')
-@click.argument('dataset')
-@click.option("--message", help="Commit message")
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to stash")
+@click.option("--message", '-m',
+              help="Commit message")
 def commit(dataset, message): 
     """
     Commit the changes made to a dataset 
     """
 
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
     (username, dataset) = helper.parse_dataset_name(dataset)    
     if dataset is None: 
+        print("Dataset must be specified or provided as a default")
         return
 
     if message is None: 
@@ -95,6 +100,25 @@ def commit(dataset, message):
 
     # Get the command that must be run 
     datasets.commit(username, dataset, message)
+
+@process.command('post')
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to stash")
+def post(dataset): 
+    """
+    Post to metadata server
+    """
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None: 
+        print("Dataset must be specified or provided as a default")
+        return
+
+    # Get the command that must be run 
+    datasets.post(username, dataset)
 
 @process.command('log')
 @click.argument('dataset')
@@ -110,12 +134,60 @@ def log(dataset):
     # Get the command that must be run 
     datasets.log(username, dataset)
 
+@process.command('default')
+@click.option('--dataset', '-d',
+              default=None,
+              help='Dataset')
+@click.option('--action','-a',
+              type=click.Choice(['clear', 'get', 'set']),
+              default="get",
+              help="Action on default")
+def default(dataset, action):
+    """
+    Set the default dataset
+    """
+    if action == 'set': 
+        if dataset is not None: 
+            config.set_default_dataset(dataset)
+        else: 
+            print("Dataset must be specified for set")            
+    elif action == "clear": 
+        config.clear_default_dataset()
+    elif action == "get": 
+        dataset = config.get_default_dataset()
+        print("Default dataset:", dataset)
+
+
+@process.command('rm')
+@click.argument('dataset')
+@click.option('--force',
+              help='Force deletion of the files')
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def rm(dataset, force, args): 
+    """
+    Commit the changes made to a dataset 
+    """
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None: 
+        return
+
+    if len(args) == 0: 
+        print("No files specified to remove") 
+        return 
+
+    # Get the command that must be run 
+    result = datasets.delete(username, dataset, force, args)
+    if 'message' in result: 
+        print(result['message'])
 
 
 @process.command('add', context_settings=dict(
     ignore_unknown_options=True,
 ))
-@click.argument('dataset')
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to stash")
 @click.option("--targetdir", '-t', 
               default=".",
               help="Directory in repo")
@@ -132,10 +204,14 @@ def log(dataset):
               default=False,
               help="Execute the filename specified")
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def add(dataset, targetdir, args, execute, generator, include, script):
+def add(dataset, targetdir, args, execute, 
+        generator, include, script):
     """
     Add content to a dataset 
     """
+
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
 
     if generator and execute: 
         print("Generator and execute are mutually exclusive") 
@@ -168,11 +244,17 @@ def add(dataset, targetdir, args, execute, generator, include, script):
 
 
 @process.command()
-@click.argument('dataset')
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to stash")
 def stash(dataset): 
     """
     Trash all the changes for a given dataset
     """
+
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
     (username, dataset) = helper.parse_dataset_name(dataset)    
     if dataset is None or username is None: 
         print("Could not find the dataset. Please specify exact repo to be stashed")
@@ -182,21 +264,27 @@ def stash(dataset):
     return 
 
 
-@process.command()
+@process.command('status')
 @click.option("--dataset", '-d', default=None)
-def status(dataset): 
+@click.option("--details/--no-details", 
+              is_flag=True,
+              default=False,
+              help="Show details")
+def status(dataset, details): 
     """
     Show all the datasets available
     """
-    if dataset is not None: 
-        (username, dataset) = helper.parse_dataset_name(dataset)    
-        if dataset is None or username is None: 
-            print("Could not find the dataset. Please specify exact repo to be stashed")
-            return
-    else: 
-        username = None 
 
-    datasets.status(username, dataset) 
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
+    print("dataset = ", dataset) 
+
+    (username, dataset) = helper.parse_dataset_name(dataset) 
+    
+    # username and dataset could still be None 
+    datasets.status(username, dataset, details)
+ 
     return 
 
 @process.command()
@@ -240,11 +328,17 @@ def drop(name):
     datasets.drop(name)
 
 @process.command()
-@click.argument('dataset')
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to stash")
 def push(dataset): 
     """
     Upload a dataset to origin (github/s3/local)
     """
+
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
     (username, dataset) = helper.parse_dataset_name(dataset)    
     if dataset is None or username is None: 
         print("Could not find the dataset. Please specify exact repo to be stashed")
@@ -256,7 +350,8 @@ def push(dataset):
 
 @process.command('plugins')
 @click.argument('action',
-                type=click.Choice(['list', 'show', 'new']))
+                type=click.Choice(['list', 'show', 'new']),
+                default='show')
 @click.option('--what',
                 type=click.Choice(['backend', 'instrumentation', 'repomanager']))
 @click.option('--name')              

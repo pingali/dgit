@@ -174,6 +174,35 @@ def add_files(args, targetdir, generator, script):
         files.append(update)             
         
     return files
+
+def delete(username, dataset, force, args): 
+
+    mgr = get_plugin_mgr() 
+    (repomanager, repo) = mgr.get_by_repo(username, dataset)
+    if repo is None: 
+        raise Exception("Invalid repo") 
+    
+    return repomanager.delete(repo, force, args) 
+
+def post(username, dataset): 
+    """
+    Post to backend server
+    """
+
+    mgr = get_plugin_mgr() 
+    (repomanager, key) = mgr.get_by_repo(username, dataset)
+    if key is None: 
+        raise Exception("Invalid repo") 
+        
+    repo = repomanager.get_repo_details(key)
+    metadatamgr = mgr.get(what='metadata',name='generic-metadata') 
+    try: 
+        metadatamgr.post(repo['package'])
+    except Exception as e:
+        print(e)
+        print("Could not post. Please check server")
+        return 
+
     
 def add(username, dataset, args,
         execute, generator,targetdir, 
@@ -236,50 +265,46 @@ def stash(username, dataset):
         
     repomanager.stash(repo) 
 
-def status(name, details): 
+def status(username, reponame, details): 
 
     mgr = get_plugin_mgr() 
     
-    # Find all repo managers
-    repomanager_keys = mgr.search(what='repomanager')['repomanager']
-    for repomanager_key in repomanager_keys: 
-        repomanager = mgr.get_by_key('repomanager', repomanager_key) 
-        repokeys = repomanager.get_repos() 
-        for key in repokeys: 
-            result = repomanager.status(key)
+    repomgr = mgr.get(what='repomanager', name='git') 
+    repokeys = repomgr.search(username, reponame) 
 
-            print("Dataset: %s/%s" %(key[0], key[1]))
-            print("Backend: %s" %(repomanager_key[0].upper()))
-            print("Status: ", result['status'])
-            print("Message:") 
-            print(result['message']) 
+    for key in repokeys: 
+        repo = repomgr.get_repo_details(key)
+        result = repomgr.status(key)
 
-            if 'dirty' in result and not result['dirty']: 
-                print("Nothing to commit, working directory clean")
+        print("Dataset: %s/%s" %(key[0], key[1]))
+        print("Backend: %s" %(repo['package']['remote-url']))
+        print("Status: ", result['status'])
+        print("Message:") 
+        print(result['message']) 
 
-            if 'deleted-files' in result and len(result['deleted-files']) > 0: 
-                print("Deleted files:")
-                for x in result['deleted-files']: 
-                    print(bcolors.FAIL + "    deleted: " +x + bcolors.ENDC)
+        if 'dirty' in result and not result['dirty']: 
+            print("Nothing to commit, working directory clean")
 
-            if 'new-files' in result and len(result['new-files']) > 0: 
-                print("New files:")
-                for x in result['new-files']: 
-                    print(bcolors.OKGREEN + "    new: " +x + bcolors.ENDC)
+        if 'deleted-files' in result and len(result['deleted-files']) > 0: 
+            print("Deleted files:")
+            for x in result['deleted-files']: 
+                print(bcolors.FAIL + "    deleted: " +x + bcolors.ENDC)
 
-            if 'renamed-files' in result and len(result['renamed-files']) > 0: 
-                print("Renamed files:")
-                for x in result['renamed-files']: 
-                    print(bcolors.OKGREEN + "    renamed: %s -> %s " %(x['from'],x['to']) + bcolors.ENDC)
+        if 'new-files' in result and len(result['new-files']) > 0: 
+            print("New files:")
+            for x in result['new-files']: 
+                print(bcolors.OKGREEN + "    new: " +x + bcolors.ENDC)
+
+        if 'renamed-files' in result and len(result['renamed-files']) > 0: 
+            print("Renamed files:")
+            for x in result['renamed-files']: 
+                print(bcolors.OKGREEN + "    renamed: %s -> %s " %(x['from'],x['to']) + bcolors.ENDC)
                 
-            if (('untracked-files' in result) and 
-                (len(result['untracked-files']) > 0)): 
-                print("Untracked files:")
-                for f in result['untracked-files']: 
-                    print("   untracked:", f)
-
-    
-    
+        if (('untracked-files' in result) and 
+            (len(result['untracked-files']) > 0)): 
+            print("Untracked files:")
+            for f in result['untracked-files']: 
+                print("   untracked:", f)
 
 def log(username, dataset): 
     """

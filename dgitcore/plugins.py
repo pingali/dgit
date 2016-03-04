@@ -18,7 +18,8 @@ class PluginManager(object):
         self.plugins = {
             'backend': {},
             'instrumentation': {},
-            'repomanager': {}
+            'repomanager': {},
+            'metadata': {},
         }
         self.sources = {} 
 
@@ -28,18 +29,19 @@ class PluginManager(object):
         allplugins = [
             {
                 'package': 'backend',
-                'base': get_path('../plugins/backends/base'),
-                'contrib': get_path('../plugins/backends/contrib'),
+                'base': get_path('../plugins/backends'),
             },
             {
                 'package': 'instrumentation',
-                'base': get_path('../plugins/instrumentations/base'),
-                'contrib': get_path('../plugins/instrumentations/contrib'),
+                'base': get_path('../plugins/instrumentations'),
             },
             {
                 'package': 'repomanager',
-                'base': get_path('../plugins/repomanagers/base'),
-                'contrib': get_path('../plugins/repomanagers/contrib'),
+                'base': get_path('../plugins/repomanagers'),
+            },
+            {
+                'package': 'metadata',
+                'base': get_path('../plugins/metadata'),
             },
         ]
     
@@ -50,14 +52,14 @@ class PluginManager(object):
             
 
             source = plugin_base.make_plugin_source(
-                searchpath=[p['contrib']],
+                searchpath=[],
                 identifier="Plugin Manager")
-
+	    
             for plugin_name in source.list_plugins():
                 # print("Loading plugin", plugin_name)
                 plugin = source.load_plugin(plugin_name)
                 plugin.setup(self)
-        
+
             self.sources[p['package']] = source 
 
     def register(self, what, obj):
@@ -137,7 +139,8 @@ class PluginManager(object):
                     print("None")
                 for k in filtered[what]: 
                     obj = self.plugins[what][k]
-                    print("%s (%s) :" % k, obj.description)
+                    print("%s (%s) :" % k, obj.name, 
+                          obj.description)
                     if details: 
                         print("   Supp:", obj.support)
                 print("")

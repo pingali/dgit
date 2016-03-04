@@ -32,9 +32,23 @@ class RepoManagerBase(object):
     def enabled(self): 
         return self.enabled.lower() != 'n'
 
-    def get_repos(self): 
+    def get_repo_list(self): 
         return list(self.repos.keys())
 
+    def get_repo_details(self,key): 
+        return self.repos[key]
+
+    def search(self, username, reponame): 
+        matches = []
+
+        for k in list(self.repos.keys()): 
+            if username is not None and k[0] != username: 
+                continue
+            if reponame is not None and k[1] != reponame: 
+                continue
+            matches.append(k)
+        return matches 
+            
     def is_my_repo(self, username, reponame): 
 
         rootdir = os.path.join(self.workspace, 'datasets')  
@@ -59,13 +73,12 @@ class RepoManagerBase(object):
         """
         Find the key corresponding to this repo if exists 
         """
-        key = (username, reponame) 
+        key = self.key(username, reponame) 
         if key not in self.repos: 
             raise Exception("Unknown repository") 
         return key 
 
-    def lookup(self, username=None, reponame=None, 
-               key=None): 
+    def lookup(self, username=None, reponame=None, key=None): 
         """
         Lookup all available repos 
         """
