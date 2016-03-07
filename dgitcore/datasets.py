@@ -19,6 +19,7 @@ from .config import get_config
 from .aws import get_session 
 from .plugins import get_plugin_mgr 
 from .helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
+from .detect import get_schema 
 
 def datapackage_exists(repo): 
     """
@@ -167,18 +168,20 @@ def add_preview(username, dataset, size, args):
     files = package['resources'] 
     for f in files: 
         
-        path = os.path.join(rootdir, f['relativepath'])
-        
+        relativepath = f['relativepath']
+        path = os.path.join(rootdir, relativepath) 
+
         # Should I be adding a snippet? 
         match = False
         for i in args: 
-            if fnmatch.fnmatch(path, i):
+            if fnmatch.fnmatch(path, i) or fnmatch.fnmatch(relativepath, i):
                 match = True
                 break 
                 
         if match: 
             print("Reading content", path)
             f['content'] = open(path).read()[:size]
+            f['schema'] = get_schema(path) 
 
     # Write a temp file 
     (handle, filename) = tempfile.mkstemp()    
@@ -230,13 +233,17 @@ def validate(username, dataset):
             print("Sha 256 mismatch between file and datapackage")
     
 
-def add_file_normal(f, targetdir, generator,script):
+def add_file_normal(f, targetdir, generator,script, source):
     """
-    Add a normal file...
+    Add a normal file including its source
     """
     
     basename = os.path.basename(f)
-    relativepath = os.path.join(targetdir, basename)
+    if targetdir != ".": 
+        relativepath = os.path.join(targetdir, basename)
+    else: 
+        relativepath = basename 
+
     relpath = os.path.relpath(f, os.getcwd())
     filetype = 'data'
     if script: 
@@ -251,13 +258,13 @@ def add_file_normal(f, targetdir, generator,script):
         'relativepath': relativepath, 
         'mimetypes': mimetypes.guess_type(f)[0],
         'content': '', 
+        'source': source, 
         'sha256': compute_sha256(f),
-        'ts': ts, 
         'localfullpath': f,
         'localrelativepath': relpath, 
     }
 
-    return update 
+    return (basename, update)
 
 def add_file_special(f):
     update = { 
@@ -273,7 +280,7 @@ def add_file_special(f):
     }
     return (f, update) 
     
-def add_files(args, targetdir, generator, script):
+def add_files(args, targetdir, generator, source, script):
         
     # get the directory 
     ts = datetime.now().isoformat()     
@@ -283,7 +290,11 @@ def add_files(args, targetdir, generator, script):
     for f in args: 
         print("Looking at", f)
         if "://" not in f:            
-            (base, update) = add_file_normal(f,targetdir, generator, script)
+            (base, update) = add_file_normal(f=f,
+                                             targetdir=targetdir, 
+                                             generator=generator,
+                                             script=script,
+                                             source=source)
         else: 
             print("Adding special file")
             (base, update) = add_file_special(f)
@@ -329,7 +340,7 @@ def post(username, dataset):
     
 def add(username, dataset, args,
         execute, generator,targetdir, 
-        includes, script=False): 
+        includes, script, source): 
     """
     Given a filename, prepare a manifest for each dataset.
     """
@@ -342,7 +353,11 @@ def add(username, dataset, args,
 
     # Gather the files...
     if not execute: 
-        files = add_files(args, targetdir,  generator, script) 
+        files = add_files(args=args, 
+                          targetdir=targetdir,  
+                          source=source,
+                          script=script,
+                          generator=generator)
     else: 
         files = run_executable(repomanager, repo, 
                                args, includes)

@@ -240,12 +240,15 @@ def rm(dataset, args):
 @click.option("--script/--no-script",
               default=False,
               help="Mark the script file as executable")
+@click.option("--source",
+              default=False,
+              help="Source of the data")
 @click.option("--execute/--no-execute",
               default=False,
               help="Execute the filename specified")
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
 def add(dataset, targetdir, args, execute, 
-        generator, include, script):
+        generator, source, include, script):
     """
     Add files to the repo
     """
@@ -275,11 +278,15 @@ def add(dataset, targetdir, args, execute,
     for i in include:
         includes.extend(i.split(","))
 
-    datasets.add(username, dataset, 
-                 args, 
-                 execute, generator, 
-                 targetdir, 
-                 includes, script) 
+    datasets.add(username=username, 
+                 dataset=dataset, 
+                 args=args, 
+                 execute=execute, 
+                 source=source,
+                 script=script,
+                 generator=generator, 
+                 targetdir=targetdir, 
+                 includes=includes)
 
 @process.command('add-preview',
                  context_settings=dict(
