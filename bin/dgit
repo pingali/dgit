@@ -42,7 +42,6 @@ def profile(action, globalvar):
         config.init(globalvar, show=True)
 
 
-
 @process.command('init', context_settings=dict(
     ignore_unknown_options=True,
 ))
@@ -75,13 +74,16 @@ def init(dataset, setup, force):
     # Get the command that must be run 
     datasets.init(username, dataset, setup, force)
 
-@process.command('commit')
+@process.command('commit', 
+                 context_settings=dict(
+                     ignore_unknown_options=True,
+                     allow_extra_args=True
+                 ))
 @click.option('--dataset', '-d',
               default=None,
               help="Dataset to stash")
-@click.option("--message", '-m',
-              help="Commit message")
-def commit(dataset, message): 
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def commit(dataset, args): 
     """
     Commit the changes made to a dataset 
     """
@@ -99,12 +101,12 @@ def commit(dataset, message):
         return 
 
     # Get the command that must be run 
-    datasets.commit(username, dataset, message)
+    datasets.commit(username, dataset, list(args))
 
 @process.command('post')
 @click.option('--dataset', '-d',
               default=None,
-              help="Dataset to stash")
+              help="Dataset to post")
 def post(dataset): 
     """
     Post to metadata server
@@ -120,19 +122,29 @@ def post(dataset):
     # Get the command that must be run 
     datasets.post(username, dataset)
 
-@process.command('log')
-@click.argument('dataset')
-def log(dataset): 
+@process.command('log',
+                 context_settings=dict(
+                     ignore_unknown_options=True,
+                     allow_extra_args=True
+                 ))
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to check log")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def log(dataset, args): 
     """
     Commit the changes made to a dataset 
     """
+
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
 
     (username, dataset) = helper.parse_dataset_name(dataset)    
     if dataset is None: 
         return
 
     # Get the command that must be run 
-    datasets.log(username, dataset)
+    datasets.log(username, dataset, list(args))
 
 @process.command('default')
 @click.option('--dataset', '-d',
@@ -158,12 +170,14 @@ def default(dataset, action):
         print("Default dataset:", dataset)
 
 
-@process.command('rm')
+@process.command('rm',
+                 context_settings=dict(
+                     ignore_unknown_options=True,
+                     allow_extra_args=True
+                 ))
 @click.argument('dataset')
-@click.option('--force',
-              help='Force deletion of the files')
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def rm(dataset, force, args): 
+def rm(dataset, args): 
     """
     Commit the changes made to a dataset 
     """
@@ -177,7 +191,7 @@ def rm(dataset, force, args):
         return 
 
     # Get the command that must be run 
-    result = datasets.delete(username, dataset, force, args)
+    result = datasets.delete(username, dataset, list(args))
     if 'message' in result: 
         print(result['message'])
 
@@ -315,14 +329,44 @@ def stash(dataset):
     datasets.stash(username, dataset) 
     return 
 
+@process.command('diff', 
+                 context_settings=dict(
+                     ignore_unknown_options=True,
+                     allow_extra_args=True
+                 ))
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to stash")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def diff(dataset, args): 
+    """
+    Show changes
+    """
 
-@process.command('status')
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None or username is None: 
+        print("Could not find the dataset. Please specify exact repo to be stashed")
+        return
+
+    datasets.diff(username, dataset, list(args))
+    return 
+
+
+@process.command('status',
+                 context_settings=dict(
+                     ignore_unknown_options=True,
+                     allow_extra_args=True
+                 ))
 @click.option("--dataset", '-d', default=None)
 @click.option("--details/--no-details", 
               is_flag=True,
               default=False,
               help="Show details")
-def status(dataset, details): 
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def status(dataset, details, args): 
     """
     Show all the datasets available
     """
@@ -330,12 +374,10 @@ def status(dataset, details):
     if dataset is None: 
         dataset = config.get_default_dataset() 
 
-    print("dataset = ", dataset) 
-
     (username, dataset) = helper.parse_dataset_name(dataset) 
     
     # username and dataset could still be None 
-    datasets.status(username, dataset, details)
+    datasets.status(username, dataset, details, list(args))
  
     return 
 

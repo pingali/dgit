@@ -20,8 +20,10 @@ class GitRepoManager(RepoManagerBase):
                                              'v0', 
                                              "Git-based repomanager")
 
+    # =>  Helper functions
     def run(self, cmd):
-        cmd = " ".join(cmd) 
+        
+        cmd = " ".join(['/usr/bin/git'] + cmd) 
         cmd += "; exit 0"
         #print("Running command", cmd)
         output = subprocess.check_output(cmd,
@@ -32,6 +34,51 @@ class GitRepoManager(RepoManagerBase):
         #print("Output of command", output)
         return output
 
+    def run_generic_command(self, key, cmd): 
+
+        repo = self.lookup(key=key)
+        result = None
+        with cd(repo['rootdir']): 
+            # Dont use sh. It is not collecting the stdout of all
+            # child processes.
+            output = self.run(cmd)
+            try: 
+                result = {
+                    'cmd': cmd, 
+                    'status': 'success',
+                    'message': output,
+                }
+            except Exception as e: 
+                result = {
+                    'cmd': cmd, 
+                    'status': 'error',
+                    'message': str(e) 
+                }
+             
+        return result         
+
+    # =>  Simple commands ...
+    def push(self, key): 
+        return self.run_generic_command(key, 
+                                        ["push", "origin","master"])
+
+    def status(self, key): 
+        return self.run_generic_command(key, ["status"])
+
+    def stash(self, key): 
+        return self.run_generic_command(key, ["stash"])
+
+    def diff(self, key, args): 
+        return self.run_generic_command(key, ["diff"] + args)
+
+    def log(self, key, args): 
+        return self.run_generic_command(key, ["log"] + args)
+
+    def commit(self, key, args): 
+        return self.run_generic_command(key, ["log"] + args)
+
+        
+    # => Run more complex functions to initialize, cleanup 
     def init(self, username, reponame, force, backend=None): 
         """
         Initialize a Git repo 
@@ -125,48 +172,6 @@ class GitRepoManager(RepoManagerBase):
                      'rootdir': self.rootdir(username, reponame),
                  })
 
-    def push(self, key): 
-        repo = self.lookup(key=key)
-        result = None
-        print("Pushing to origin from local repository", repo['rootdir'])
-        with cd(repo['rootdir']): 
-            # Dont use sh. It is not collecting the stdout of all
-            # child processes.
-            pushoutput = self.run(["/usr/bin/git", 
-                                   "push", "origin", 
-                                   "master"])
-            try: 
-                result = {
-                    'status': 'success',
-                    'message': pushoutput,
-                }
-            except Exception as e: 
-                result = {
-                    'status': 'error',
-                    'message': str(e) 
-                }
-             
-        print(result) 
-        return result         
-        
-        
-
-    def status(self, key):        
-        repo = self.lookup(key=key)
-        result = None
-        with cd(repo['rootdir']): 
-            try: 
-                result = {
-                    'status': 'success',
-                    'message': git.status()
-                }
-            except Exception as e: 
-                result = {
-                    'status': 'error',
-                    'message': str(e) 
-                }
-
-        return result 
 
     def delete(self, key, force, files): 
         """
@@ -181,7 +186,7 @@ class GitRepoManager(RepoManagerBase):
                     raise Exception("Missing file" + f) 
 
             try: 
-                cmd = ['/usr/bin/git', 'rm'] + list(files)
+                cmd = ['rm'] + list(files)
                 # print("Command = ", cmd) 
                 result = {
                     'status': 'success',
@@ -209,7 +214,7 @@ class GitRepoManager(RepoManagerBase):
 
         # Find the root of the repo and cd into that directory..
         os.chdir(os.path.dirname(path))    
-        rootdir = self.run(["/usr/bin/git", "rev-parse", "--show-toplevel"])    
+        rootdir = self.run(["rev-parse", "--show-toplevel"])    
         os.chdir(rootdir)        
         # print("Rootdir = ", rootdir) 
 
@@ -219,13 +224,13 @@ class GitRepoManager(RepoManagerBase):
 
         # Get the last commit for this file
         #3764cc2600b221ac7d7497de3d0dbcb4cffa2914
-        sha1 = self.run(["/usr/bin/git", "log", "-n", "1", "--format=format:%H", relpath])    
+        sha1 = self.run(["log", "-n", "1", "--format=format:%H", relpath])    
         #print("sha1 = ", sha1) 
 
         # Get the repo URL 
         #git@gitlab.com:pingali/simple-regression.git
         #https://gitlab.com/kanban_demo/test_project.git
-        remoteurl = self.run(["/usr/bin/git", "config", "--get", "remote.origin.url"])
+        remoteurl = self.run(["config", "--get", "remote.origin.url"])
         #print("remoteurl = ", remoteurl)     
 
         # Go back to the original directory...
@@ -256,42 +261,6 @@ class GitRepoManager(RepoManagerBase):
             return (None, None) 
 
 
-    def stash(self, key):
-        """
-        Stash the changes 
-        """
-        repo = self.lookup(key=key)
-        with cd(repo['rootdir']): 
-            try: 
-                result = {
-                    'status': 'success',
-                    'message': git.stash() 
-                }
-            except Exception as e: 
-                result = {
-                    'status': 'error',
-                    'message': str(e) 
-                }
-
-    def log(self, key):
-        """
-        Log of the changes
-        """
-        repo = self.lookup(key=key)
-        with cd(repo['rootdir']): 
-            output = self.run(["/usr/bin/git", "log"])
-            try: 
-                result = {
-                    'status': 'success',
-                    'message': output,
-                    }
-            except Exception as e: 
-                result = {
-                    'status': 'error',
-                    'message': str(e) 
-                }
-            
-        return result 
 
     def add_raw(self, key, files): 
         repo = self.lookup(key=key)
@@ -301,21 +270,6 @@ class GitRepoManager(RepoManagerBase):
                 result = git.add(files) 
             except: 
                 pass 
-
-    def commit(self, key, message): 
-        """
-        Commit files to a repo 
-        """
-        repo = self.lookup(key=key)
-        result = None
-        with cd(repo['rootdir']): 
-            try: 
-                result = git.commit('-m', message, '-a')
-            except Exception as e: 
-                result = {
-                    'status': 'error',
-                    'message': str(e) 
-                }
 
 
     def add_files(self, key, files): 

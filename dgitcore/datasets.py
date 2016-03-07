@@ -34,7 +34,7 @@ def compute_sha256(filename):
         h.update(buf.encode('utf-8')) 
     return h.hexdigest() 
 
-def check_datapackage(repo): 
+def datapackage_exists(repo): 
     """
     Check if the datapackage exists...
     """
@@ -110,8 +110,8 @@ def init(username, dataset, setup, force):
     ])
 
     os.unlink(filename) 
-    repomgr.commit(key, message="Bootstrapped the datapackage")
-
+    args = ['-a', '-m', 'Bootstrapped the datapackage']
+    repomgr.commit(key, args)
                    
     
 def clone(url): 
@@ -135,9 +135,10 @@ def clone(url):
 
     # Insert a datapackage if it doesnt already exist...
     repo = repomgr.lookup(key=key)    
-    if check_datapackage(repo):
+    if not datapackage_exists(repo):
         bootstrap_datapackage(repo)
-        repomgr.commit(key, message="Bootstrapped cloned repo")
+        args = ['-a', '-m', 'Bootstrapped cloned repo']
+        repomgr.commit(key, args)
 
 def push(username, dataset):
     mgr = get_plugin_mgr() 
@@ -186,6 +187,18 @@ def add_snippet(username, dataset, includes, size=512):
         }
     ])
     
+def diff(username, dataset, args): 
+    """
+    Show the changes 
+    """
+    mgr = get_plugin_mgr() 
+    (repomanager, key) = mgr.get_by_repo(username, dataset)
+    if key is None: 
+        raise Exception("Invalid repo") 
+
+    result = repomanager.diff(key, list(args)) 
+    if 'message' in result: 
+        print(result['message'])
 
 def validate(username, dataset): 
     """
@@ -241,14 +254,14 @@ def add_files(args, targetdir, generator, script):
         
     return files
 
-def delete(username, dataset, force, args): 
+def delete(username, dataset, args): 
 
     mgr = get_plugin_mgr() 
-    (repomanager, repo) = mgr.get_by_repo(username, dataset)
+    (repomanager, key) = mgr.get_by_repo(username, dataset)
     if repo is None: 
         raise Exception("Invalid repo") 
     
-    return repomanager.delete(repo, force, args) 
+    return repomanager.delete(key, args)
 
 def post(username, dataset): 
     """
@@ -331,7 +344,7 @@ def stash(username, dataset):
         
     repomanager.stash(repo) 
 
-def status(username, reponame, details): 
+def status(username, reponame, details, args): 
 
     mgr = get_plugin_mgr() 
     
@@ -340,7 +353,7 @@ def status(username, reponame, details):
 
     for key in repokeys: 
         repo = repomgr.get_repo_details(key)
-        result = repomgr.status(key)
+        result = repomgr.status(key, args)
 
         print("Dataset: %s/%s" %(key[0], key[1]))
         print("Backend: %s" %(repo['package']['remote-url']))
@@ -372,7 +385,7 @@ def status(username, reponame, details):
             for f in result['untracked-files']: 
                 print("   untracked:", f)
 
-def log(username, dataset): 
+def log(username, dataset, args): 
     """
     Log of the changes executed until now
     """
@@ -382,12 +395,12 @@ def log(username, dataset):
     if repokey is None: 
         raise Exception("Invalid repo") 
     
-    result = repomanager.log(repokey)
+    result = repomanager.log(repokey, args)
     print("Status:", result['status'])
     print(result['message'])
 
 
-def commit(username, dataset, message): 
+def commit(username, dataset, args): 
     """
     Commit the changes made...
     """
@@ -396,7 +409,7 @@ def commit(username, dataset, message):
     if repo is None: 
         raise Exception("Invalid repo") 
 
-    repomanager.commit(repo, message) 
+    repomanager.commit(repo, args) 
 
 
 def drop(name): 
