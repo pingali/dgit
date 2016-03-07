@@ -182,7 +182,7 @@ def rm(dataset, force, args):
         print(result['message'])
 
 
-@process.command('add', context_settings=dict(
+@process.command('add-files', context_settings=dict(
     ignore_unknown_options=True,
 ))
 @click.option('--dataset', '-d',
@@ -207,7 +207,7 @@ def rm(dataset, force, args):
 def add(dataset, targetdir, args, execute, 
         generator, include, script):
     """
-    Add content to a dataset 
+    Add files to the repo
     """
 
     if dataset is None: 
@@ -242,6 +242,58 @@ def add(dataset, targetdir, args, execute,
                  targetdir, 
                  includes, script) 
 
+@process.command('add-preview')
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to stash")
+@click.option("--include", '-i', 
+              multiple=True,
+              help="File patterns to include")
+@click.option("--size", '-s', 
+              default=512, 
+              help="File patterns to include")
+def snippet(dataset, include): 
+    """
+    Add preview from files into metadata 
+    """
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
+    if len(include) == 0: 
+        print("paths must be specified")
+        return 
+
+    # Extract the correct dataset name
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None: 
+        return
+
+    # Cleanup includes 
+    includes = []
+    for i in include:
+        includes.extend(i.split(","))        
+
+    datasets.add_snippet(username, dataset, includes, size)
+
+
+@process.command('validate')
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset")
+def validate(dataset): 
+    """
+    Check the integrity of a dataset
+    """
+
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None or username is None: 
+        print("Could not find the dataset. Please specify exact repo to be stashed")
+        return
+
+    datasets.validate(username, dataset) 
 
 @process.command()
 @click.option('--dataset', '-d',

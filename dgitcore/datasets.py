@@ -145,6 +145,72 @@ def push(username, dataset):
     key = repomgr.key(username, dataset) 
     repomgr.push(key)
 
+def add_snippet(username, dataset, includes, size=512): 
+
+    mgr = get_plugin_mgr() 
+    (repomanager, key) = mgr.get_by_repo(username, dataset)
+    if key is None: 
+        raise Exception("Invalid repo") 
+        
+    repo = repomanager.get_repo_details(key)    
+    rootdir = repo['rootdir']    
+    packagefilename = 'datapackage.json' 
+    package = repo['package'] 
+    
+    files = package['resources'] 
+    for f in files: 
+        
+        path = os.path.join(rootdir, f['relativepath'])
+        
+        # Should I be adding a snippet? 
+        match = False
+        for i in includes: 
+            if fnmatch.fnmatch(path, i):
+                match = True
+                break 
+                
+        if match: 
+            print("Reading content", path)
+            f['content'] = open(path).read()[:size]
+
+    # Write a temp file 
+    (handle, filename) = tempfile.mkstemp()    
+    with open(filename, 'w') as fd: 
+        fd.write(json.dumps(package, indent=4))
+
+    # Add it to the list of files...
+    repomanager.add_files(key, [
+        { 
+            'relativepath': 'datapackage.json',
+            'localfullpath': filename, 
+        }
+    ])
+    
+
+def validate(username, dataset): 
+    """
+    Check the integrity of the dataset
+    """
+    mgr = get_plugin_mgr() 
+    (repomanager, key) = mgr.get_by_repo(username, dataset)
+    if key is None: 
+        raise Exception("Invalid repo") 
+        
+    repo = repomanager.get_repo_details(key)    
+    rootdir = repo['rootdir']    
+    package = repo['package'] 
+    
+    files = package['resources'] 
+    print('files', len(files))
+    for f in files: 
+        print(f['relativepath'])
+        coded_sha256 = f['sha256'] 
+        computed_sha256 = compute_sha256(os.path.join(rootdir,
+                                                      f['relativepath']))
+        if computed_sha256 != coded_sha256: 
+            print("Sha 256 mismatch between file and datapackage")
+
+    
 
 def add_files(args, targetdir, generator, script):
         

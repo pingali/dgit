@@ -1,6 +1,8 @@
 dgit - Lightweight "Git Wrapper for Datasets"
 =============================================
 
+*Note: Code is still pre-alpha. It is being cleanedup and stabilized. Not yet ready for daily use.* 
+
 dgit is an application on top of git. The application uses git for
 version management but structures the repositories, content, and
 interface to suit data management tasks. 
