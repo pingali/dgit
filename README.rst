@@ -49,28 +49,38 @@ Setup
     # Add alias for ease of use (note the single quote for bang operator) 
     $ git config --global alias.data '!dgit'
 
-usage 
+Usage
 ::
-
     $ dgit 
     Usage: dgit [OPTIONS] COMMAND [ARGS]...
+    
+      git wrapper for datasets
     
     Options:
       --help  Show this message and exit.
     
     Commands:
-      add      Add content to a dataset
-      clone    Clone a git URL
-      commit   Commit the changes made to a dataset
-      config   Create configuration file (~/.dgit.ini)
-      drop     Drop a dataset
-      init     Bootstrap a new dataset (a git repo+s3...
-      log      Commit the changes made to a dataset
-      plugins  Plugin management
-      push     Upload a dataset to origin (github/s3/local)
-      remote   Manage remote
-      stash    Trash all the changes for a given dataset
-      status   Show all the datasets available
+      add-files    Add files to the repo
+      add-preview  Add files preview from files into metadata
+      clone        Clone a git URL
+      commit       Commit the changes made to a dataset
+      config       Create configuration file (~/.dgit.ini)
+      default      Set the default dataset
+      diff         Show changes
+      drop         Drop a dataset
+      init         Bootstrap a new dataset (a git repo+s3...
+      list         List datasets
+      log          Commit the changes made to a dataset
+      plugins      Plugin management
+      post         Post to metadata server
+      push         Upload a dataset to origin (github/s3/local)
+      remote       Manage remote
+      rm           Commit the changes made to a dataset
+      sh           Post to metadata server
+      stash        Trash all the changes for a given dataset
+      status       Show all the datasets available
+      validate     Check the integrity of a dataset
+    
 
 Tutorial
 --------
