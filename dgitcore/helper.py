@@ -3,6 +3,7 @@
 import os, sys 
 import json 
 import shelve 
+import subprocess, pipes 
 from datetime import datetime
 import getpass 
 from .config import get_state 
@@ -101,3 +102,36 @@ class cd:
 
     def __exit__(self, etype, value, traceback):
         os.chdir(self.savedPath)
+
+def clean_name(n): 
+    n = "".join([x if (x.isalnum() or x == "-") else "_" for x in n])    
+    return n
+
+def compute_sha256(filename):    
+    h = sha256()
+    fd = open(filename) 
+    while True: 
+        buf = fd.read(0x1000000)
+        if buf in [None, ""]:
+            break 
+        h.update(buf.encode('utf-8')) 
+    return h.hexdigest() 
+
+def run(cmd):
+    """
+    Run a shell command
+    """
+    cmd = [pipes.quote(c) for c in cmd]
+    cmd = " ".join(cmd) 
+    cmd += "; exit 0"
+    # print("Running {} in {}".format(cmd, os.getcwd()))
+    try: 
+        output = subprocess.check_output(cmd,
+                                         stderr=subprocess.STDOUT,
+                                         shell=True)        
+    except subprocess.CalledProcessError as e:
+            output = e.output 
+
+    output = output.decode('utf-8')
+    output = output.strip() 
+    return output

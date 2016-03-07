@@ -96,10 +96,6 @@ def commit(dataset, args):
         print("Dataset must be specified or provided as a default")
         return
 
-    if message is None: 
-        print("A commit message is necessary") 
-        return 
-
     # Get the command that must be run 
     datasets.commit(username, dataset, list(args))
 
@@ -121,6 +117,37 @@ def post(dataset):
 
     # Get the command that must be run 
     datasets.post(username, dataset)
+
+@process.command('list')
+def list_repos(): 
+    """
+    List datasets
+    """
+    datasets.list_repos()
+
+@process.command('sh',
+                 context_settings=dict(
+                     ignore_unknown_options=True,
+                     allow_extra_args=True
+                 ))
+@click.option('--dataset', '-d',
+              default=None,
+              help="Dataset to post")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def shcmd(dataset, args): 
+    """
+    Post to metadata server
+    """
+    if dataset is None: 
+        dataset = config.get_default_dataset() 
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None: 
+        print("Dataset must be specified or provided as a default")
+        return
+
+    # Get the command that must be run 
+    datasets.shellcmd(username, dataset, list(args))
 
 @process.command('log',
                  context_settings=dict(
@@ -147,14 +174,13 @@ def log(dataset, args):
     datasets.log(username, dataset, list(args))
 
 @process.command('default')
+@click.argument('action',
+              type=click.Choice(['clear', 'get', 'set']),
+              default="get")
 @click.option('--dataset', '-d',
               default=None,
               help='Dataset')
-@click.option('--action','-a',
-              type=click.Choice(['clear', 'get', 'set']),
-              default="get",
-              help="Action on default")
-def default(dataset, action):
+def default(action,dataset):
     """
     Set the default dataset
     """
@@ -211,7 +237,7 @@ def rm(dataset, args):
 @click.option("--generator/--no-generator",
               default=False,
               help="Generator script")
-@click.option("--script",
+@click.option("--script/--no-script",
               default=False,
               help="Mark the script file as executable")
 @click.option("--execute/--no-execute",
@@ -235,7 +261,6 @@ def add(dataset, targetdir, args, execute,
         print("Files to be included must be specified")
         return
 
-
     # Extract the correct dataset name
     (username, dataset) = helper.parse_dataset_name(dataset)    
     if dataset is None: 
@@ -256,38 +281,31 @@ def add(dataset, targetdir, args, execute,
                  targetdir, 
                  includes, script) 
 
-@process.command('add-preview')
+@process.command('add-preview',
+                 context_settings=dict(
+                     ignore_unknown_options=True,
+                     allow_extra_args=True
+                 ))
 @click.option('--dataset', '-d',
               default=None,
               help="Dataset to stash")
-@click.option("--include", '-i', 
-              multiple=True,
-              help="File patterns to include")
 @click.option("--size", '-s', 
               default=512, 
-              help="File patterns to include")
-def snippet(dataset, include): 
+              help="Size of snippet to include")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def preview(dataset, size, args):
     """
-    Add preview from files into metadata 
+    Add files preview from files into metadata 
     """
     if dataset is None: 
         dataset = config.get_default_dataset() 
-
-    if len(include) == 0: 
-        print("paths must be specified")
-        return 
 
     # Extract the correct dataset name
     (username, dataset) = helper.parse_dataset_name(dataset)    
     if dataset is None: 
         return
 
-    # Cleanup includes 
-    includes = []
-    for i in include:
-        includes.extend(i.split(","))        
-
-    datasets.add_snippet(username, dataset, includes, size)
+    datasets.add_preview(username, dataset, size, list(args))
 
 
 @process.command('validate')

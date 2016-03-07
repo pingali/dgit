@@ -1,6 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys, json, subprocess, re 
+import pipes
 import shutil 
 from sh import git 
 from dgitcore.repomanager import RepoManagerBase, RepoManagerHelper
@@ -23,15 +24,18 @@ class GitRepoManager(RepoManagerBase):
     # =>  Helper functions
     def run(self, cmd):
         
+        cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd) 
         cmd += "; exit 0"
-        #print("Running command", cmd)
-        output = subprocess.check_output(cmd,
-                                         stderr=subprocess.STDOUT,
-                                         shell=True)
+        try: 
+            output = subprocess.check_output(cmd,
+                                             stderr=subprocess.STDOUT,
+                                             shell=True)
+        except subprocess.CalledProcessError as e:
+            output = e.output 
         output = output.decode('utf-8')
         output = output.strip() 
-        #print("Output of command", output)
+        # print("Output of command", output)
         return output
 
     def run_generic_command(self, key, cmd): 
@@ -62,11 +66,11 @@ class GitRepoManager(RepoManagerBase):
         return self.run_generic_command(key, 
                                         ["push", "origin","master"])
 
-    def status(self, key): 
-        return self.run_generic_command(key, ["status"])
+    def status(self, key, args): 
+        return self.run_generic_command(key, ["status"] + args)
 
-    def stash(self, key): 
-        return self.run_generic_command(key, ["stash"])
+    def stash(self, key, args=[]): 
+        return self.run_generic_command(key, ["stash"] + args)
 
     def diff(self, key, args): 
         return self.run_generic_command(key, ["diff"] + args)
@@ -75,7 +79,7 @@ class GitRepoManager(RepoManagerBase):
         return self.run_generic_command(key, ["log"] + args)
 
     def commit(self, key, args): 
-        return self.run_generic_command(key, ["log"] + args)
+        return self.run_generic_command(key, ["commit"] + args)
 
         
     # => Run more complex functions to initialize, cleanup 
@@ -127,6 +131,7 @@ class GitRepoManager(RepoManagerBase):
                  {
                      'username': username,
                      'reponame': reponame,
+                     'remoteurl': url, 
                      'rootdir': self.rootdir(username, reponame),
                  })
 
@@ -342,8 +347,8 @@ class GitRepoManager(RepoManagerBase):
 
                         package = os.path.join(repo['rootdir'], 'datapackage.json')
                         if not os.path.exists(package): 
-                            print("Invalid dataset: %s/%s at %s " %(username, reponame, rootdir))
-                            print("Skipping")
+                            print("[Initialization] Invalid dataset: %s/%s at %s " %(username, reponame, rootdir))
+                            print("[Initalization] Skipping")
                             continue 
                         repo['package'] = json.loads(open(package).read())
                         self.add(username, reponame, repo) 

@@ -5,7 +5,7 @@ This is the core module for manipulating the dataset metadata
 import os, sys, copy, fnmatch, re, shutil 
 import yaml, json, tempfile 
 import webbrowser 
-import subprocess, string, random 
+import subprocess, string, random, pipes
 import shelve, getpass
 from datetime import datetime
 from hashlib import sha256
@@ -18,21 +18,7 @@ from dateutil import parser
 from .config import get_config
 from .aws import get_session 
 from .plugins import get_plugin_mgr 
-from .helper import bcolors, clean_str, cd 
-
-def clean_name(n): 
-    n = "".join([x if (x.isalnum() or x == "-") else "_" for x in n])    
-    return n
-
-def compute_sha256(filename):    
-    h = sha256()
-    fd = open(filename) 
-    while True: 
-        buf = fd.read(0x1000000)
-        if buf in [None, ""]:
-            break 
-        h.update(buf.encode('utf-8')) 
-    return h.hexdigest() 
+from .helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
 
 def datapackage_exists(repo): 
     """
@@ -63,25 +49,22 @@ def bootstrap_datapackage(repo, force=False):
         ],
         'creator': getpass.getuser(),
         'createdat': datetime.now().isoformat(),
-        'remote-url': repo['remote-url']
+        'remote-url': repo['remoteurl'], 
     }
 
-    # Get user input...
-    with tempfile.NamedTemporaryFile(suffix=".tmp") as temp:
-        temp.write(yaml.dump(package, default_flow_style=False).encode('utf-8'))
-        temp.flush()
-        EDITOR = os.environ.get('EDITOR','/usr/bin/vi')
-        subprocess.call("%s %s" %(EDITOR,temp.name), shell=True)
-        temp.seek(0)
-        data = temp.read() 
-        conf = yaml.load(data) 
-
+    for var in ['title', 'description']: 
+        value = ''
+        while value in ['',None]:
+            value = input('Your dataset ' + var.title() + ": ")
+            if len(value) == 0: 
+                print("{} cannot be empty. Please re-enter.".format(var.title()))
+                
+        package[var] = value
+    
     # Now store the package...
     (handle, filename) = tempfile.mkstemp()    
     with open(filename, 'w') as fd: 
-        fd.write(json.dumps(conf, indent=4))
-
-    print("Bootstrapping", filename) 
+        fd.write(json.dumps(package, indent=4))
 
     return filename 
 
@@ -140,13 +123,32 @@ def clone(url):
         args = ['-a', '-m', 'Bootstrapped cloned repo']
         repomgr.commit(key, args)
 
+def list_repos():
+    mgr = get_plugin_mgr() 
+    repomgr = mgr.get(what='repomanager', name='git') 
+    repos = repomgr.get_repo_list() 
+    repos.sort() 
+    for r in repos: 
+        print("{}/{}".format(*r))
+
+def shellcmd(username, dataset, args):
+    mgr = get_plugin_mgr() 
+    repomgr = mgr.get(what='repomanager', name='git') 
+    key = repomgr.key(username, dataset) 
+    repo = repomgr.get_repo_details(key)    
+    
+    with cd(repo['rootdir']): 
+        result = run(args) 
+        print(result)
+
 def push(username, dataset):
     mgr = get_plugin_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
     key = repomgr.key(username, dataset) 
-    repomgr.push(key)
+    result = repomgr.push(key)
+    print(result) 
 
-def add_snippet(username, dataset, includes, size=512): 
+def add_preview(username, dataset, size, args): 
 
     mgr = get_plugin_mgr() 
     (repomanager, key) = mgr.get_by_repo(username, dataset)
@@ -165,7 +167,7 @@ def add_snippet(username, dataset, includes, size=512):
         
         # Should I be adding a snippet? 
         match = False
-        for i in includes: 
+        for i in args: 
             if fnmatch.fnmatch(path, i):
                 match = True
                 break 
@@ -222,27 +224,35 @@ def validate(username, dataset):
                                                       f['relativepath']))
         if computed_sha256 != coded_sha256: 
             print("Sha 256 mismatch between file and datapackage")
-
     
 
 def add_files(args, targetdir, generator, script):
         
-    files = []
-
     # get the directory 
     ts = datetime.now().isoformat()     
     
+    files = []
     for f in args: 
-        relativepath = os.path.join(targetdir, os.path.basename(f))
+        basename = os.path.basename(f)
+        relativepath = os.path.join(targetdir, basename)
+        relpath = os.path.relpath(f, os.getcwd())
         change = 'update' if basename in files else 'add'
+        filetype = 'data'
+        generator = False
+        if script: 
+            filetype = 'script'
+            if generator: 
+                generator = True
+                filetype = 'generator' 
+
         update = {
             'change': change,
-            'type': 'data' if not script else 'script',
-            'generator': True if (script and generator) else False,
+            'type': filetype, 
+            'generator': generator, 
             'uuid': str(uuid.uuid1()),
             'relativepath': relativepath, 
             'mimetypes': mimetypes.guess_type(f)[0],
-            'content': open(f).read(512), 
+            'content': '', 
             'sha256': compute_sha256(f),
             'ts': ts, 
             'localfullpath': f,
@@ -298,7 +308,7 @@ def add(username, dataset, args,
 
     # Gather the files...
     if not execute: 
-        files = add_files(args, generator, script) 
+        files = add_files(args, targetdir,  generator, script) 
     else: 
         files = run_executable(repomanager, repo, 
                                args, includes)
@@ -409,7 +419,9 @@ def commit(username, dataset, args):
     if repo is None: 
         raise Exception("Invalid repo") 
 
-    repomanager.commit(repo, args) 
+    result = repomanager.commit(repo, args) 
+    if 'message' in result: 
+        print(result['message'])
 
 
 def drop(name): 
