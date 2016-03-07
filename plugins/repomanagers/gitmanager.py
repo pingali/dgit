@@ -286,6 +286,9 @@ class GitRepoManager(RepoManagerBase):
         for f in files: 
             relativepath = f['relativepath']                        
             sourcepath = f['localfullpath']             
+            if sourcepath is None: 
+                # This can happen if the relative path is a URL
+                continue #
             # Prepare the target path
             targetpath = os.path.join(rootdir, relativepath) 
             try: 

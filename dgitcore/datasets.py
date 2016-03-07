@@ -142,11 +142,15 @@ def shellcmd(username, dataset, args):
         print(result)
 
 def push(username, dataset):
+    """
+    Push to S3 
+    """
     mgr = get_plugin_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
     key = repomgr.key(username, dataset) 
     result = repomgr.push(key)
-    print(result) 
+    if 'message' in result: 
+        print(result['message'])
 
 def add_preview(username, dataset, size, args): 
 
@@ -226,42 +230,72 @@ def validate(username, dataset):
             print("Sha 256 mismatch between file and datapackage")
     
 
+def add_file_normal(f, targetdir, generator,script):
+    """
+    Add a normal file...
+    """
+    
+    basename = os.path.basename(f)
+    relativepath = os.path.join(targetdir, basename)
+    relpath = os.path.relpath(f, os.getcwd())
+    filetype = 'data'
+    if script: 
+        filetype = 'script'
+        if generator: 
+            filetype = 'generator' 
+        
+    update = {
+        'type': filetype, 
+        'generator': generator, 
+        'uuid': str(uuid.uuid1()),
+        'relativepath': relativepath, 
+        'mimetypes': mimetypes.guess_type(f)[0],
+        'content': '', 
+        'sha256': compute_sha256(f),
+        'ts': ts, 
+        'localfullpath': f,
+        'localrelativepath': relpath, 
+    }
+
+    return update 
+
+def add_file_special(f):
+    update = { 
+        'type': 'data',
+        'generator': False,
+        'uuid': str(uuid.uuid1()),
+        'relativepath': f,
+        'mimetypes': "",
+        'content': "", 
+        'sha256': "",
+        'localfullpath': None,
+        'localrelativepath': None
+    }
+    return (f, update) 
+    
 def add_files(args, targetdir, generator, script):
         
     # get the directory 
     ts = datetime.now().isoformat()     
     
+    seen = []
     files = []
     for f in args: 
-        basename = os.path.basename(f)
-        relativepath = os.path.join(targetdir, basename)
-        relpath = os.path.relpath(f, os.getcwd())
-        change = 'update' if basename in files else 'add'
-        filetype = 'data'
-        generator = False
-        if script: 
-            filetype = 'script'
-            if generator: 
-                generator = True
-                filetype = 'generator' 
+        print("Looking at", f)
+        if "://" not in f:            
+            (base, update) = add_file_normal(f,targetdir, generator, script)
+        else: 
+            print("Adding special file")
+            (base, update) = add_file_special(f)
 
-        update = {
-            'change': change,
-            'type': filetype, 
-            'generator': generator, 
-            'uuid': str(uuid.uuid1()),
-            'relativepath': relativepath, 
-            'mimetypes': mimetypes.guess_type(f)[0],
-            'content': '', 
-            'sha256': compute_sha256(f),
-            'ts': ts, 
-            'localfullpath': f,
-            'localrelativepath': relpath, 
-        }
+        if base not in seen: 
+            update['change'] = 'add'
+            seen.append(base)
+        else: 
+            update['change'] = 'update'
 
-        print("Added change:", change, basename)
+        update['ts'] = ts 
         files.append(update)             
-        
     return files
 
 def delete(username, dataset, args): 

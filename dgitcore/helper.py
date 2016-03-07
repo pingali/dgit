@@ -3,6 +3,7 @@
 import os, sys 
 import json 
 import shelve 
+from hashlib import sha256 
 import subprocess, pipes 
 from datetime import datetime
 import getpass 
@@ -81,7 +82,8 @@ def clean_args(args, execute):
         args[0] = filename
     else: 
         for i in range(len(args)):
-            args[i] = os.path.abspath(args[i])
+            if "://" not in args[i]:
+                args[i] = os.path.realpath(args[i])
         
     return args 
 
