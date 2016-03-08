@@ -439,12 +439,18 @@ def remote(op, dataset, shortname, url):
 
 
 @process.command()
-@click.argument('name')
-def drop(name): 
+@click.argument('dataset')
+def drop(dataset): 
     """
     Drop a dataset
     """
-    datasets.drop(name)
+
+    (username, dataset) = helper.parse_dataset_name(dataset)    
+    if dataset is None or username is None: 
+        print("Could not find the dataset. Please specify exact repo to be stashed")
+        return
+
+    datasets.drop(username, dataset)
 
 @process.command()
 @click.option('--dataset', '-d',

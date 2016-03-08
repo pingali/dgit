@@ -98,6 +98,9 @@ class RepoManagerBase(object):
     def repos(self, username):         
         return os.listdir(os.path.join(self.workspace, 'datasets', username))
 
+    def server_rootdir_from_key(self,  key, create=True): 
+        return self.server_rootdir(key[0], key[1], create)
+
     def server_rootdir(self,  username, reponame, create=True): 
         """
         Working directory for the repo 
@@ -139,6 +142,9 @@ class RepoManagerBase(object):
         key = self.key(username, reponame) 
         self.repos[key] = repo 
         return key 
+
+    def drop(self, key): 
+        pass 
 
     def push(self, key): 
         pass 

@@ -473,27 +473,20 @@ def commit(username, dataset, args):
         print(result['message'])
 
 
-def drop(name): 
+def drop(username, dataset): 
     """
     Drop a particular dataset
     """
-    state = get_state()
-    
-    matched = False
-    for i in range(len(state['datasets'])):
-        d = state['datasets'][i]
-        if name in [d['name'], d['uuid']] :
-            matched = True
-            res = input("Deleting dataset (%s)? [yN] : " %(name))
-            if res.lower() == 'y': 
-                del state['datasets'][i]
 
-    if not matched: 
-        print("No datasets matched the specified name.")
-        print("Note that for dropping, the precise name is required")
-        sys.exit() 
+    mgr = get_plugin_mgr() 
+    (repomanager, repo) = mgr.get_by_repo(username, dataset)
+    if repo is None: 
+        raise Exception("Invalid repo") 
 
-    state.sync() 
+    result = repomanager.drop(repo) 
+    if 'message' in result: 
+        print(result['message'])
+
             
 def extract_files(filename, includes): 
     """

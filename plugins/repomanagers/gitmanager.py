@@ -206,6 +206,31 @@ class GitRepoManager(RepoManagerBase):
             # print(result) 
             return result 
 
+    def drop(self, key): 
+        """
+        Cleanup the repo 
+        """
+        repo = self.lookup(key=key)
+        
+        # Clean up the rootdir
+        rootdir = repo['rootdir']
+        print("Cleaning repo directory: {}".format(rootdir))
+        if os.path.exists(rootdir): 
+            shutil.rmtree(rootdir) 
+
+        server_repodir = self.server_rootdir_from_key(key, create=False)
+        print("Cleaning data from local git 'server': {}".format(server_repodir))
+
+        if not os.path.exists(server_repodir): 
+            raise Exception("Missing local repo directory")
+
+        if os.path.exists(server_repodir): 
+            shutil.rmtree(server_repodir) 
+
+        return { 
+            'status': 'success'
+        }
+
     def permalink(self, key, path):        
         """
         Get the permalink to command that generated the dataset 
