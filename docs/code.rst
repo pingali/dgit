@@ -13,12 +13,7 @@ Instabase in future .
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.repomanagers.base.git.GitRepoManager
-    :members: 
-    :undoc-members: update
-    :show-inheritance:
-
-.. autoclass:: plugins.repomanagers.base.filesystem.FilesystemRepoManager
+.. autoclass:: plugins.repomanagers.gitmanager.GitRepoManager
     :members: 
     :undoc-members: update
     :show-inheritance:
@@ -35,12 +30,12 @@ filesystem and s3 are supported. We plan to support more in future.
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.backends.base.s3.S3Backend
+.. autoclass:: plugins.backends.s3.S3Backend
     :members: 
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.backends.base.local.LocalBackend
+.. autoclass:: plugins.backends.local.LocalBackend
     :members: 
     :undoc-members: 
     :show-inheritance:
@@ -56,12 +51,29 @@ generation of the dataset.
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.instrumentations.base.content.ContentInstrumentation
+.. autoclass:: plugins.instrumentations.content.ContentInstrumentation
     :members: 
     :undoc-members: update
     :show-inheritance:
 
-.. autoclass:: plugins.instrumentations.base.platform.PlatformInstrumentation
+.. autoclass:: plugins.instrumentations.platform.PlatformInstrumentation
     :members: 
     :undoc-members: update
+    :show-inheritance:
+
+.. autoclass:: plugins.instrumentations.executable.ExecutableInstrumentation
+    :members: 
+    :undoc-members: update
+    :show-inheritance:
+
+Metadata
+--------
+
+dgit supports posting metadata to simple API servers to enable search,
+lineage computation, and sharing. A minimal posting client is
+supported for now.
+
+.. autoclass:: dgitcore.metadata.default.MetadataDefault
+    :members: 
+    :undoc-members: 
     :show-inheritance:
