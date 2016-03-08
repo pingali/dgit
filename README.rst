@@ -11,7 +11,7 @@ A lot of data-scientists' time goes towards generating, shaping, and
 using datasets. dgit enables organizing and using datasets with
 minimal effort. dgit leverages the versioning capability from git. Git
 can be replaced with other versioning backends such as instabase (as
-and when it is released) as needed. 
+and when it is released) as needed.
 
 dgit is agnostic to form and content of the datasets and
 post-processing scripts. It tries to adher to `best available dataset
@@ -24,6 +24,7 @@ Contents:
 * Usage
     1. `Command`_
     2. `Tutorial`_
+    3. `Security and Privacy`_
 * Background
     1. `Dataset Management Problem`_ 
     2. `Usecase`_
@@ -139,9 +140,32 @@ Use the model in production server-side
     # Check what is in the repo 
     dgit ls coupon-assignment 
 
-    # make a local copy of repo files
-    dgit cp coupon-assignment "*.json" .
 
+
+Security and Privacy
+--------------------
+
+Some basic principles adhered to by dgit: 
+
+1. dgit code is opensource to enable auditing if needed. 
+
+2. No data ever leaves organizational premises (or even local machine)
+   without explicit actions.
+
+3. When pushing data repo to a backend such as s3, it is done using
+   credentials stored on the local machine. Nobody outside the
+   organization can access the repo.
+
+4. When metadata is posted to any server to enable search, lineage
+   computation etc. the parameters are controlled - what is posted,
+   when and where. 
+
+5. When data leaves premises (e.g., dgit post), it is only metadata by
+   default (filenames, timestamps etc). There is an ability to add
+   previews/schemas etc but that information must be explicitly
+   added. All metadata being posted is stored in a standard location
+   (datapackage.json) within the data repo. Posting rawdata is not
+   supported by design.
 
 
 Background
