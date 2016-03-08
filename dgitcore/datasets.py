@@ -124,13 +124,17 @@ def clone(url):
         args = ['-a', '-m', 'Bootstrapped cloned repo']
         repomgr.commit(key, args)
 
-def list_repos():
+def list_repos(remote):
     mgr = get_plugin_mgr() 
-    repomgr = mgr.get(what='repomanager', name='git') 
-    repos = repomgr.get_repo_list() 
-    repos.sort() 
-    for r in repos: 
-        print("{}/{}".format(*r))
+    
+    if not remote: 
+        repomgr = mgr.get(what='repomanager', name='git') 
+        repos = repomgr.get_repo_list() 
+        repos.sort() 
+        for r in repos: 
+            print("{}/{}".format(*r))
+    else:         
+        repomgr = mgr.get(what='backend', name='s3') 
 
 def shellcmd(username, dataset, args):
     mgr = get_plugin_mgr() 
@@ -218,20 +222,15 @@ def validate(username, dataset):
     if key is None: 
         raise Exception("Invalid repo") 
         
-    repo = repomanager.get_repo_details(key)    
-    rootdir = repo['rootdir']    
-    package = repo['package'] 
-    
-    files = package['resources'] 
-    print('files', len(files))
-    for f in files: 
-        print(f['relativepath'])
-        coded_sha256 = f['sha256'] 
-        computed_sha256 = compute_sha256(os.path.join(rootdir,
-                                                      f['relativepath']))
-        if computed_sha256 != coded_sha256: 
-            print("Sha 256 mismatch between file and datapackage")
-    
+    # keys =  {'validator': [Key(name='basic-validator', version='v0')]}
+    validators = mgr.search(what='validator') 
+    validators = validators['validator']
+    print("validator keys = ", validators) 
+
+    for v in validators: 
+        v = mgr.get_by_key('validator', v)
+        v.evaluate(repomanager, key)
+
 
 def add_file_normal(f, targetdir, generator,script, source):
     """

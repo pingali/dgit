@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys
+import os, sys, pkg_resources 
 import json 
 from collections import namedtuple
 from functools import partial
@@ -20,8 +20,11 @@ class PluginManager(object):
             'instrumentation': {},
             'repomanager': {},
             'metadata': {},
+            'validator': {},
         }
         self.sources = {} 
+
+
 
         thisdir = os.path.abspath(os.path.dirname(__file__))
         get_path = partial(os.path.join, thisdir)
@@ -43,6 +46,10 @@ class PluginManager(object):
                 'package': 'metadata',
                 'base': get_path('../plugins/metadata'),
             },
+            {
+                'package': 'validator',
+                'base': get_path('../plugins/validators'),
+            },
         ]
     
         for p in allplugins: 
@@ -61,6 +68,16 @@ class PluginManager(object):
                 plugin.setup(self)
 
             self.sources[p['package']] = source 
+
+        self.discover_all_plugins() 
+
+    def discover_all_plugins(self):
+        """
+        Load all plugins from dgit extension 
+        """
+        for v in pkg_resources.iter_entry_points('dgit.plugins'):
+            m = v.load() 
+            m.setup(self)
 
     def register(self, what, obj):
         """

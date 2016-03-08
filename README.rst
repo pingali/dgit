@@ -24,7 +24,8 @@ Contents:
 * Usage
     1. `Command`_
     2. `Tutorial`_
-    3. `Security and Privacy`_
+    3. `Plugins`_
+    4. `Security and Privacy`_
 * Background
     1. `Dataset Management Problem`_ 
     2. `Usecase`_
@@ -140,6 +141,53 @@ Use the model in production server-side
     # Check what is in the repo 
     dgit ls coupon-assignment 
 
+
+Plugins
+-------
+
+This is the base set of plugins supported by the default dgit
+repo. More extensions are part of `dgit-extensions
+<https://github.com/pingali/dgit-extensions>`_.
+
+::
+
+   # The modules in bold are extensions from this repo 
+   $ dgit plugins 
+   ========
+   metadata
+   ========
+   generic-metadata (v0) : generic-metadata Basic metadata tracker
+      Supp: ['generic-metadata']
+   
+   ========
+   validator
+   ========
+   basic-validator (v0) : basic-validator Basic validator of the content
+      Supp: ['basic-validator']
+   
+   ========
+   instrumentation
+   ========
+   platform (v0) : platform Execution platform information
+      Supp: ['platform']
+   content (v0) : content Basic content analysis
+      Supp: ['content']
+   executable (v0) : executable Executable analysis
+      Supp: ['executable']
+   
+   ========
+   backend
+   ========
+   s3 (v0) : s3 S3 backend
+      Supp: ['s3']
+   local (v0) : local Local filesystem backend
+      Supp: ['local']
+   
+   ========
+   repomanager
+   ========
+   git (v0) : git Git-based repomanager
+      Supp: ['git']
 
 
 Security and Privacy

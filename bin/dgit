@@ -119,11 +119,15 @@ def post(dataset):
     datasets.post(username, dataset)
 
 @process.command('list')
-def list_repos(): 
+@click.option('--remote', '-r',
+              is_flag=True, 
+              default=False,
+              help="List remote repos available")
+def list_repos(remote): 
     """
     List datasets
     """
-    datasets.list_repos()
+    datasets.list_repos(remote)
 
 @process.command('sh',
                  context_settings=dict(
