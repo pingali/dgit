@@ -4,7 +4,7 @@ import os, sys, json, subprocess, re
 import pipes
 import shutil 
 from sh import git 
-from dgitcore.plugins.repomanager import RepoManagerBase, RepoManagerHelper
+from dgitcore.plugins.repomanager import RepoManagerBase, RepoManagerHelper, Repo
 from dgitcore.helper import cd 
 
 class GitRepoManager(RepoManagerBase):     
@@ -23,7 +23,8 @@ class GitRepoManager(RepoManagerBase):
 
     # =>  Helper functions
     def run(self, cmd):
-        
+
+        print("Running cmd", cmd)
         cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd) 
         cmd += "; exit 0"
@@ -38,11 +39,10 @@ class GitRepoManager(RepoManagerBase):
         # print("Output of command", output)
         return output
 
-    def run_generic_command(self, key, cmd): 
+    def run_generic_command(self, repo, cmd): 
 
-        repo = self.lookup(key=key)
         result = None
-        with cd(repo['rootdir']): 
+        with cd(repo.rootdir): 
             # Dont use sh. It is not collecting the stdout of all
             # child processes.
             output = self.run(cmd)
@@ -62,24 +62,24 @@ class GitRepoManager(RepoManagerBase):
         return result         
 
     # =>  Simple commands ...
-    def push(self, key): 
-        return self.run_generic_command(key, 
+    def push(self, repo): 
+        return self.run_generic_command(repo, 
                                         ["push", "origin","master"])
 
-    def status(self, key, args): 
-        return self.run_generic_command(key, ["status"] + args)
+    def status(self, repo, args): 
+        return self.run_generic_command(repo, ["status"] + args)
 
-    def stash(self, key, args=[]): 
-        return self.run_generic_command(key, ["stash"] + args)
+    def stash(self, repo, args=[]): 
+        return self.run_generic_command(repo, ["stash"] + args)
 
-    def diff(self, key, args): 
-        return self.run_generic_command(key, ["diff"] + args)
+    def diff(self, repo, args): 
+        return self.run_generic_command(repo, ["diff"] + args)
 
-    def log(self, key, args): 
-        return self.run_generic_command(key, ["log"] + args)
+    def log(self, repo, args): 
+        return self.run_generic_command(repo, ["log"] + args)
 
-    def commit(self, key, args): 
-        return self.run_generic_command(key, ["commit"] + args)
+    def commit(self, repo, args): 
+        return self.run_generic_command(repo, ["commit"] + args)
 
         
     # => Run more complex functions to initialize, cleanup 
@@ -87,7 +87,7 @@ class GitRepoManager(RepoManagerBase):
         """
         Initialize a Git repo 
         """
-        key = (username, reponame) 
+        key = self.key(username, reponame) 
         
         # In local filesystem-based server, add a repo 
         server_repodir = self.server_rootdir(username, 
@@ -126,16 +126,14 @@ class GitRepoManager(RepoManagerBase):
         url = server_repodir
         if backend is not None: 
             url = backend.url(username, reponame) 
+            
+        repo = Repo(username, reponame)
+        repo.manager = self 
+        repo.remoteurl = url 
+        repo.rootdir = self.rootdir(username, reponame)
 
-        key = self.add(username, reponame, 
-                 {
-                     'username': username,
-                     'reponame': reponame,
-                     'remoteurl': url, 
-                     'rootdir': self.rootdir(username, reponame),
-                 })
-
-        return key 
+        self.add(repo)
+        return repo 
 
     def clone(self, url, backend=None): 
         """
@@ -154,11 +152,11 @@ class GitRepoManager(RepoManagerBase):
                                              reponame, 
                                              create=False)         
 
+        rootdir = self.rootdir(username,  reponame, create=False)
         if backend is None: 
             print("Backend is standard git server") 
-            repodir = self.rootdir(username,  reponame, create=False)
-            with cd(os.path.dirname(repodir)): 
-                git.clone(url) 
+            with cd(os.path.dirname(rootdir)): 
+                self.run(['clone', '--no-hardlinks'])
         else: 
             if os.path.exists(server_repodir): 
                 raise Exception("Local copy already exists") 
@@ -166,33 +164,35 @@ class GitRepoManager(RepoManagerBase):
             # s3 -> .dgit/git/pingali/hello.git -> .dgit/datasets/pingali/hello 
             print("Backend cloned the repo") 
             backend.clone_repo(url, server_repodir)
-            repodir = self.rootdir(username,  reponame, create=True)             
-            with cd(os.path.dirname(repodir)): 
-                git.clone(server_repodir, '--no-hardlinks') 
+            with cd(os.path.dirname(rootdir)): 
+                self.run(['clone', '--no-hardlinks'])
 
-        self.add(username, reponame, 
-                 {
-                     'username': username,
-                     'reponame': reponame,
-                     'rootdir': self.rootdir(username, reponame),
-                 })
+        r = Repo(username, reponame)
+        r.rootdir = repodir
+        r.remoteurl = url 
+        r.manager = self 
+
+        self.add(repo)
 
 
-    def delete(self, key, force, files): 
+    def delete(self, repo, force, files): 
         """
+        Delet files from the repo
         """
 
-        # print("Delete", files)
-        repo = self.lookup(key=key)
+        print("Delete", files)
         result = None
-        with cd(repo['rootdir']):             
+        with cd(repo.rootdir):             
             for f in files: 
                 if not os.path.exists(f): 
                     raise Exception("Missing file" + f) 
 
             try: 
-                cmd = ['rm'] + list(files)
-                # print("Command = ", cmd) 
+                if force: 
+                    cmd = ['rm', '-f'] + list(files)
+                else: 
+                    cmd = ['rm'] + list(files)         
+
                 result = {
                     'status': 'success',
                     'message': self.run(cmd)
@@ -206,19 +206,21 @@ class GitRepoManager(RepoManagerBase):
             # print(result) 
             return result 
 
-    def drop(self, key): 
+    def drop(self, repo): 
         """
         Cleanup the repo 
         """
-        repo = self.lookup(key=key)
         
         # Clean up the rootdir
-        rootdir = repo['rootdir']
+        rootdir = repo.rootdir
         print("Cleaning repo directory: {}".format(rootdir))
         if os.path.exists(rootdir): 
             shutil.rmtree(rootdir) 
 
-        server_repodir = self.server_rootdir_from_key(key, create=False)
+        # Cleanup the local version of the repo (this could be on
+        # the server etc.
+        server_repodir = self.server_rootdir_from_repo(repo, 
+                                                       create=False)
         print("Cleaning data from local git 'server': {}".format(server_repodir))
 
         if not os.path.exists(server_repodir): 
@@ -292,22 +294,20 @@ class GitRepoManager(RepoManagerBase):
 
 
 
-    def add_raw(self, key, files): 
-        repo = self.lookup(key=key)
+    def add_raw(self, repo, files): 
         result = None
-        with cd(repo['rootdir']): 
+        with cd(repo.rootdir): 
             try: 
-                result = git.add(files) 
+                result = self.run(["add"] + files)
             except: 
                 pass 
 
 
-    def add_files(self, key, files): 
+    def add_files(self, repo, files): 
         """
         Add files to the repo 
         """
-        repo = self.lookup(key=key)
-        rootdir = repo['rootdir']
+        rootdir = repo.rootdir
         for f in files: 
             relativepath = f['relativepath']                        
             sourcepath = f['localfullpath']             
@@ -322,8 +322,8 @@ class GitRepoManager(RepoManagerBase):
                 pass 
             print(sourcepath," => ", targetpath)
             shutil.copyfile(sourcepath, targetpath) 
-            with cd(repo['rootdir']):             
-                git.add(relativepath)
+            with cd(repo.rootdir):             
+                self.run(['add', relativepath])
 
     def config(self, what='get', params=None): 
         """
@@ -366,20 +366,16 @@ class GitRepoManager(RepoManagerBase):
             for username in os.listdir(repodir): 
                 for reponame in os.listdir(os.path.join(repodir, username)):
                     if self.is_my_repo(username, reponame): 
-                        rootdir = os.path.join(repodir, username, reponame)
-                        repo = {
-                            'username': username,
-                            'reponame': reponame,
-                            'rootdir': rootdir
-                        }
-
-                        package = os.path.join(repo['rootdir'], 'datapackage.json')
+                        r = Repo(username, reponame) 
+                        r.rootdir = os.path.join(repodir, username, reponame)
+                        package = os.path.join(r.rootdir, 'datapackage.json')
                         if not os.path.exists(package): 
                             print("[Initialization] Invalid dataset: %s/%s at %s " %(username, reponame, rootdir))
                             print("[Initalization] Skipping")
                             continue 
-                        repo['package'] = json.loads(open(package).read())
-                        self.add(username, reponame, repo) 
+                        r.package = json.loads(open(package).read())
+                        r.manager = self 
+                        self.add(r) 
                     
 def setup(mgr): 
     

@@ -6,6 +6,35 @@ from collections import namedtuple
 
 Key = namedtuple("Key", ["name","version"])
 
+class Repo: 
+    """
+    Class to track each repo 
+    """
+    def __init__(self, username, reponame):
+        self.username = username
+        self.reponame = reponame 
+        self.package = None
+        self.manager = None 
+        self.rootdir = None
+        self.key = None 
+        self.remoteurl = None
+
+    def __str__(self): 
+        return "[{}] {}/{}".format(self.manager.name,
+                                   self.username,
+                                   self.reponame)
+    def run(self, cmd, *args): 
+        """
+        Run a specific command using the manager 
+        """
+        if self.manager is None: 
+            raise Exception("Fatal internal error: Missing repository manager")
+        if cmd not in dir(self.manager):
+            raise Exception("Fatal internal error: Invalid command {} being run".format(cmd))
+        func = getattr(self.manager, cmd)
+        repo = self 
+        return func(repo, *args)
+
 class RepoManagerHelper: 
     """
     Miscellaneous helper functions useful for evaluation
@@ -35,7 +64,7 @@ class RepoManagerBase(object):
     def get_repo_list(self): 
         return list(self.repos.keys())
 
-    def get_repo_details(self,key): 
+    def get_repo_details(self, key): 
         return self.repos[key]
 
     def search(self, username, reponame): 
@@ -67,23 +96,14 @@ class RepoManagerBase(object):
         pass
 
     def key(self, username, reponame):
-        return (username, reponame) 
-
-    def find(self, username=None, reponame=None):
-        """
-        Find the key corresponding to this repo if exists 
-        """
-        key = self.key(username, reponame) 
-        if key not in self.repos: 
-            raise Exception("Unknown repository") 
-        return key 
+        return (username, reponame)     
 
     def lookup(self, username=None, reponame=None, key=None): 
         """
         Lookup all available repos 
         """
         if key is None: 
-            key = self.find(username, reponame) 
+            key = self.key(username, reponame) 
         if key not in self.repos: 
             raise Exception("Unknown repository") 
 
@@ -98,8 +118,10 @@ class RepoManagerBase(object):
     def repos(self, username):         
         return os.listdir(os.path.join(self.workspace, 'datasets', username))
 
-    def server_rootdir_from_key(self,  key, create=True): 
-        return self.server_rootdir(key[0], key[1], create)
+    def server_rootdir_from_repo(self,  repo, create=True): 
+        return self.server_rootdir(repo.username, 
+                                   repo.reponame, 
+                                   create)
 
     def server_rootdir(self,  username, reponame, create=True): 
         """
@@ -135,33 +157,34 @@ class RepoManagerBase(object):
 
         
 
-    def add(self, username, reponame, repo): 
+    def add(self, repo): 
         """
         Add repo to the internal lookup table...
         """
-        key = self.key(username, reponame) 
+        key = self.key(repo.username, repo.reponame) 
+        repo.key = key 
         self.repos[key] = repo 
         return key 
 
-    def drop(self, key): 
+    def drop(self, repo): 
         pass 
 
-    def push(self, key): 
+    def push(self, repo): 
         pass 
 
-    def status(self, key): 
+    def status(self, repo): 
         pass 
 
-    def stash(self, key): 
+    def stash(self, repo): 
         pass 
         
-    def commit(self, key, message): 
+    def commit(self, repo, message): 
         pass 
 
-    def add_raw(self, key, files): 
+    def add_raw(self, repo, files): 
         pass 
 
-    def add_files(self, key, files): 
+    def add_files(self, repo, files): 
         """
         Files is a list with simple structure 
         {
@@ -171,7 +194,7 @@ class RepoManagerBase(object):
         """
         pass 
 
-    def clone(self, key, newusername, newreponame):
+    def clone(self, repo, newusername, newreponame):
         """
         Clone repo 
         """

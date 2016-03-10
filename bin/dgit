@@ -8,230 +8,152 @@ import json
 import getpass 
 import traceback 
 import click 
+from click.exceptions import UsageError
 from distutils.spawn import find_executable
 from dgitcore import datasets, plugins 
+from dgitcore.plugins import repomanager
 from dgitcore import config, helper 
 
-# 
+##############################################################
+# Generic settings
+##############################################################
 thisdir=os.path.realpath(os.path.dirname(__file__))
+CONTEXT_SETTINGS=dict(allow_extra_args=True,ignore_unknown_options=True)
 
+##############################################################
+# Helper functions..
+##############################################################
 
+def repo_option(f):
+    def callback(ctx, param, value):
+        if value is None: 
+            value = config.get_default_dataset() 
+
+        (username, dataset) = helper.parse_dataset_name(value)    
+        value = datasets.lookup(username=username, dataset=dataset)
+        if value is None: 
+            print("Dataset is unspecified. Please use dgit default")
+            raise UsageError("dataset is unspecified")
+
+        return value
+    return click.option('--repo', '-r',
+                        default=None,
+                        help="Dataset to operate on",
+                        callback=callback)(f)
+
+def common_options(f):
+    f = repo_option(f)
+    return f        
+
+#####################################################################
+# Repo specific commands
+#####################################################################
 @click.group()
-def process(standlone_mode=False):
-    """
-    git wrapper for datasets
-    """
-    pass
+def repo_specific():
+    pass 
 
-@process.command('config')
-@click.argument('action',
-                type=click.Choice(['update', 'init', 'show']))
-@click.option('-g',
-              "--globalvar",
-              nargs=2, 
-              multiple=1,
-              type=click.Tuple([str,str]),
-              help="Update profile variables")
-def profile(action, globalvar): 
-    """
-    Create configuration file (~/.dgit.ini) 
-    """
-    if action in ["update", "init"]:
-        config.update(globalvar)
-    elif action == "show":
-        config.init(globalvar, show=True)
-
-
-@process.command('init', context_settings=dict(
-    ignore_unknown_options=True,
-))
-@click.argument('dataset')
-@click.option("--setup",
-              type=click.Choice(['git+s3', 'git']),
-              default='git+s3',
-              help="What is the backend for this repo")
-@click.option("--force",
-              default=False,
-              is_flag=True,
-              help="Force overwriting the directory")
-def init(dataset, setup, force): 
-    """
-    Bootstrap a new dataset (a git repo+s3 backup)
-    
-    Example: 
-
-    # Create a local repo with s3 backend 
-    dgit init --setup git+s3 pingali/hello 
-
-    # Create a local repo with no backends 
-    dgit init --setup git pingali/hello 
-    """
-
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        return
-
-    # Get the command that must be run 
-    datasets.init(username, dataset, setup, force)
-
-@process.command('commit', 
-                 context_settings=dict(
-                     ignore_unknown_options=True,
-                     allow_extra_args=True
-                 ))
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to stash")
+@repo_specific.command('commit', context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def commit(dataset, args): 
+@common_options
+def commit(repo, args):
     """
-    Commit the changes made to a dataset 
+    Commit repo data
     """
-
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
-
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        print("Dataset must be specified or provided as a default")
-        return
-
-    # Get the command that must be run 
-    datasets.commit(username, dataset, list(args))
-
-@process.command('post')
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to post")
-def post(dataset): 
-    """
-    Post to metadata server
-    """
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
-
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        print("Dataset must be specified or provided as a default")
-        return
-
-    # Get the command that must be run 
-    datasets.post(username, dataset)
-
-@process.command('list')
-@click.option('--remote', '-r',
-              is_flag=True, 
-              default=False,
-              help="List remote repos available")
-def list_repos(remote): 
-    """
-    List datasets
-    """
-    datasets.list_repos(remote)
-
-@process.command('sh',
-                 context_settings=dict(
-                     ignore_unknown_options=True,
-                     allow_extra_args=True
-                 ))
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to post")
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def shcmd(dataset, args): 
-    """
-    Post to metadata server
-    """
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
-
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        print("Dataset must be specified or provided as a default")
-        return
-
-    # Get the command that must be run 
-    datasets.shellcmd(username, dataset, list(args))
-
-@process.command('log',
-                 context_settings=dict(
-                     ignore_unknown_options=True,
-                     allow_extra_args=True
-                 ))
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to check log")
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def log(dataset, args): 
-    """
-    Commit the changes made to a dataset 
-    """
-
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
-
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        return
-
-    # Get the command that must be run 
-    datasets.log(username, dataset, list(args))
-
-@process.command('default')
-@click.argument('action',
-              type=click.Choice(['clear', 'get', 'set']),
-              default="get")
-@click.option('--dataset', '-d',
-              default=None,
-              help='Dataset')
-def default(action,dataset):
-    """
-    Set the default dataset
-    """
-    if action == 'set': 
-        if dataset is not None: 
-            config.set_default_dataset(dataset)
-        else: 
-            print("Dataset must be specified for set")            
-    elif action == "clear": 
-        config.clear_default_dataset()
-    elif action == "get": 
-        dataset = config.get_default_dataset()
-        print("Default dataset:", dataset)
-
-
-@process.command('rm',
-                 context_settings=dict(
-                     ignore_unknown_options=True,
-                     allow_extra_args=True
-                 ))
-@click.argument('dataset')
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def rm(dataset, args): 
-    """
-    Commit the changes made to a dataset 
-    """
-
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        return
-
     if len(args) == 0: 
-        print("No files specified to remove") 
+        print("Commit with editor support not available right now")
+        print("Use -m <message>")
         return 
 
-    # Get the command that must be run 
-    result = datasets.delete(username, dataset, list(args))
-    if 'message' in result: 
-        print(result['message'])
+    datasets.commit(repo, list(args))
 
+@repo_specific.command('log', context_settings=CONTEXT_SETTINGS)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options
+def log(repo, args):
+    """
+    Gather the log details
+    """
+    datasets.log(repo, list(args))
 
-@process.command('add-files', context_settings=dict(
-    ignore_unknown_options=True,
-))
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to stash")
+@repo_specific.command('rm',context_settings=CONTEXT_SETTINGS)
+@click.option('--force', 
+              is_flag=True, 
+              default=False,
+              help="Force rm")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options
+def rm(repo, force, args): 
+    """
+    Delete files from repo 
+    """
+    datasets.delete(repo, force, list(args))
+
+@repo_specific.command('sh',context_settings=CONTEXT_SETTINGS)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options 
+def sh(repo, args): 
+    """
+    Run generic shell commands in repo
+    """
+    if len(args) == 0: 
+        print("Atleast one command should be provided") 
+        return 
+
+    datasets.shellcmd(repo, list(args))
+
+@repo_specific.command('post',context_settings=CONTEXT_SETTINGS)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options 
+def post(repo, args): 
+    """
+    Post metadata (only) to thirdparty server
+    """
+    datasets.post(repo, list(args))
+
+@repo_specific.command('stash',context_settings=CONTEXT_SETTINGS)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options 
+def stash(repo, args): 
+    """
+    Trash all the changes in the dataset
+    """
+    datasets.stash(repo, list(args))
+
+@repo_specific.command('status',context_settings=CONTEXT_SETTINGS)
+@click.option('--details', 
+              is_flag=True, 
+              default=False,
+              help="Show repo details")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options 
+def status(repo, details, args): 
+    """
+    Status of the repo
+    """
+    datasets.status(repo, details, list(args))
+
+@repo_specific.command('diff',context_settings=CONTEXT_SETTINGS)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options 
+def diff(repo, args): 
+    """
+    Show the diff between two commits
+    """
+    datasets.diff(repo, list(args))
+
+@repo_specific.command('drop', context_settings=CONTEXT_SETTINGS)
+@common_options 
+def drop(repo): 
+    """
+    Drop dataset
+    """
+    datasets.drop(repo)
+
+##############################################################
+# Repo specific but more complicated commands 
+##############################################################
+
+@repo_specific.command('add-files', context_settings=CONTEXT_SETTINGS)
 @click.option("--targetdir", '-t', 
               default=".",
               help="Directory in repo")
@@ -251,14 +173,13 @@ def rm(dataset, args):
               default=False,
               help="Execute the filename specified")
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def add(dataset, targetdir, args, execute, 
+@common_options
+def add(repo, targetdir, args, execute, 
         generator, source, include, script):
     """
     Add files to the repo
     """
 
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
 
     if generator and execute: 
         print("Generator and execute are mutually exclusive") 
@@ -268,10 +189,6 @@ def add(dataset, targetdir, args, execute,
         print("Files to be included must be specified")
         return
 
-    # Extract the correct dataset name
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        return
 
     args = helper.clean_args(args, execute) 
     if args is None: 
@@ -282,8 +199,7 @@ def add(dataset, targetdir, args, execute,
     for i in include:
         includes.extend(i.split(","))
 
-    datasets.add(username=username, 
-                 dataset=dataset, 
+    datasets.add(repo=repo,
                  args=args, 
                  execute=execute, 
                  source=source,
@@ -292,19 +208,13 @@ def add(dataset, targetdir, args, execute,
                  targetdir=targetdir, 
                  includes=includes)
 
-@process.command('add-preview',
-                 context_settings=dict(
-                     ignore_unknown_options=True,
-                     allow_extra_args=True
-                 ))
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to stash")
+@repo_specific.command('add-preview',context_settings=CONTEXT_SETTINGS)
 @click.option("--size", '-s', 
               default=512, 
               help="Size of snippet to include")
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def preview(dataset, size, args):
+@common_options
+def preview(repo, size, args):
     """
     Add files preview from files into metadata 
     """
@@ -318,11 +228,7 @@ def preview(dataset, size, args):
 
     datasets.add_preview(username, dataset, size, list(args))
 
-@process.command('validation',
-                 context_settings=dict(
-                     ignore_unknown_options=True,
-                     allow_extra_args=True
-                 ))
+@repo_specific.command('validation',context_settings=CONTEXT_SETTINGS)
 @click.argument('action',
                 type=click.Choice(['add', 'remove', 'list', 'show', 'test', 'evaluate']))
 @click.option('--name', '-n',
@@ -333,10 +239,8 @@ def preview(dataset, size, args):
               help="Specification for the filename as a pattern")
 @click.option('--rules', '-r',
               help="File with validation rules")
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to which filename belongs")
-def validation(action, name, target, rules, dataset): 
+@common_options
+def validation(repo, action, name, target, rules): 
     """
     Add validation rules
     
@@ -374,98 +278,14 @@ def validation(action, name, target, rules, dataset):
     if invalid: 
         return 
 
-        
-
-
-@process.command()
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to stash")
-def stash(dataset): 
-    """
-    Trash all the changes for a given dataset
-    """
-
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
-
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None or username is None: 
-        print("Could not find the dataset. Please specify exact repo to be stashed")
-        return
-
-    datasets.stash(username, dataset) 
-    return 
-
-@process.command('diff', 
-                 context_settings=dict(
-                     ignore_unknown_options=True,
-                     allow_extra_args=True
-                 ))
-@click.option('--dataset', '-d',
-              default=None,
-              help="Dataset to stash")
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def diff(dataset, args): 
-    """
-    Show changes
-    """
-
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
-
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None or username is None: 
-        print("Could not find the dataset. Please specify exact repo to be stashed")
-        return
-
-    datasets.diff(username, dataset, list(args))
-    return 
-
-
-@process.command('status',
-                 context_settings=dict(
-                     ignore_unknown_options=True,
-                     allow_extra_args=True
-                 ))
-@click.option("--dataset", '-d', default=None)
-@click.option("--details/--no-details", 
-              is_flag=True,
-              default=False,
-              help="Show details")
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def status(dataset, details, args): 
-    """
-    Show all the datasets available
-    """
-
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
-
-    (username, dataset) = helper.parse_dataset_name(dataset) 
-    
-    # username and dataset could still be None 
-    datasets.status(username, dataset, details, list(args))
- 
-    return 
-
-@process.command()
-@click.argument("url")
-def clone(url): 
-    """
-    Clone a git URL 
-    """
-    datasets.clone(url) 
-    return 
-
-
-@process.command()
+@repo_specific.command('remote', context_settings=CONTEXT_SETTINGS)
 @click.argument("op",
                 type=click.Choice(['add', 'rm', 'rename', 'show']))
 @click.argument("dataset")
 @click.argument("shortname")
 @click.argument("url")
-def remote(op, dataset, shortname, url): 
+@common_options
+def remote(repo, op, shortname, url): 
     """
     Manage remote 
     """
@@ -481,42 +301,114 @@ def remote(op, dataset, shortname, url):
     return 
 
 
-@process.command()
-@click.argument('dataset')
-def drop(dataset): 
-    """
-    Drop a dataset
-    """
+##############################################################
+# Repo generic commands commands 
+##############################################################
 
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None or username is None: 
-        print("Could not find the dataset. Please specify exact repo to be stashed")
-        return
+@click.group()
+def repo_generic():
+    pass 
 
-    datasets.drop(username, dataset)
-
-@process.command()
+@repo_generic.command('default')
+@click.argument('action',
+              type=click.Choice(['clear', 'get', 'set']),
+              default="get")
 @click.option('--dataset', '-d',
               default=None,
-              help="Dataset to stash")
-def push(dataset): 
+              help='Dataset')
+def default(action,dataset):
     """
-    Upload a dataset to origin (github/s3/local)
+    Set the default dataset
     """
+    if action == 'set': 
+        if dataset is not None: 
+            config.set_default_dataset(dataset)
+        else: 
+            print("Dataset must be specified for set")            
+    elif action == "clear": 
+        config.clear_default_dataset()
+    elif action == "get": 
+        dataset = config.get_default_dataset()
+        print("Default dataset:", dataset)
 
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
+@repo_generic.command('list')
+@click.option('--remote', '-r',
+              is_flag=True, 
+              default=False,
+              help="List remote repos available")
+def list_repos(remote): 
+    """
+    List datasets
+    """
+    datasets.list_repos(remote)
+
+@repo_generic.command()
+@click.argument("url")
+def clone(url): 
+    """
+    Clone a git URL 
+    """
+    datasets.clone(url) 
+    return 
+
+
+@repo_generic.command('init', context_settings=CONTEXT_SETTINGS)
+@click.argument('dataset')
+@click.option("--setup",
+              type=click.Choice(['git+s3', 'git']),
+              default='git+s3',
+              help="What is the backend for this repo")
+@click.option("--force",
+              default=False,
+              is_flag=True,
+              help="Force overwriting the directory")
+def init(dataset, setup, force): 
+    """
+    Bootstrap a new dataset (a git repo+s3 backup)
+    
+    Example: 
+
+    # Create a local repo with s3 backend 
+    dgit init --setup git+s3 pingali/hello 
+
+    # Create a local repo with no backends 
+    dgit init --setup git pingali/hello 
+    """
 
     (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None or username is None: 
-        print("Could not find the dataset. Please specify exact repo to be stashed")
+    if dataset is None: 
         return
 
-    datasets.push(username, dataset) 
+    # Get the command that must be run 
+    datasets.init(username, dataset, setup, force)
+
+##############################################################
+# Management commands 
+##############################################################
+@click.group()
+def management():
+    pass 
+
+@management.command('config')
+@click.argument('action',
+                type=click.Choice(['update', 'init', 'show']))
+@click.option('-g',
+              "--globalvar",
+              nargs=2, 
+              multiple=1,
+              type=click.Tuple([str,str]),
+              help="Update profile variables")
+def profile(action, globalvar): 
+    """
+    Create configuration file (~/.dgit.ini) 
+    """
+    if action in ["update", "init"]:
+        config.update(globalvar)
+    elif action == "show":
+        config.init(globalvar, show=True)
 
 
-
-@process.command('plugins')
+@management.command('plugins')
 @click.argument('action',
                 type=click.Choice(['list', 'show', 'new']),
                 default='show')
@@ -535,12 +427,16 @@ def plugin_cmd(action, what, name, version):
     elif action == "new":
         plugins.generate(what, name, version)
 
-if __name__ == "__main__": 
+cli = click.CommandCollection(sources=[repo_specific, repo_generic, management])
+
+if __name__ == "__main__":
     
     plugins.load() 
     try: 
         config.init()
-        process() 
+        cli() 
     except Exception as e: 
         traceback.print_exc() 
     plugins.close() 
+
+
