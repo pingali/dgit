@@ -3,7 +3,7 @@
 import os, sys, stat, subprocess 
 import boto3 
 import getpass 
-from dgitcore.backend import BackendBase, BackendContext
+from dgitcore.plugins.backend import BackendBase, BackendContext
 from dgitcore.config import get_config 
 from dgitcore.helper import cd
 

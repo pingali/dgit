@@ -5,7 +5,7 @@ Configuration parser
 import os, sys, json
 import shelve 
 import configparser 
-from .plugins import get_plugin_mgr 
+from .plugins.common import get_plugin_mgr 
 config = None 
 
 def getprofileini():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys
-from dgitcore.backend import BackendBase, BackendContext
+from dgitcore.plugins.backend import BackendBase, BackendContext
 
 class LocalBackend(BackendBase): 
     """

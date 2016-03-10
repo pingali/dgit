@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys
-from dgitcore.metadata import MetadataBase
+from dgitcore.plugins.metadata import MetadataBase
 from dgitcore.config import get_config 
 
 class MetadataDefault(MetadataBase):     

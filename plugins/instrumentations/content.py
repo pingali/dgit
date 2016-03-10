@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys
-from dgitcore.instrumentation import InstrumentationBase, InstrumentationHelper
+from dgitcore.plugins.instrumentation import InstrumentationBase, InstrumentationHelper
 from dgitcore.config import get_config 
 from hashlib import sha1 
 import mimetypes

@@ -9,8 +9,8 @@ import getpass
 import traceback 
 import click 
 from distutils.spawn import find_executable
-from dgitcore import plugins 
-from dgitcore import config, datasets, helper 
+from dgitcore import datasets, plugins 
+from dgitcore import config, helper 
 
 # 
 thisdir=os.path.realpath(os.path.dirname(__file__))
@@ -318,25 +318,64 @@ def preview(dataset, size, args):
 
     datasets.add_preview(username, dataset, size, list(args))
 
-
-@process.command('validate')
+@process.command('validation',
+                 context_settings=dict(
+                     ignore_unknown_options=True,
+                     allow_extra_args=True
+                 ))
+@click.argument('action',
+                type=click.Choice(['add', 'remove', 'list', 'show', 'test', 'evaluate']))
+@click.option('--name', '-n',
+              help="Name of the ruleset")
+@click.option('--validator', '-v',
+              help="Name of the validator")
+@click.option('--target', '-t',
+              help="Specification for the filename as a pattern")
+@click.option('--rules', '-r',
+              help="File with validation rules")
 @click.option('--dataset', '-d',
               default=None,
-              help="Dataset")
-def validate(dataset): 
+              help="Dataset to which filename belongs")
+def validation(action, name, target, rules, dataset): 
     """
-    Check the integrity of a dataset
+    Add validation rules
+    
+    Parameters
+    ----------
+    filename: Filename pattern to which the rule must be applied 
+    rules: jsonfile with rules specificied in the LIVR format (`Language Independent Validation Rules <https://github.com/koorchik/LIVR>`_)
     """
 
     if dataset is None: 
         dataset = config.get_default_dataset() 
 
+    # Extract the correct dataset name
     (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None or username is None: 
-        print("Could not find the dataset. Please specify exact repo to be stashed")
+    if dataset is None: 
         return
 
-    datasets.validate(username, dataset) 
+    checks = {
+        "name must be specified": {
+            'test': name is not None,
+            'action': ['add', 'remove']
+        },
+        "rules file to be specified": {
+            'test': not os.path.exists(rules),
+            'action': ['add', 'test']
+        }
+    }
+
+    invalid = False
+    for c in checks: 
+        if action in checks[c]['action'] and checks[c]['test']:
+            print(c) 
+            invalid = True 
+    
+    if invalid: 
+        return 
+
+        
+
 
 @process.command()
 @click.option('--dataset', '-d',

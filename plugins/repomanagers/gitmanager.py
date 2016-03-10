@@ -4,7 +4,7 @@ import os, sys, json, subprocess, re
 import pipes
 import shutil 
 from sh import git 
-from dgitcore.repomanager import RepoManagerBase, RepoManagerHelper
+from dgitcore.plugins.repomanager import RepoManagerBase, RepoManagerHelper
 from dgitcore.helper import cd 
 
 class GitRepoManager(RepoManagerBase):     

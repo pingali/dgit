@@ -27,33 +27,36 @@ class PluginManager(object):
 
 
         thisdir = os.path.abspath(os.path.dirname(__file__))
-        get_path = partial(os.path.join, thisdir)
+        def get_path(p):
+            return os.path.abspath(os.path.join(thisdir, 
+                                                "../../plugins",
+                                                p))
 
         allplugins = [
             {
                 'package': 'backend',
-                'base': get_path('../plugins/backends'),
+                'base': get_path('backends'),
             },
             {
                 'package': 'instrumentation',
-                'base': get_path('../plugins/instrumentations'),
+                'base': get_path('instrumentations'),
             },
             {
                 'package': 'repomanager',
-                'base': get_path('../plugins/repomanagers'),
+                'base': get_path('repomanagers'),
             },
             {
                 'package': 'metadata',
-                'base': get_path('../plugins/metadata'),
+                'base': get_path('metadata'),
             },
             {
                 'package': 'validator',
-                'base': get_path('../plugins/validators'),
+                'base': get_path('validators'),
             },
         ]
-    
+
         for p in allplugins: 
-            
+
             plugin_base = PluginBase(package=p['package'],
                                      searchpath=[p['base']])
             

@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys
-from dgitcore.validator import ValidatorBase
+from dgitcore.plugins.validator import ValidatorBase
 from dgitcore.config import get_config 
 from dgitcore.helper import compute_sha256 
 

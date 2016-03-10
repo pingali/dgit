@@ -5,7 +5,7 @@ import json
 import messytables 
 import subprocess 
 from dgitcore.helper import cd 
-from dgitcore.instrumentation import InstrumentationBase, InstrumentationHelper
+from dgitcore.plugins.instrumentation import InstrumentationBase, InstrumentationHelper
 from dgitcore.config import get_config 
 
     
