@@ -218,15 +218,8 @@ def preview(repo, size, args):
     """
     Add files preview from files into metadata 
     """
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
 
-    # Extract the correct dataset name
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        return
-
-    datasets.add_preview(username, dataset, size, list(args))
+    datasets.add_preview(repo, size, list(args))
 
 @repo_specific.command('validation',context_settings=CONTEXT_SETTINGS)
 @click.argument('action',
