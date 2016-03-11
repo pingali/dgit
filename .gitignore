@@ -99,7 +99,6 @@ Thumbs.db
 node_modules
 env
 data
-datasets
 metastore_db
 output
 .ipynb_checkpoints
