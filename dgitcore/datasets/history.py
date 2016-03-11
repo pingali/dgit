@@ -120,16 +120,19 @@ def associate_branches(history):
         }
         if parent == "": 
             d.update({
+                'parent-branches': [],
                 'branch': 'master',
-                'type': 'root',
+                'action': 'commit',
                 'children': []
             })
         elif " " in parent: 
             # Merge action 
             parent = parent.split(" ") 
             d.update({
+                'parent-branches': [branches[parent[0]]['branch'],
+                                     branches[parent[1]]['branch']],
                 'branch': branches[parent[0]]['branch'],
-                'type': 'merge',
+                'action': 'merge',
                 'children': []
             })
             branches[parent[0]]['children'].append(commit) 
@@ -137,8 +140,9 @@ def associate_branches(history):
         elif ((refs == "") or (refs != "" and 'tag' in refs)) \
              and parent in branches: 
             d.update({
+                'parent-branches': [branches[parent]['branch']],
                 'branch': branches[parent]['branch'],
-                'type': 'normal',
+                'action': 'commit',
                 'children': []
             })
             branches[parent]['children'].append(commit) 
@@ -151,9 +155,11 @@ def associate_branches(history):
             refs = refs.split(",")
             # print("REF", refs) 
             refs = [r.strip() for r in refs] 
+            # refs = [r.replace("origin/","") for r in refs]
             d.update({
+                'parent-branches': [branches[parent]['branch']],
                 'branch': refs[-1],
-                'type': 'split',
+                'action': 'branch',
                 'children': []
             })
         else:
@@ -167,7 +173,9 @@ def associate_branches(history):
         commit = history[i]['commit']
         if commit not in branches: 
             raise Exception("Missing branch information for " + commit)             
+        history[i]['action'] = branches[commit]['action'] 
         history[i]['branch'] = branches[commit]['branch'] 
+        history[i]['parent-branches'] = branches[commit]['parent-branches'] 
 
     # print(json.dumps(branches, indent=4))
     #values = branches.values() 
