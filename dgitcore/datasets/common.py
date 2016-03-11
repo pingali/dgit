@@ -18,7 +18,7 @@ from dateutil import parser
 from ..config import get_config
 from ..plugins.common import get_plugin_mgr 
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
-from .detect import get_schema, 
+from .detect import get_schema
 from .history import get_history
 
 #####################################################    
@@ -53,8 +53,8 @@ def shellcmd(repo, args):
     """
     Run a shell command within the repo's context
     """
-    with cd(repo.rootdir): 
-        result = repo.run(args) 
+    with cd(repo.rootdir):
+        result = run(args) 
         print(result)
 
 
@@ -282,8 +282,6 @@ def add_preview(repo, size, args):
             f['schema'] = get_schema(path) 
 
     
-    package['history'] = get_history(repo) 
-
     # Write a temp file 
     (handle, filename) = tempfile.mkstemp()    
     with open(filename, 'w') as fd: 
@@ -338,7 +336,7 @@ def status(repo, details, args):
 ###########################################################
 # Post metadata to a server
 ###########################################################
-def post(repo): 
+def post(repo, args): 
     """
     Post to metadata server
     """
@@ -346,9 +344,12 @@ def post(repo):
     mgr = get_plugin_mgr() 
     metadatamgr = mgr.get(what='metadata',name='generic-metadata') 
     try: 
-        metadatamgr.post(repo.package)
+        # Annotate with history as well...
+        package = repo.package 
+        package['history'] = get_history(repo.rootdir) 
+        metadatamgr.post(package)
     except Exception as e:
         print(e)
-        print("Could not post. Please check server")
+        print("Could not post. Please look at the log files")
         return 
 

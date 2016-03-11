@@ -3,25 +3,7 @@
 import os, sys, parse 
 import subprocess, pipes 
 import json
-
-def run(cmd):
-    """
-    Run a shell command
-    """
-    cmd = [pipes.quote(c) for c in cmd]
-    cmd = " ".join(cmd) 
-    cmd += "; exit 0"
-    # print("Running {} in {}".format(cmd, os.getcwd()))
-    try: 
-        output = subprocess.check_output(cmd,
-                                         stderr=subprocess.STDOUT,
-                                         shell=True)        
-    except subprocess.CalledProcessError as e:
-            output = e.output 
-
-    output = output.decode('utf-8')
-    output = output.strip() 
-    return output
+from ..helper import run, cd
 
 def get_change():
 
@@ -193,10 +175,16 @@ def associate_branches(history):
     #print(json.dumps(values, indent=4))
 
     return history 
-    
+
+def get_history(gitdir="."): 
+
+    with cd(gitdir): 
+        history = get_tree()
+        history = associate_branches(history)    
+    return history 
+
 if __name__ == "__main__":
     
-    history = get_tree()
-    history = associate_branches(history)
+    history = get_history()
     print(json.dumps(history, indent=4))
     
