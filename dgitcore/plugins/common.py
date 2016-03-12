@@ -4,6 +4,7 @@ import os, sys, pkg_resources
 import json 
 from collections import namedtuple
 from functools import partial
+import html5lib 
 from pluginbase import PluginBase
 
 Key = namedtuple("Key", ["name","version"])
