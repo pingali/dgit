@@ -75,6 +75,15 @@ def log(repo, args):
     """
     datasets.log(repo, list(args))
 
+@repo_specific.command('push', context_settings=CONTEXT_SETTINGS)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options
+def push(repo, args):
+    """
+    Gather the log details
+    """
+    datasets.push(repo, list(args))
+
 @repo_specific.command('rm',context_settings=CONTEXT_SETTINGS)
 @click.option('--force', 
               is_flag=True, 

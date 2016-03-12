@@ -62,20 +62,20 @@ class GitRepoManager(RepoManagerBase):
         return result         
 
     # =>  Simple commands ...
-    def push(self, repo): 
+    def push(self, repo, args=[]): 
         return self.run_generic_command(repo, 
-                                        ["push", "origin","master"])
+                                        ["push", "origin","master"] + args)
 
-    def status(self, repo, args): 
+    def status(self, repo, args=[]): 
         return self.run_generic_command(repo, ["status"] + args)
 
     def stash(self, repo, args=[]): 
         return self.run_generic_command(repo, ["stash"] + args)
 
-    def diff(self, repo, args): 
+    def diff(self, repo, args=[]): 
         return self.run_generic_command(repo, ["diff"] + args)
 
-    def log(self, repo, args): 
+    def log(self, repo, args=[]): 
         return self.run_generic_command(repo, ["log"] + args)
 
     def commit(self, repo, args): 

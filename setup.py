@@ -29,13 +29,12 @@ setup(
     author_email='pingali@gmail.com',
     url='https://github.com/pingali/dgit',
     packages=[
-        'dgitcore',
+        'dgit',
     ],
     scripts=[
         'bin/dgit'
     ],
-    package_dir={'dgit':
-                 'dgit'},
+    package_dir={'dgit': 'dgit'},
     include_package_data=True,
     install_requires=requirements,
     license="MIT",
