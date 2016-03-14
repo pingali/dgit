@@ -31,7 +31,7 @@ class MetadataDefault(MetadataBase):
                     'enable': {
                         'value': "y",
                         "description": "Enable Metadata server?" 
-                    },            
+                    },
                     'token': {
                         'value': '',
                         'description': 'Provide API token to be used for posting',

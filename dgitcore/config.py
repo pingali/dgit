@@ -89,8 +89,6 @@ def update(globalvars):
             except:
                 continue
 
-    print(json.dumps(allconfigs, indent=4))
-
     for c in allconfigs: 
         name = c['name']
         config[name] = {} 

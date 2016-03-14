@@ -302,6 +302,25 @@ def remote(repo, op, shortname, url):
     datasets.remote(op, username, dataset, shortname, url) 
     return 
 
+##############################################################
+# Repo generic commands commands 
+##############################################################
+
+@click.group()
+def automatic():
+    pass 
+
+@automatic.command('auto', context_settings=CONTEXT_SETTINGS)
+@click.option('--force-init', '-f',
+              is_flag=True, 
+              default=False,
+              help="Force a new configuration file")
+def auto(force_init): 
+    """
+    Auto mode of operation 
+    """
+    datasets.auto.collect(force_init)
+
 
 ##############################################################
 # Repo generic commands commands 
@@ -429,7 +448,7 @@ def plugin_cmd(action, what, name, version):
     elif action == "new":
         plugins.generate(what, name, version)
 
-cli = click.CommandCollection(sources=[repo_specific, repo_generic, management])
+cli = click.CommandCollection(sources=[repo_specific, repo_generic, management, automatic])
 
 if __name__ == "__main__":
     
