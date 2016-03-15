@@ -86,6 +86,9 @@ def auto_init(autofile, force_init=False):
                 ('.', '')
             ]))
         ])),
+        ('validate' ,OrderedDict([
+            ('content-rule-validator', ['*.csv', '*.tsv']),
+        ]))
     ])
 
     keys = mgr.search('metadata') 
@@ -166,7 +169,6 @@ def auto_get_repo(autooptions, debug=False):
                 if debug: 
                     print("Successfully inited repo") 
 
-    print("Adding auto options ", autooptions) 
     repo.options = autooptions 
 
     return repo
@@ -199,13 +201,6 @@ def get_files_to_commit(autooptions):
         matched_files.extend(files)
 
     return matched_files
-
-def find_matching_files(repo, includes): 
-  
-    files = [f['relativepath'] for f in repo.package['resources']]
-    includes = r'|'.join([fnmatch.translate(x) for x in includes])
-    files = [f for f in files if re.match(includes, os.path.basename(f))]
-    return files 
 
 def auto_add(repo, autooptions, files): 
     """
@@ -264,17 +259,6 @@ def collect(autofile, force_init):
             history = get_history(repo.rootdir) 
             print("Got history") 
         
-        # Include 
-        include_schema = metadata.get('include-schema',False)
-        if include_schema: 
-            files = find_matching_files(repo, metadata['include-schema'])
-
-        # Include preview 
-        include_preview = metadata.get('include-preview',False)
-        if include_preview: 
-            files = find_matching_files(repo, metadata['include-preview'])
-            print("Including for preview", files)
-
     package = repo.package
     package['history'] = history 
 
