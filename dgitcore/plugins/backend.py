@@ -40,6 +40,24 @@ class BackendBase(object):
         """
         return 
 
+    def clone_repo(self, url, gitdir): 
+        """
+        Clone a repo at specified URL
+        """
+        return 
+
+    def supported(self, url): 
+        """
+        Check if a URL is supported by repo 
+        """
+        return False
+
+    def url_is_valid(self, url): 
+        """
+        Check if a URL exists
+        """
+        return 
+
     def push(self, state, name): 
         """
         Push a data version to the server 

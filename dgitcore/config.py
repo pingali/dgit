@@ -2,12 +2,62 @@
 """
 Configuration parser 
 """
-import os, sys, json
-import shelve 
+import os, sys, json, re, traceback 
+
+try: 
+    from urllib.parse import urlparse
+except:
+    from urlparse import urlparse
+
 import configparser 
 from .plugins.common import get_plugin_mgr 
 config = None 
 
+###################################
+# Input validators
+###################################
+class ChoiceValidator(object): 
+    def __init__(self, choices): 
+        self.choices = choices 
+        self.message = "Supported options include: {}".format(",".join(self.choices))
+
+    def is_valid(self, value): 
+        if value in self.choices: 
+            return True             
+        return False
+
+class NonEmptyValidator(object): 
+    def __init__(self): 
+        self.message = "Value cannot be an empty string"
+
+    def is_valid(self, value): 
+        if value is None or len(value) == 0: 
+            return False
+        return True 
+
+class EmailValidator(object): 
+    def __init__(self): 
+        self.message = "Value has to be an email address" 
+        self.pattern = r"[^@]+@[^@]+\.[^@]+"
+        
+    def is_valid(self, value): 
+        if not re.match(self.pattern, value): 
+            return False 
+        return True 
+
+class URLValidator(object): 
+    def __init__(self): 
+        self.message = "Value should be a valid URL"
+        
+    def is_valid(self, value): 
+        o = urlparse(value) 
+        print("Validating url", o) 
+        return o.scheme in ['http', 'https']
+
+
+###################################
+# Main helper functions...
+###################################
 def getprofileini():
     homedir = os.path.abspath(os.environ['HOME'])
     profileini = os.path.join(homedir,'.dgit.ini') 
@@ -25,6 +75,7 @@ def init(globalvars=None, show=False):
         config.read(profileini)
         mgr = get_plugin_mgr() 
         mgr.update_configs(config)
+
         if show: 
             for source in config: 
                 print("[%s] :" %(source))
@@ -32,11 +83,12 @@ def init(globalvars=None, show=False):
                     print("   %s : %s" % (k, config[source][k]))
             
     else:
-        print("Profile does not exist")
+        print("Profile does not exist. So creating one")
         if not show:
             update(globalvars)
     
 def input_with_default(message, default):
+    
     res = input("%s [%s]: " %(message, default))
     return res or default
 
@@ -51,7 +103,6 @@ def update(globalvars):
     config.read(profileini)
     defaults = {}
 
-
     if globalvars is not None: 
         defaults = {a[0]: a[1] for a in globalvars }
 
@@ -59,37 +110,45 @@ def update(globalvars):
     generic_configs = [{
         'name': 'User',
         'nature': 'generic',
-        'variables': ['user.name', 'user.email', 'user.fullname'],
+        'description': "General information",
+        'variables': ['user.email', 'user.fullname'],
         'defaults': {
             'user.email': { 
                 'value': defaults.get('user.email',''),
-                'description': "Email address" 
+                'description': "Email address",
+                'validator': EmailValidator() 
             },
             'user.fullname': {
                 'value': defaults.get('user.fullname',''),
-                'description': "User"
+                'description': "Full Name",
+                'validator': NonEmptyValidator() 
             },
-            'user.name': {
-                'value': defaults.get('user.name',''),
-                'description': "User"
-            }
         }
     }]
-    
+
+    # Gather configuration requirements from all plugins 
     mgr = get_plugin_mgr() 
     extra_configs = mgr.gather_configs()
-
     allconfigs = generic_configs + extra_configs 
+
+    # Read the existing config and update the defaults 
     for c in allconfigs: 
         name = c['name']
         for v in c['variables']: 
-            print("Looking at ", name, v)
             try: 
                 c['defaults'][v]['value'] = config[name][v] 
             except:
                 continue
 
     for c in allconfigs: 
+
+        print("")
+        print(c['description'])
+        print("==================")
+        if len(c['variables']) == 0: 
+            print("Nothing to do. Enabled by default") 
+            continue
+
         name = c['name']
         config[name] = {} 
         config[name]['nature'] = c['nature']
@@ -99,22 +158,29 @@ def update(globalvars):
             value = ''
             description = v + " " 
             helptext = ""
+            validator = None
 
-            # Expand..
+            # Look up pre-set values
             if v in c['defaults']: 
                 value = c['defaults'][v].get('value','')            
-            if v in c['defaults']: 
                 helptext = c['defaults'][v].get("description","") 
+                validator = c['defaults'][v].get('validator',None)
             if helptext != "": 
                 description += "(" + helptext + ")"         
 
             # Get user input..
-            choice = input_with_default(description, value)
-            choice = choice.lower() 
+            while True: 
+                choice = input_with_default(description, value)
+                if validator is not None: 
+                    if validator.is_valid(choice):
+                        break
+                    else: 
+                        print("Invalid input. Expected input is {}".format(validator.message))
+                else: 
+                    break 
+
             config[name][v] = choice
-            if v == 'enable' and choice in ['n', 'no']: 
-                # Dont bother to get the rest...
-                break 
+
 
     with open(profileini, 'w') as fd:
         config.write(fd)
@@ -126,47 +192,3 @@ def get_config():
         init() 
     return config 
 
-def set_default_dataset(dataset): 
-
-    workspace = config['Local']['workspace'] 
-    statefile = os.path.join(workspace, '.default')
-    with open(statefile, 'w') as fd: 
-        fd.write(dataset)
-
-def clear_default_dataset(): 
-
-    workspace = config['Local']['workspace'] 
-    statefile = os.path.join(workspace, '.default')
-    if os.path.exists(statefile): 
-        os.remove(statefile) 
-
-def get_default_dataset(): 
-
-    workspace = config['Local']['workspace'] 
-    statefile = os.path.join(workspace, '.default')    
-
-    dataset = None 
-    if os.path.exists(statefile): 
-        dataset = open(statefile).read()         
-        if dataset == "":
-            dataset = None 
-
-    return dataset 
-
-        
-    
-def get_state():
-    
-    config = get_config()
-    workspace = config['Local']['workspace']         
-    
-    if not os.path.exists(workspace): 
-        os.makedirs(workspace)
-
-    statefile = os.path.join(workspace, "datasets.state.shelve")
-    state = shelve.open(statefile, writeback=True)
-    state['config'] = config # may have changed...
-    state.sync() 
-
-    return state 
-    

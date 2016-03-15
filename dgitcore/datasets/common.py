@@ -24,13 +24,13 @@ from .history import get_history
 #####################################################    
 # Repo independent commands...
 #####################################################    
-def lookup(username, dataset): 
+def lookup(username, reponame): 
     """
-    Lookup a repo based on username dataset
+    Lookup a repo based on username reponame
     """
     mgr = get_plugin_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
-    repo =  repomgr.lookup(username=username, reponame=dataset) 
+    repo =  repomgr.lookup(username=username, reponame=reponame) 
     return repo 
 
 def list_repos(remote):
@@ -184,7 +184,7 @@ def bootstrap_datapackage(repo, force=False):
     for var in ['title', 'description']: 
         value = ''
         while value in ['',None]:
-            value = input('Your dataset ' + var.title() + ": ")
+            value = input('Your Repo ' + var.title() + ": ")
             if len(value) == 0: 
                 print("{} cannot be empty. Please re-enter.".format(var.title()))
                 
@@ -200,9 +200,9 @@ def bootstrap_datapackage(repo, force=False):
 
     return filename 
 
-def init(username, dataset, setup, force):
+def init(username, reponame, setup, force):
     """
-    Given a filename, prepare a datapackage.json for each dataset.
+    Given a filename, prepare a datapackage.json for each repo.
     """
 
     backend = None 
@@ -212,7 +212,7 @@ def init(username, dataset, setup, force):
     mgr = get_plugin_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
     backendmgr = mgr.get(what='backend', name=backend) 
-    repo = repomgr.init(username, dataset, force, backendmgr) 
+    repo = repomgr.init(username, reponame, force, backendmgr) 
 
     # Now bootstrap the datapackage.json metadata file and copy it in...
     filename = bootstrap_datapackage(repo)
@@ -227,24 +227,28 @@ def init(username, dataset, setup, force):
     os.unlink(filename) 
     args = ['-a', '-m', 'Bootstrapped the datapackage']
     repo.run('commit', args)
-                   
+    return repo 
     
 def clone(url): 
     """
-    Given a filename, prepare a manifest for each dataset.
+    Clone a S3/Other URL 
     """
     backend = None 
     backendmgr = None
     if url.startswith('s3'): 
-        backend = 's3'
+        backendtype = 's3'
     elif url.startswith("http") or url.startswith("git"): 
-        backend = 'git'
+        backendtype = 'git'
     else: 
-        backend = None
+        backendtype = None
 
     mgr = get_plugin_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
-    backendmgr = mgr.get(what='backend', name=backend) 
+    backendmgr = mgr.get(what='backend', name=backendtype) 
+    
+    if backendmgr is not None and not backendmgr.url_is_valid(url): 
+        raise Exception("Invalid URL") 
+        
     key = repomgr.clone(url, backendmgr) 
 
     # Insert a datapackage if it doesnt already exist...
@@ -254,54 +258,15 @@ def clone(url):
         args = ['-a', '-m', 'Bootstrapped cloned repo']
         repomgr.commit(key, args)
 
-#####################################################
-# Add content to the metadata
-#####################################################
-def add_preview(repo, size, args): 
+    return repo 
 
-    rootdir = repo.rootdir 
-    packagefilename = 'datapackage.json' 
-    package = repo.package
-    
-    files = package['resources'] 
-    for f in files: 
-        
-        relativepath = f['relativepath']
-        path = os.path.join(rootdir, relativepath) 
-
-        # Should I be adding a snippet? 
-        match = False
-        for i in args: 
-            if fnmatch.fnmatch(path, i) or fnmatch.fnmatch(relativepath, i):
-                match = True
-                break 
-                
-        if match: 
-            print("Reading content", path)
-            f['content'] = open(path).read()[:size]
-            f['schema'] = get_schema(path) 
-
-    
-    # Write a temp file 
-    (handle, filename) = tempfile.mkstemp()    
-    with open(filename, 'w') as fd: 
-        fd.write(json.dumps(package, indent=4))
-
-    # Add it to the list of files...
-    repo.run('add_files',[
-        { 
-            'relativepath': 'datapackage.json',
-            'localfullpath': filename, 
-        }
-    ])
-    
 
 def status(repo, details, args): 
 
     result = generic_repo_cmd(repo, 'status', False, args)
 
     if details: 
-        print("Dataset: %s" %(str(repo)))
+        print("Repo: %s" %(str(repo)))
         print("Backend: %s" %(repo.package['remote-url']))
     print("Status: ", result['status'])
     print("Message:") 
@@ -336,6 +301,46 @@ def status(repo, details, args):
 ###########################################################
 # Post metadata to a server
 ###########################################################
+def add_preview(repo, size, args): 
+
+    rootdir = repo.rootdir 
+    packagefilename = 'datapackage.json' 
+    package = repo.package
+    
+    files = package['resources'] 
+    for f in files: 
+        
+        relativepath = f['relativepath']
+        path = os.path.join(rootdir, relativepath) 
+
+        # Should I be adding a snippet? 
+        match = False
+        for i in args: 
+            if (fnmatch.fnmatch(path, i) or 
+                fnmatch.fnmatch(relativepath, i)):
+                match = True
+                break 
+                
+        if match: 
+            print("Reading content", path)
+            f['content'] = open(path).read()[:size]
+            f['schema'] = get_schema(path) 
+
+    
+    # Write a temp file 
+    (handle, filename) = tempfile.mkstemp()    
+    with open(filename, 'w') as fd: 
+        fd.write(json.dumps(package, indent=4))
+
+    # Add it to the list of files...
+    repo.run('add_files',[
+        { 
+            'relativepath': 'datapackage.json',
+            'localfullpath': filename, 
+        }
+    ])
+    
+
 def post(repo, args): 
     """
     Post to metadata server

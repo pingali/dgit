@@ -5,7 +5,7 @@ from dgitcore.plugins.validator import ValidatorBase
 from dgitcore.config import get_config 
 from dgitcore.helper import compute_sha256 
 
-class ValidatorDefault(ValidatorBase):     
+class ChecksumValidator(ValidatorBase):     
     """
     Simple validator backend for the datasets.
 
@@ -16,29 +16,26 @@ class ValidatorDefault(ValidatorBase):
         self.enable = False 
         self.token = None 
         self.url = None 
-        super(ValidatorDefault, self).__init__('basic-validator', 
+        super(ChecksumValidator, self).__init__('checksum-validator', 
                                               'v0', 
-                                              "Basic validator of the content")
+                                              "Validate checksum for all files")
 
     def config(self, what='get', params=None): 
         
         if what == 'get': 
             return {
-                'name': 'basic-validator', 
+                'name': 'checksum-validator', 
                 'nature': 'validator',
                 'variables': ['enable'], 
                 'defaults': { 
                     'enable': {
                         'value': "y",
-                        "description": "Enable Validator server?" 
+                        "description": "Enable checksum validation?" 
                     },            
                 }
             }
         else:
-            try: 
-                self.enable = params['basic-validator']['enable']
-            except:
-                self.enable = 'n'
+            self.enable = params['checksum-validator']['enable']
 
     def evaluate(self, repomanager, key): 
         """
@@ -69,7 +66,7 @@ class ValidatorDefault(ValidatorBase):
     
 def setup(mgr): 
     
-    obj = ValidatorDefault()
+    obj = ChecksumValidator()
     mgr.register('validator', obj)
 
 

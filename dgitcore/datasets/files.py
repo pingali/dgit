@@ -21,6 +21,28 @@ from .detect import get_schema
 ############################################################
 # Add files and links...
 ############################################################
+def annotate_record(h): 
+
+    # Insert defaults 
+    defaults = {
+        'type': 'data',
+        'generator': False, 
+        'source': None
+    }
+    for k, v in defaults.items(): 
+        if k not in h: 
+            h[k] = v 
+
+    # Update UUID and other detauls 
+    f = h['localfullpath'] 
+    h.update({ 
+        'uuid': str(uuid.uuid1()),
+        'mimetypes': mimetypes.guess_type(f)[0],
+        'sha256': compute_sha256(f),
+    })
+    
+    return h 
+    
 def add_link(f):
     update = { 
         'type': 'data',
@@ -56,24 +78,20 @@ def add_file_normal(f, targetdir, generator,script, source):
     update = {
         'type': filetype, 
         'generator': generator, 
-        'uuid': str(uuid.uuid1()),
         'relativepath': relativepath, 
-        'mimetypes': mimetypes.guess_type(f)[0],
         'content': '', 
         'source': source, 
-        'sha256': compute_sha256(f),
         'localfullpath': f,
         'localrelativepath': relpath, 
     }
+
+    update = annotate_record(update) 
 
     return (basename, update)
 
     
 def add_files(args, targetdir, generator, source, script):
         
-    # get the directory 
-    ts = datetime.now().isoformat()     
-    
     seen = []
     files = []
     for f in args: 
@@ -94,8 +112,11 @@ def add_files(args, targetdir, generator, source, script):
         else: 
             update['change'] = 'update'
 
-        update['ts'] = ts 
-        files.append(update)             
+        ts = os.path.getmtime(f)
+        ts = datetime.fromtimestamp(ts)
+        update['ts'] = ts.isoformat() 
+        files.append(update)          
+   
     return files
 
 ###################################################################    
@@ -318,9 +339,10 @@ def run_executable(repomanager, repo,
 ################################################
 # Main function
 ################################################
-def add(repo, args,
-        execute, generator,targetdir, 
-        includes, script, source): 
+def add(repo, args, targetdir, 
+        execute=False, generator=False,
+        includes=[], script=False, 
+        source=None): 
     """
     Add files to the repository
     """
@@ -336,31 +358,31 @@ def add(repo, args,
         files = run_executable(repomanager, repo, 
                                args, includes)
 
+    if files is None or len(files) == 0: 
+        return repo 
 
-    if files is not None and len(files) > 0: 
 
-        # Copy the files 
-        repo.manager.add_files(repo, files) 
+    # Copy the files 
+    repo.manager.add_files(repo, files) 
 
-        # Update the package.json 
-        rootdir = repo.rootdir 
-        with cd(rootdir): 
-            datapath = "datapackage.json"
-            package = json.loads(open(datapath).read()) 
-            
-            # Update the resources 
-            for h in files: 
-                found = False
-                for i, r in  enumerate(package['resources']):
-                    if h['relativepath'] == r['relativepath']: 
-                        package['resources'][i] = h
-                        found = True
-                        break 
-                if not found: 
-                    package['resources'].append(h) 
+    # Update the repo package...
+    package = repo.package             
+    for h in files: 
+        found = False
+        for i, r in  enumerate(package['resources']):
+            if h['relativepath'] == r['relativepath']: 
+                package['resources'][i] = h
+                found = True
+                break 
+        if not found: 
+            package['resources'].append(h) 
 
-            with open(datapath, 'w') as fd: 
-                fd.write(json.dumps(package, indent=4))
+    # Write to disk...
+    rootdir = repo.rootdir 
+    with cd(rootdir): 
+        datapath = "datapackage.json"
+        with open(datapath, 'w') as fd: 
+            fd.write(json.dumps(package, indent=4))
         
     return 
 

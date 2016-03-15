@@ -25,20 +25,16 @@ CONTEXT_SETTINGS=dict(allow_extra_args=True,ignore_unknown_options=True)
 ##############################################################
 
 def repo_option(f):
-    def callback(ctx, param, value):
-        if value is None: 
-            value = config.get_default_dataset() 
+    def callback(ctx, param, filename):
 
-        (username, dataset) = helper.parse_dataset_name(value)    
-        value = datasets.lookup(username=username, dataset=dataset)
-        if value is None: 
-            print("Dataset is unspecified. Please use dgit default")
-            raise UsageError("dataset is unspecified")
+        # Load the options from a configuration file 
+        autooptions = datasets.auto_init(filename) 
+        repo = datasets.auto_get_repo(autooptions) 
+        return repo 
 
-        return value
     return click.option('--repo', '-r',
-                        default=None,
-                        help="Dataset to operate on",
+                        default='dgit.json',
+                        help="dataset repository configuration file",
                         callback=callback)(f)
 
 def common_options(f):
@@ -189,7 +185,6 @@ def add(repo, targetdir, args, execute,
     Add files to the repo
     """
 
-
     if generator and execute: 
         print("Generator and execute are mutually exclusive") 
         return 
@@ -197,7 +192,6 @@ def add(repo, targetdir, args, execute,
     if execute and len(include) == 0: 
         print("Files to be included must be specified")
         return
-
 
     args = helper.clean_args(args, execute) 
     if args is None: 
@@ -217,19 +211,6 @@ def add(repo, targetdir, args, execute,
                  targetdir=targetdir, 
                  includes=includes)
 
-@repo_specific.command('add-preview',context_settings=CONTEXT_SETTINGS)
-@click.option("--size", '-s', 
-              default=512, 
-              help="Size of snippet to include")
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
-@common_options
-def preview(repo, size, args):
-    """
-    Add files preview from files into metadata 
-    """
-
-    datasets.add_preview(repo, size, list(args))
-
 @repo_specific.command('validation',context_settings=CONTEXT_SETTINGS)
 @click.argument('action',
                 type=click.Choice(['add', 'remove', 'list', 'show', 'test', 'evaluate']))
@@ -246,8 +227,6 @@ def validation(repo, action, name, target, rules):
     """
     Add validation rules
     
-    Parameters
-    ----------
     filename: Filename pattern to which the rule must be applied 
     rules: jsonfile with rules specificied in the LIVR format (`Language Independent Validation Rules <https://github.com/koorchik/LIVR>`_)
     """
@@ -311,15 +290,18 @@ def automatic():
     pass 
 
 @automatic.command('auto', context_settings=CONTEXT_SETTINGS)
+@click.option('--config', '-c',
+              default="dgit.json",
+              help="Configuration file")
 @click.option('--force-init', '-f',
               is_flag=True, 
               default=False,
-              help="Force a new configuration file")
-def auto(force_init): 
+              help="Force re-initialization the configuration file")
+def auto(config, force_init): 
     """
     Auto mode of operation 
     """
-    datasets.auto.collect(force_init)
+    datasets.auto.collect(config, force_init)
 
 
 ##############################################################
@@ -329,28 +311,6 @@ def auto(force_init):
 @click.group()
 def repo_generic():
     pass 
-
-@repo_generic.command('default')
-@click.argument('action',
-              type=click.Choice(['clear', 'get', 'set']),
-              default="get")
-@click.option('--dataset', '-d',
-              default=None,
-              help='Dataset')
-def default(action,dataset):
-    """
-    Set the default dataset
-    """
-    if action == 'set': 
-        if dataset is not None: 
-            config.set_default_dataset(dataset)
-        else: 
-            print("Dataset must be specified for set")            
-    elif action == "clear": 
-        config.clear_default_dataset()
-    elif action == "get": 
-        dataset = config.get_default_dataset()
-        print("Default dataset:", dataset)
 
 @repo_generic.command('list')
 @click.option('--remote', '-r',

@@ -16,10 +16,10 @@ class GitRepoManager(RepoManagerBase):
         self.workspace = None
         self.metadatadir = '.git'
         self.repos = {} 
-        self.per_dataset_repo = True 
+        self.enable = True 
         super(GitRepoManager, self).__init__('git', 
                                              'v0', 
-                                             "Git-based repomanager")
+                                             "Git-based Repository Manager")
 
     # =>  Helper functions
     def run(self, cmd):
@@ -172,7 +172,7 @@ class GitRepoManager(RepoManagerBase):
         r.remoteurl = url 
         r.manager = self 
 
-        self.add(repo)
+        return self.add(repo)
 
 
     def delete(self, repo, force, files): 
@@ -329,36 +329,21 @@ class GitRepoManager(RepoManagerBase):
         """
         Paramers: 
         --------
-        per_dataset_repo: Per dataset repo
 
         """
         if what == 'get': 
             return {
                 'name': 'git', 
                 'nature': 'repomanager',
-                'variables': ['enable', 'per_dataset_repo'],
-                'defaults': { 
-                    'enable': {
-                        'value': "n",
-                        "description": "Use Git for storing datasets",
-                    },            
-                    'per_dataset_repo': {
-                        'value': 'y',
-                        'description': "Use one repo for each dataset"
-                    },
-                }
+                'variables': [],
             }
         elif what == 'set': 
             self.workspace = params['Local']['workspace']
-            self.username = params['User']['user.name']
-            self.enable = params['git'].get('enable', 'n')
-            self.per_dataset_repo = params['git'].get('per_dataset_repo', 'y') 
+            self.username = params['User']['user.fullname']
+            self.email = params['User']['user.email']
             if self.enable == 'n': 
                 return 
 
-            if self.per_dataset_repo == 'n': 
-                raise Exception("Global repo for all datasets is not supported") 
-                
             repodir = os.path.join(self.workspace, 'datasets')
             if not os.path.exists(repodir): 
                 return 
@@ -370,7 +355,7 @@ class GitRepoManager(RepoManagerBase):
                         r.rootdir = os.path.join(repodir, username, reponame)
                         package = os.path.join(r.rootdir, 'datapackage.json')
                         if not os.path.exists(package): 
-                            print("[Initialization] Invalid dataset: %s/%s at %s " %(username, reponame, rootdir))
+                            print("[Initialization] Invalid dataset: %s/%s at %s " %(username, reponame, r.rootdir))
                             print("[Initalization] Skipping")
                             continue 
                         r.package = json.loads(open(package).read())

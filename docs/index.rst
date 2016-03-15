@@ -7,6 +7,7 @@
    :maxdepth: 2
 
    README.rst
+   auto.rst
    code.rst 
    faq.rst
 

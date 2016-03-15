@@ -2,9 +2,9 @@
 
 import os, sys
 from dgitcore.plugins.metadata import MetadataBase
-from dgitcore.config import get_config 
+from dgitcore.config import get_config, ChoiceValidator, URLValidator, NonEmptyValidator
 
-class MetadataDefault(MetadataBase):     
+class BasicMetadata(MetadataBase):     
     """
     Metadata backend for the datasets.
 
@@ -16,40 +16,43 @@ class MetadataDefault(MetadataBase):
         self.enable = False 
         self.token = None 
         self.url = None 
-        super(MetadataDefault, self).__init__('generic-metadata', 
+        super(BasicMetadata, self).__init__('basic-metadata', 
                                               'v0', 
-                                              "Basic metadata tracker")
+                                              "Basic metadata server")
 
     def config(self, what='get', params=None): 
         
         if what == 'get': 
             return {
-                'name': 'generic-metadata', 
+                'name': 'basic-metadata', 
                 'nature': 'metadata',
                 'variables': ['enable', 'token', 'url'], 
                 'defaults': { 
                     'enable': {
                         'value': "y",
-                        "description": "Enable Metadata server?" 
+                        "description": "Enable generic Metadata server?",
+                        'validator': ChoiceValidator(['y','n'])
                     },
                     'token': {
                         'value': '',
                         'description': 'Provide API token to be used for posting',
+                        'validator': NonEmptyValidator(),
                     },
                     'url': {
                         'value': '',
-                        'description': 'URL to which metadata should be posted'
+                        'description': 'URL to which metadata should be posted',
+                        'validator': URLValidator()
                     },
                 }
             }
         else:
             try: 
-                self.enable = params['generic-metadata']['enable']
+                self.enable = params['basic-metadata']['enable']
             except:
                 self.enable = 'n'
                 return 
                 
-            metadata = params['generic-metadata']
+            metadata = params['basic-metadata']
             self.enable     = metadata['enable']
             self.token      = metadata.get('token', None)
             self.url        = metadata.get('url', None) 
@@ -64,7 +67,7 @@ class MetadataDefault(MetadataBase):
     
 def setup(mgr): 
     
-    obj = MetadataDefault()
+    obj = BasicMetadata() 
     mgr.register('metadata', obj)
 
 

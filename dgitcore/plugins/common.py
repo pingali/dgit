@@ -131,10 +131,17 @@ class PluginManager(object):
         Gather configuration requirements of all plugins 
         """
         configs = []
-        for what in self.plugins: 
+        for what in ['backend', 'repomanager',
+                     'instrumentation', 'validator',
+                     'metadata']: 
             for key in self.plugins[what]: 
-                c = self.plugins[what][key].config(what='get')
+                mgr = self.plugins[what][key]
+                c = mgr.config(what='get')
                 if c is not None: 
+                    c.update({
+                        'description': mgr.description
+                    })
+                    print("Gathering configuration from ", c)
                     configs.append(c) 
         return configs 
 

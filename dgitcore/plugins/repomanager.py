@@ -198,6 +198,7 @@ class RepoManagerBase(object):
         """
         Clone repo 
         """
+        pass 
 
     def config(self, what='get', params=None): 
         return 

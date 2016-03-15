@@ -7,7 +7,6 @@ from hashlib import sha256
 import subprocess, pipes 
 from datetime import datetime
 import getpass 
-from .config import get_state 
 import uuid 
 import subprocess 
 

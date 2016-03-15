@@ -1,6 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys
+from dgitcore.config import NonEmptyValidator
 from dgitcore.plugins.backend import BackendBase, BackendContext
 
 class LocalBackend(BackendBase): 
@@ -11,10 +12,19 @@ class LocalBackend(BackendBase):
         
         self.workspace = None 
         super(LocalBackend,self).__init__('local', 'v0',
-                                          "Local filesystem backend")
-    def initialize(self, connect=False): 
-        pass
-        
+                                          "Local Filesystem Backend")
+
+    def url_is_valid(self, url): 
+        """
+        Check if a URL exists
+        """
+        # Check if the file system path exists...
+        if url.startswith("file://"):
+            url = url.replace("file://","") 
+
+        return os.path.exists(url)
+
+
     def config(self, what='get', params=None): 
         if what == 'get': 
             return {
@@ -24,7 +34,8 @@ class LocalBackend(BackendBase):
                 'defaults': { 
                     'workspace': {
                         "value": os.path.join(os.environ['HOME'], '.dgit'),
-                        "description": "Local directory to store datasets"
+                        "description": "Local directory to store datasets",
+                        'validator': NonEmptyValidator() 
                     },
                 }
             }

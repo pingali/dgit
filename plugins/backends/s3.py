@@ -4,7 +4,7 @@ import os, sys, stat, subprocess
 import boto3 
 import getpass 
 from dgitcore.plugins.backend import BackendBase, BackendContext
-from dgitcore.config import get_config 
+from dgitcore.config import get_config, ChoiceValidator, NonEmptyValidator
 from dgitcore.helper import cd
 
 postreceive_template="""#!/bin/bash
@@ -47,7 +47,9 @@ class S3Backend(BackendBase):
 
     def run(self, cmd):
         cmd = " ".join(cmd) 
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+        output = subprocess.check_output(cmd, 
+                                         stderr=subprocess.STDOUT, 
+                                         shell=True)
         output = output.decode('utf-8')
         return output
 
@@ -63,26 +65,42 @@ class S3Backend(BackendBase):
                 'defaults': { 
                     'enable': {
                         'value': "y",
-                        "description": "Enable S3 backend?" 
+                        "description": "Enable S3 backend?",
+                        'validator': ChoiceValidator(['y', 'n'])
                     },            
                     'client': {
                         'value': 'aws',
-                        'description': 'Command line tool to use for repo backup (aws|s3cmd)'
+                        'description': 'Command line tool to use for repo backup (aws|s3cmd)',
+                        'validator': NonEmptyValidator()
                     },
                     "s3cfg": {
                         'value': os.path.join(os.environ['HOME'], '.s3cfg'),
-                        'description': 's3cfg configuration file if s3cmd is chosen. Otherwise ignore'                        
+                        'description': 's3cfg configuration file if s3cmd is chosen. Otherwise ignore',
+                        'validator': NonEmptyValidator()
                     },
                     'bucket': {
                         'value': "",
-                        'description': "Bucket into which the datasets are stored"
+                        'description': "Bucket into which the datasets are stored",
+                        'validator': NonEmptyValidator()
                     },
                     'prefix': {
                         "value": "git",
-                        "description": "Prefix within bucket to backup the repos"
+                        "description": "Prefix within bucket to backup the repos",
+                        'validator': NonEmptyValidator()
                     },
                 }
             }
+        elif what == 'validate': 
+            valid = True
+            s3 = params['S3']            
+            if params['s3']['enable'] == 'y': 
+                if params['s3']['bucket'] in ['', None]: 
+                    print("Bucket cannot be empty")
+                    valid = False
+                if params['s3']['prefix'] in ['', None]: 
+                    print("Prefix within bucket cannot be empty") 
+                    valid = False
+            return valid 
         else:
             s3 = params['S3']
             self.enable     = s3['enable']
@@ -91,7 +109,9 @@ class S3Backend(BackendBase):
                                      os.path.join(os.environ['HOME'], '.s3cfg'))
             self.bucket     = s3.get('bucket', None)
             self.prefix     = s3.get('prefix', None) 
-                                     
+            
+        return True
+
     def init_repo(self, gitdir): 
 
         hooksdir = os.path.join(gitdir, 'hooks')
@@ -113,12 +133,26 @@ class S3Backend(BackendBase):
         os.chmod(postrecv_filename, 
                  st.st_mode | stat.S_IEXEC)
 
+    def url_exists(self, url): 
+             
+        if self.client == 'aws': 
+            cmd = ["aws", "s3", "ls", url ]
+        else: 
+            cmd = ["s3cmd", "-c", self.s3cfg, "ls", url]   
+
+        try: 
+            self.run(cmd) 
+            return True
+        except: 
+            return False 
+
     def clone_repo(self, url, gitdir): 
 
         try: 
             os.makedirs(gitdir) 
         except:
             pass 
+
 
         print("Syncing into local directory", gitdir) 
         with cd(gitdir): 
