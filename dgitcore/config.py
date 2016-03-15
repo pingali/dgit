@@ -51,7 +51,6 @@ class URLValidator(object):
         
     def is_valid(self, value): 
         o = urlparse(value) 
-        print("Validating url", o) 
         return o.scheme in ['http', 'https']
 
 
