@@ -166,6 +166,7 @@ def auto_get_repo(autooptions, debug=False):
                 if debug: 
                     print("Successfully inited repo") 
 
+    print("Adding auto options ", autooptions) 
     repo.options = autooptions 
 
     return repo
