@@ -107,15 +107,17 @@ def stash(repo, args):
     """
     return generic_repo_cmd(repo, 'stash', True, args) 
 
-def delete(repo, force, files): 
+def delete(repo, args): 
     """
     Delete files
     """
     
     # Cleanup metadata for these files.
     missing = []
-    for f in files: 
+    for f in args: 
         found = False
+        if f.startswith("-"):
+            continue 
         for i, r in enumerate(repo.package['resources']):
             if r['relativepath'] == f: 
                 del repo.package['resources'][i]                
@@ -129,8 +131,7 @@ def delete(repo, force, files):
         print("Repo may have been corrupted")
 
     # Cleanup the repo
-    generic_repo_cmd(repo, 'delete', False, 
-                     force, files)
+    generic_repo_cmd(repo, 'delete', False, args)
 
     
     # Now sync the metadata 
@@ -345,6 +346,8 @@ def post(repo, args):
     """
     Post to metadata server
     """
+
+    
 
     mgr = get_plugin_mgr() 
     metadatamgr = mgr.get(what='metadata',name='generic-metadata') 

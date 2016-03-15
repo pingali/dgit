@@ -81,17 +81,13 @@ def push(repo, args):
     datasets.push(repo, list(args))
 
 @repo_specific.command('rm',context_settings=CONTEXT_SETTINGS)
-@click.option('--force', 
-              is_flag=True, 
-              default=False,
-              help="Force rm")
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @common_options
-def rm(repo, force, args): 
+def rm(repo, args): 
     """
     Delete files from repo 
     """
-    datasets.delete(repo, force, list(args))
+    datasets.delete(repo, list(args))
 
 @repo_specific.command('sh',context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)

@@ -175,24 +175,20 @@ class GitRepoManager(RepoManagerBase):
         return self.add(repo)
 
 
-    def delete(self, repo, force, files): 
+    def delete(self, repo, args): 
         """
-        Delet files from the repo
+        Delete files from the repo
         """
 
-        print("Delete", files)
         result = None
         with cd(repo.rootdir):             
             for f in files: 
-                if not os.path.exists(f): 
-                    raise Exception("Missing file" + f) 
+                if not f.startswith("-"):
+                    if not os.path.exists(f): 
+                        raise Exception("Missing file" + f) 
 
             try: 
-                if force: 
-                    cmd = ['rm', '-f'] + list(files)
-                else: 
-                    cmd = ['rm'] + list(files)         
-
+                cmd = ['rm'] + list(args)
                 result = {
                     'status': 'success',
                     'message': self.run(cmd)
