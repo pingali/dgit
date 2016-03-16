@@ -4,7 +4,7 @@ from collections import OrderedDict
 import fnmatch, re
 from ..config import get_config
 from ..plugins.common import get_plugin_mgr 
-from .common import clone as common_clone, init as common_init, add_preview as common_add_preview 
+from .common import clone as common_clone, init as common_init, post as common_post
 from .files import add as files_add
 from .history import get_history 
 from .detect import get_schema 
@@ -69,8 +69,10 @@ def auto_init(autofile, force_init=False):
         backend = mgr.get_by_key('backend', keys[0])
         candidate = backend.url(username, reponame)
         revised = input("Please specify remote URL [{}]".format(candidate))
-        if revised not in ["", None]: 
+        if revised in ["", None]: 
             remoteurl = candidate
+        else: 
+            remoteurl = revised 
 
     autooptions = OrderedDict([
         ("username", username),
@@ -107,10 +109,14 @@ def auto_init(autofile, force_init=False):
             ('metadata-management', OrderedDict([
                 ('servers', servers),
                 ('include-code-history', find_executable_files()),
-                ('include-preview', ['*.txt', '*.csv', '*.tsv']), 
+                ('include-preview', OrderedDict([
+                    ('length', 512),
+                    ('files', ['*.txt', '*.csv', '*.tsv'])
+                    ])),
                 ('include-data-history', True),
                 ('include-schema', ['*.csv', '*.tsv']),
                 ('include-tab-diffs', ['*.csv', '*.tsv']),
+                ('include-platform', True),
             ]))]))
     
     with open(autofile, 'w') as fd: 
@@ -248,17 +254,5 @@ def collect(autofile, force_init):
     # Add the files to the repo
     auto_add(repo, autooptions, files) 
 
-    # Add metadata information 
-    history = None 
-    if 'metadata-management' in autooptions: 
-        metadata = autooptions['metadata-management']
-        
-        # Include history of the data repo 
-        include_data_history = metadata.get('include-data-history',False)
-        if include_data_history: 
-            history = get_history(repo.rootdir) 
-            print("Got history") 
-        
-    package = repo.package
-    package['history'] = history 
-
+    # Collect all the metadata and post
+    common_post(repo)

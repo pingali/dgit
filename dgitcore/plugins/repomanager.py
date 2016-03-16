@@ -2,6 +2,7 @@
 
 import os, sys
 import json
+import fnmatch, re 
 from collections import namedtuple
 
 Key = namedtuple("Key", ["name","version"])
@@ -30,21 +31,6 @@ class Repo:
         files = [f for f in files if re.match(includes, os.path.basename(f))]
         return files 
     
-    def find_include_files(self, pattern_name): 
-        
-        if 'metadata-management' not in self.options:
-            return [] 
-
-        if pattern_name not in ['include-preview',
-                                'include-schema',
-                                'include-tab-diffs',
-                                
-                            ]: 
-            return []
-
-        metadata = self.options['metadata-management']
-        patterns = metadata.get(pattern_name,[])
-        return self.find_include_files(patterns) 
         
     def __str__(self): 
         return "[{}] {}/{}".format(self.manager.name,

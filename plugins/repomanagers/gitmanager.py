@@ -182,11 +182,6 @@ class GitRepoManager(RepoManagerBase):
 
         result = None
         with cd(repo.rootdir):             
-            for f in files: 
-                if not f.startswith("-"):
-                    if not os.path.exists(f): 
-                        raise Exception("Missing file" + f) 
-
             try: 
                 cmd = ['rm'] + list(args)
                 result = {
@@ -202,7 +197,7 @@ class GitRepoManager(RepoManagerBase):
             # print(result) 
             return result 
 
-    def drop(self, repo): 
+    def drop(self, repo, args): 
         """
         Cleanup the repo 
         """
@@ -226,10 +221,11 @@ class GitRepoManager(RepoManagerBase):
             shutil.rmtree(server_repodir) 
 
         return { 
-            'status': 'success'
+            'status': 'success',
+            'message': "successful cleanup"
         }
 
-    def permalink(self, key, path):        
+    def permalink(self, repo, path):        
         """
         Get the permalink to command that generated the dataset 
         """

@@ -3,8 +3,8 @@
 This is the core module for manipulating the dataset metadata 
 """
 import os, sys, copy, fnmatch, re, shutil 
-import yaml, json, tempfile 
-import webbrowser 
+import yaml, json, tempfile, mimetypes
+import webbrowser, traceback 
 import subprocess, string, random, pipes
 import shelve, getpass
 from datetime import datetime
@@ -112,27 +112,11 @@ def delete(repo, args):
     Delete files
     """
     
-    # Cleanup metadata for these files.
-    missing = []
-    for f in args: 
-        found = False
-        if f.startswith("-"):
-            continue 
-        for i, r in enumerate(repo.package['resources']):
-            if r['relativepath'] == f: 
-                del repo.package['resources'][i]                
-                found = True
-                break 
-        if not found: 
-            missing.append(f)
-
-    if len(missing) > 0: 
-        print("Could not find metadata for the following:", missing) 
-        print("Repo may have been corrupted")
-
     # Cleanup the repo
     generic_repo_cmd(repo, 'delete', False, args)
 
+    # Have to sync up repo files and datapackage.json 
+    print("XXXX Update datapackage.json") 
     
     # Now sync the metadata 
     (handle, filename) = tempfile.mkstemp()    
@@ -302,61 +286,103 @@ def status(repo, details, args):
 ###########################################################
 # Post metadata to a server
 ###########################################################
-def add_preview(repo, size, args): 
 
-    rootdir = repo.rootdir 
-    packagefilename = 'datapackage.json' 
+def annotate_metadata_data(repo, task, patterns, size=0): 
+    """
+    Update metadata with the content of the files
+    """
+    
+    matching_files = repo.find_matching_files(patterns)
     package = repo.package
-    
+    rootdir = repo.rootdir 
     files = package['resources'] 
-    for f in files: 
-        
+    for f in files:
         relativepath = f['relativepath']
-        path = os.path.join(rootdir, relativepath) 
+        if relativepath in matching_files: 
+            path = os.path.join(rootdir, relativepath) 
+            if task == 'preview': 
+                print("Adding preview for ", path)
+                f['content'] = open(path).read()[:size]            
+            elif task == 'schema': 
+                print("Adding schema for ", path)
+                f['schema'] = get_schema(path) 
 
-        # Should I be adding a snippet? 
-        match = False
-        for i in args: 
-            if (fnmatch.fnmatch(path, i) or 
-                fnmatch.fnmatch(relativepath, i)):
-                match = True
-                break 
-                
-        if match: 
-            print("Reading content", path)
-            f['content'] = open(path).read()[:size]
-            f['schema'] = get_schema(path) 
-
+def annotate_metadata_code(repo, files):
+    """
+    Update metadata with the commit information 
+    """
     
-    # Write a temp file 
-    (handle, filename) = tempfile.mkstemp()    
-    with open(filename, 'w') as fd: 
-        fd.write(json.dumps(package, indent=4))
+    package = repo.package 
+    package['code'] = []
+    for f in files: 
+        f = os.path.abspath(f)
+        package['code'].append({ 
+            'permalink': repo.manager.permalink(repo, f),
+            'uuid': str(uuid.uuid1()),
+            'mimetypes': mimetypes.guess_type(f)[0],
+            'sha256': compute_sha256(f),
+        })
 
-    # Add it to the list of files...
-    repo.run('add_files',[
-        { 
-            'relativepath': 'datapackage.json',
-            'localfullpath': filename, 
-        }
-    ])
+
+def annotate_metadata_platform(repo, files):
+    """
+    Update metadata with the commit information 
+    """
+
+    print("Added platform information")    
+    package = repo.package 
+    mgr = get_plugin_mgr() 
+    repomgr = mgr.get(what='instrumentation', name='platform') 
+    package['platform'] = repomgr.get_metadata()
     
 
-def post(repo, args): 
+def post(repo, args=[]): 
     """
     Post to metadata server
     """
 
-    
 
-    mgr = get_plugin_mgr() 
-    metadatamgr = mgr.get(what='metadata',name='generic-metadata') 
+    if 'metadata-management' in repo.options:
+
+        metadata = repo.options['metadata-management']
+        
+        # Add data repo history 
+        if 'include-data-history' in metadata and metadata['include-data-history']: 
+            print("Including history")
+            repo.package['history'] = get_history(repo.rootdir)
+
+        # Add data repo history 
+        if 'include-preview' in metadata: 
+            annotate_metadata_data(repo, 
+                                   task='preview',
+                                   patterns=metadata['include-preview']['files'],
+                                   size=metadata['include-preview']['length'])
+
+        if 'include-schema' in metadata: 
+            annotate_metadata_data(repo, 
+                                   task='schema',
+                                   patterns=metadata['include-schema'])
+            
+        if 'include-code-history' in metadata: 
+            annotate_metadata_code(repo, 
+                                   files=metadata['include-code-history'])
+
+        if 'include-platform' in metadata: 
+            annotate_metadata_platform(repo)
+            
+
+    print(repo)
     try: 
-        # Annotate with history as well...
-        package = repo.package 
-        package['history'] = get_history(repo.rootdir) 
-        metadatamgr.post(package)
+        mgr = get_plugin_mgr() 
+        keys = mgr.search(what='metadata')
+        keys = keys['metadata']
+        for k in keys: 
+            print("Key", k)
+            metadatamgr = mgr.get_by_key('metadata', k)
+            print("Posting to ", metadatamgr)
+            metadatamgr.post(repo)
     except Exception as e:
+        traceback.print_exc()
         print(e)
         print("Could not post. Please look at the log files")
         return 

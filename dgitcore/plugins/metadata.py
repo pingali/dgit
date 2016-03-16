@@ -41,16 +41,18 @@ class MetadataBase(object):
         """
         return 
 
-    def post(self, datapackage): 
+    def post(self, repo): 
         """
         Post to the metadata server 
         
         Parameters
         ----------
 
-        datapackage: datapackage 
+        repo 
         """
         
+        datapackage = repo.package 
+
         url = self.url 
         token = self.token 
         headers = {

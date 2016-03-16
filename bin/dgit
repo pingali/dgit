@@ -143,12 +143,13 @@ def diff(repo, args):
     datasets.diff(repo, list(args))
 
 @repo_specific.command('drop', context_settings=CONTEXT_SETTINGS)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @common_options 
-def drop(repo): 
+def drop(repo, args): 
     """
     Drop dataset
     """
-    datasets.drop(repo)
+    datasets.drop(repo, list(args))
 
 ##############################################################
 # Repo specific but more complicated commands 
