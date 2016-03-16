@@ -20,7 +20,7 @@ from ..config import get_config
 from ..plugins.common import get_plugin_mgr 
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
 from .detect import get_schema
-from .history import get_history
+from .history import get_history, get_diffs
 
 #####################################################    
 # Repo independent commands...
@@ -345,8 +345,13 @@ def annotate_metadata_platform(repo):
     mgr = get_plugin_mgr() 
     repomgr = mgr.get(what='instrumentation', name='platform') 
     package['platform'] = repomgr.get_metadata()
-    
 
+def annotate_metadata_diffs(repo): 
+    
+    with cd(repo.rootdir):     
+        get_diffs(repo.package['history'])
+
+    
 def post(repo, args=[]): 
     """
     Post to metadata server
@@ -373,14 +378,19 @@ def post(repo, args=[]):
             annotate_metadata_data(repo, 
                                    task='schema',
                                    patterns=metadata['include-schema'])
-            
+        
         if 'include-code-history' in metadata: 
             annotate_metadata_code(repo, 
                                    files=metadata['include-code-history'])
 
         if 'include-platform' in metadata: 
             annotate_metadata_platform(repo)
-            
+
+        history = repo.package.get('history',None)
+        if (('include-tab-diffs' in metadata) and 
+            metadata['include-tab-diffs'] and 
+            history is not None): 
+            annotate_metadata_diffs(repo)
 
     try: 
         mgr = get_plugin_mgr() 
