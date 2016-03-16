@@ -176,6 +176,8 @@ def auto_get_repo(autooptions, debug=True):
                                    force=True)
                 if debug: 
                     print("Successfully inited repo") 
+            else: 
+                raise Exception("Cannot load repo") 
 
     repo.options = autooptions 
 

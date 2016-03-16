@@ -5,6 +5,7 @@ This is the core module for manipulating the dataset metadata
 import os, sys, copy, fnmatch, re, shutil 
 import yaml, json, tempfile 
 import webbrowser 
+from collections import OrderedDict
 import subprocess, string, random, pipes
 import getpass
 from datetime import datetime
@@ -24,37 +25,37 @@ from .detect import get_schema
 def annotate_record(h): 
 
     # Insert defaults 
-    defaults = {
-        'type': 'data',
-        'generator': False, 
-        'source': None
-    }
+    defaults = OrderedDict([
+        ('type', 'data'),
+        ('generator', False), 
+        ('source', None)
+    ])
+
     for k, v in defaults.items(): 
         if k not in h: 
             h[k] = v 
 
     # Update UUID and other detauls 
     f = h['localfullpath'] 
-    h.update({ 
-        'uuid': str(uuid.uuid1()),
-        'mimetypes': mimetypes.guess_type(f)[0],
-        'sha256': compute_sha256(f),
-    })
+    h.update(OrderedDict([
+        ('mimetypes', mimetypes.guess_type(f)[0]),
+        ('sha256', compute_sha256(f))
+    ]))
     
     return h 
     
 def add_link(f):
-    update = { 
-        'type': 'data',
-        'generator': False,
-        'uuid': str(uuid.uuid1()),
-        'relativepath': f,
-        'mimetypes': "",
-        'content': "", 
-        'sha256': "",
-        'localfullpath': None,
-        'localrelativepath': None
-    }
+    update = OrderedDict([
+        ('type', 'data'),
+        ('generator', False),
+        ('relativepath', f),
+        ('mimetypes', ""),
+        ('content', ""), 
+        ('sha256', ""),
+        ('localfullpath', None),
+        ('localrelativepath', None)
+    ])
+
     return (f, update) 
 
 def add_file_normal(f, targetdir, generator,script, source):
@@ -74,16 +75,16 @@ def add_file_normal(f, targetdir, generator,script, source):
         filetype = 'script'
         if generator: 
             filetype = 'generator' 
-        
-    update = {
-        'type': filetype, 
-        'generator': generator, 
-        'relativepath': relativepath, 
-        'content': '', 
-        'source': source, 
-        'localfullpath': f,
-        'localrelativepath': relpath, 
-    }
+      
+    update = OrderedDict([
+        ('type', filetype),
+        ('generator', generator),
+        ('relativepath', relativepath),
+        ('content', ""), 
+        ('source', source),
+        ('localfullpath', f),
+        ('localrelativepath', relpath)
+    ])  
 
     update = annotate_record(update) 
 
@@ -242,18 +243,17 @@ def extract_files(filename, includes):
         else: 
             relativepath = os.path.join(relativepath, os.path.basename(f))
 
-        result.append({
-            "relativepath": relativepath, 
-            'type': 'run-output',
-            'actions': files[f],
-            'uuid': str(uuid.uuid1()),
-            'mimetypes': mimetypes.guess_type(f)[0],
-            'content': open(f).read(512), 
-            'sha256': compute_sha256(f),
-            'ts': ts, 
-            'localrelativepath': os.path.relpath(f, "."),
-            "localfullpath": os.path.abspath(f),            
-        })
+        result.append(OrderedDict([
+            ('relativepath', relativepath), 
+            ('type', 'run-output'),
+            ('actions', files[f]),
+            ('mimetypes', mimetypes.guess_type(f)[0]),
+            ('content', open(f).read(512)), 
+            ('sha256', compute_sha256(f)),
+            ('ts', ts),
+            ('localrelativepath', os.path.relpath(f, ".")),
+            ('localfullpath', os.path.abspath(f)),   
+        ]))
         
     print(json.dumps(result, indent=4))
     return result

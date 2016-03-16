@@ -161,7 +161,6 @@ def bootstrap_datapackage(repo, force=False):
     package = OrderedDict([
         ('title', ''),
         ('description', ''),
-        ('uuid', str(uuid.uuid1())),
         ('username', repo.username),
         ('reponame', repo.reponame),
         ('name', str(repo)),
@@ -323,15 +322,17 @@ def annotate_metadata_code(repo, files):
     
     package = repo.package 
     package['code'] = []
-    for f in files: 
-        absf = os.path.abspath(f)
-        package['code'].append({
-            'script': f,
-            'permalink': repo.manager.permalink(repo, absf),
-            'uuid': str(uuid.uuid1()),
-            'mimetypes': mimetypes.guess_type(absf)[0],
-            'sha256': compute_sha256(absf)
-        })
+    for p in files:
+        matching_files = glob2.glob("**/{}".format(p))
+        print("Found matching files", matching_files)
+        for f in matching_files: 
+            absf = os.path.abspath(f)
+            package['code'].append(OrderedDict([
+                ('script', f),
+                ('permalink', repo.manager.permalink(repo, absf)),
+                ('mimetypes', mimetypes.guess_type(absf)[0]),
+                ('sha256', compute_sha256(absf))
+            ]))
 
 
 def annotate_metadata_platform(repo):
