@@ -133,21 +133,24 @@ class S3Backend(BackendBase):
         os.chmod(postrecv_filename, 
                  st.st_mode | stat.S_IEXEC)
 
-    def url_exists(self, url): 
+    def url_is_valid(self, url): 
              
         if self.client == 'aws': 
             cmd = ["aws", "s3", "ls", url ]
         else: 
             cmd = ["s3cmd", "-c", self.s3cfg, "ls", url]   
 
-        try: 
-            self.run(cmd) 
-            return True
-        except: 
-            return False 
+        output = self.run(cmd) 
+        if len(output) == 0: 
+            return False
+
+        return True 
 
     def clone_repo(self, url, gitdir): 
 
+        if not self.url_is_valid(url):
+            raise Exception("Invalid URL")
+        
         try: 
             os.makedirs(gitdir) 
         except:

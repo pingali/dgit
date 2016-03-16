@@ -142,6 +142,15 @@ def diff(repo, args):
     """
     datasets.diff(repo, list(args))
 
+@repo_specific.command('show',context_settings=CONTEXT_SETTINGS)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@common_options 
+def show(repo, args): 
+    """
+    Show details of commit
+    """
+    datasets.show(repo, list(args))
+
 @repo_specific.command('drop', context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @common_options 

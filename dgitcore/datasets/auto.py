@@ -1,5 +1,5 @@
 import os, sys, getpass, stat, glob, json, platform 
-import subprocess, time
+import subprocess, time, traceback 
 from collections import OrderedDict
 import fnmatch, re
 from ..config import get_config
@@ -133,7 +133,7 @@ def auto_init(autofile, force_init=False):
     sys.exit() 
 
 
-def auto_get_repo(autooptions, debug=False): 
+def auto_get_repo(autooptions, debug=True): 
     """
     Clone this repo if exists. Otherwise create one...
     """
@@ -164,6 +164,7 @@ def auto_get_repo(autooptions, debug=False):
             if debug: 
                 print("Cloning successful")
         except:
+            # traceback.print_exc()
             yes = input("Repo doesnt exists and could not clone. Should I create one? [yN]") 
             if yes == 'y': 
                 setup = "git"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
-import os, sys, json, subprocess, re 
-import pipes
+import os, sys, json, subprocess, re, json 
+import pipes, collections
 import shutil 
 from sh import git 
 from dgitcore.plugins.repomanager import RepoManagerBase, RepoManagerHelper, Repo
@@ -80,6 +80,9 @@ class GitRepoManager(RepoManagerBase):
 
     def commit(self, repo, args): 
         return self.run_generic_command(repo, ["commit"] + args)
+
+    def show(self, repo, args): 
+        return self.run_generic_command(repo, ["show"] + args)
 
         
     # => Run more complex functions to initialize, cleanup 
@@ -162,7 +165,6 @@ class GitRepoManager(RepoManagerBase):
                 raise Exception("Local copy already exists") 
 
             # s3 -> .dgit/git/pingali/hello.git -> .dgit/datasets/pingali/hello 
-            print("Backend cloned the repo") 
             backend.clone_repo(url, server_repodir)
             with cd(os.path.dirname(rootdir)): 
                 self.run(['clone', '--no-hardlinks'])
@@ -331,7 +333,7 @@ class GitRepoManager(RepoManagerBase):
             }
         elif what == 'set': 
             self.workspace = params['Local']['workspace']
-            self.username = params['User']['user.fullname']
+            self.username = params['User']['user.name']
             self.email = params['User']['user.email']
             if self.enable == 'n': 
                 return 
@@ -349,8 +351,9 @@ class GitRepoManager(RepoManagerBase):
                         if not os.path.exists(package): 
                             print("[Initialization] Invalid dataset: %s/%s at %s " %(username, reponame, r.rootdir))
                             print("[Initalization] Skipping")
-                            continue 
-                        r.package = json.loads(open(package).read())
+                            continue
+                        packagedata = open(package).read()
+                        r.package = json.JSONDecoder(object_pairs_hook=collections.OrderedDict).decode(packagedata)
                         r.manager = self 
                         self.add(r) 
                     

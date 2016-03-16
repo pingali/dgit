@@ -2,7 +2,7 @@
 """
 Configuration parser 
 """
-import os, sys, json, re, traceback 
+import os, sys, json, re, traceback, getpass 
 
 try: 
     from urllib.parse import urlparse
@@ -110,7 +110,8 @@ def update(globalvars):
         'name': 'User',
         'nature': 'generic',
         'description': "General information",
-        'variables': ['user.email', 'user.fullname'],
+        'variables': ['user.email', 'user.name', 
+                      'user.fullname'],
         'defaults': {
             'user.email': { 
                 'value': defaults.get('user.email',''),
@@ -119,6 +120,11 @@ def update(globalvars):
             },
             'user.fullname': {
                 'value': defaults.get('user.fullname',''),
+                'description': "Full Name",
+                'validator': NonEmptyValidator() 
+            },
+            'user.name': {
+                'value': defaults.get('user.name', getpass.getuser()),
                 'description': "Full Name",
                 'validator': NonEmptyValidator() 
             },

@@ -4,8 +4,9 @@ This is the core module for manipulating the dataset metadata
 """
 import os, sys, copy, fnmatch, re, shutil 
 import yaml, json, tempfile, mimetypes
-import webbrowser, traceback 
+import webbrowser, traceback, collections 
 import subprocess, string, random, pipes
+from collections import OrderedDict
 import shelve, getpass
 from datetime import datetime
 from hashlib import sha256
@@ -83,6 +84,12 @@ def log(repo, args):
     """
     return generic_repo_cmd(repo, 'log', True, args)
 
+def show(repo, args): 
+    """
+    Show commit details
+    """
+    return generic_repo_cmd(repo, 'show', True, args) 
+
 def push(repo, args): 
     """
     Push to S3 
@@ -151,20 +158,21 @@ def bootstrap_datapackage(repo, force=False):
     tsprefix = datetime.now().date().isoformat()  
 
     # Initial data package json 
-    package = {
-        'uuid': str(uuid.uuid1()),
-        'username': repo.username,
-        'reponame': repo.reponame,
-        'name': str(repo),
-        'title': "",
-        'description': "",
-        'keywords': [], 
-        'resources': [
-        ],
-        'creator': getpass.getuser(),
-        'createdat': datetime.now().isoformat(),
-        'remote-url': repo.remoteurl, 
-    }
+    package = OrderedDict([
+        ('title', ''),
+        ('description', ''),
+        ('uuid', str(uuid.uuid1())),
+        ('username', repo.username),
+        ('reponame', repo.reponame),
+        ('name', str(repo)),
+        ('title', ""),
+        ('description', ""),
+        ('keywords', []),
+        ('resources', []),
+        ('creator', getpass.getuser()),
+        ('createdat', datetime.now().isoformat()),
+        ('remote-url', repo.remoteurl)
+    ])
 
     for var in ['title', 'description']: 
         value = ''
@@ -231,6 +239,7 @@ def clone(url):
     repomgr = mgr.get(what='repomanager', name='git') 
     backendmgr = mgr.get(what='backend', name=backendtype) 
     
+    # print("Testing {} with backend {}".format(url, backendmgr))
     if backendmgr is not None and not backendmgr.url_is_valid(url): 
         raise Exception("Invalid URL") 
         
@@ -316,12 +325,12 @@ def annotate_metadata_code(repo, files):
     package['code'] = []
     for f in files: 
         absf = os.path.abspath(f)
-        package['code'].append({ 
-            'script': f, 
+        package['code'].append({
+            'script': f,
             'permalink': repo.manager.permalink(repo, absf),
             'uuid': str(uuid.uuid1()),
             'mimetypes': mimetypes.guess_type(absf)[0],
-            'sha256': compute_sha256(absf),
+            'sha256': compute_sha256(absf)
         })
 
 

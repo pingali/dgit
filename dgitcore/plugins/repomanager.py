@@ -179,16 +179,19 @@ class RepoManagerBase(object):
         self.repos[key] = repo 
         return key 
 
-    def drop(self, repo): 
+    def drop(self, repo, args): 
         pass 
 
-    def push(self, repo): 
+    def push(self, repo, args): 
         pass 
 
-    def status(self, repo): 
+    def status(self, repo, args): 
         pass 
 
-    def stash(self, repo): 
+    def show(self, repo, args): 
+        pass 
+
+    def stash(self, repo, args): 
         pass 
         
     def commit(self, repo, message): 
