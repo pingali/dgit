@@ -315,12 +315,13 @@ def annotate_metadata_code(repo, files):
     package = repo.package 
     package['code'] = []
     for f in files: 
-        f = os.path.abspath(f)
+        absf = os.path.abspath(f)
         package['code'].append({ 
-            'permalink': repo.manager.permalink(repo, f),
+            'script': f, 
+            'permalink': repo.manager.permalink(repo, absf),
             'uuid': str(uuid.uuid1()),
-            'mimetypes': mimetypes.guess_type(f)[0],
-            'sha256': compute_sha256(f),
+            'mimetypes': mimetypes.guess_type(absf)[0],
+            'sha256': compute_sha256(absf),
         })
 
 
