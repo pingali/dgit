@@ -8,6 +8,7 @@ from .common import clone as common_clone, init as common_init, post as common_p
 from .files import add as files_add
 from .history import get_history 
 from .detect import get_schema 
+from datetime import datetime 
 
 def find_executable_files(): 
     """
@@ -253,6 +254,14 @@ def collect(autofile, force_init):
 
     # Add the files to the repo
     auto_add(repo, autooptions, files) 
+
+    # Commit the changes
+    ts = datetime.now().isoformat()
+    repo.run('commit', ['-a', 
+                        '-m', "Automatic commit on {}".format(ts)])
+    
+    # Push to server 
+    repo.run('push', ['origin', 'master'])
 
     # Collect all the metadata and post
     common_post(repo)

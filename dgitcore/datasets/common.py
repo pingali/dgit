@@ -324,9 +324,9 @@ def annotate_metadata_code(repo, files):
         })
 
 
-def annotate_metadata_platform(repo, files):
+def annotate_metadata_platform(repo):
     """
-    Update metadata with the commit information 
+    Update metadata host information
     """
 
     print("Added platform information")    
@@ -371,7 +371,6 @@ def post(repo, args=[]):
             annotate_metadata_platform(repo)
             
 
-    print(repo)
     try: 
         mgr = get_plugin_mgr() 
         keys = mgr.search(what='metadata')
