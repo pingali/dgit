@@ -46,7 +46,6 @@ class RegressionQualityValidator(ValidatorBase):
         """
 
         status = []
-
         
         with cd(repo.rootdir): 
             rules = dict([(r, json.loads(open(r).read())) for r in rules])
@@ -60,7 +59,10 @@ class RegressionQualityValidator(ValidatorBase):
                     match = re.search(r"R-squared:\s+(\d.\d+)", files[f])
                     if match is None: 
                         status.append({
-                            'target': "{} with {}".format(f, r),
+                            'target': f,
+                            'validator': self.name,
+                            'description': self.description,
+                            'rules': r, 
                             'status': "ERROR",
                             'message': "Invalid model output"
                             })
@@ -69,13 +71,19 @@ class RegressionQualityValidator(ValidatorBase):
                         r2 = float(r2)
                         if r2 > minr2: 
                             status.append({
-                                'target': "{} with {}".format(f, r),
+                                'target': f,
+                                'validator': self.name,
+                                'description': self.description,
+                                'rules': r, 
                                 'status': "OK",
                                 'message': "Acceptable R2"
                             })
                         else: 
                             status.append({
-                                'target': "{} with {}".format(f, r),
+                                'target': f,
+                                'validator': self.name,
+                                'description': self.description,
+                                'rules': r, 
                                 'status': "ERROR",
                                 'message': "R2 is too low"
                             })

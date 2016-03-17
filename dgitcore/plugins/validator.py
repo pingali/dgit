@@ -41,15 +41,15 @@ class ValidatorBase(object):
         """
         return 
 
-    def evaluate(self, repomanager, repo): 
+    def evaluate(self, repo, files, rules): 
         """
         Evaluate the repo
         
-        Parameters
-        ----------
-
-        repo manager
-        repo
+        returns: A list of dictionaries with:
+           target: relative path of the file 
+           rules: rules file used 
+           validator: name of the validator 
+           status: OK/Success/Error
+           Message: Any additional information              
         """
-        
-        print("Do nothing")
+        return []

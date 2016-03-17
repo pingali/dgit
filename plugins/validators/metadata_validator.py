@@ -61,24 +61,36 @@ class MetadataValidator(ValidatorBase):
                     if computed_sha256 != coded_sha256: 
                         status.append({
                             'target': f,
+                            'rules': "",
+                            'validator': self.name,
+                            'description': self.description,
                             'status': 'ERROR',
                             'message': "Mismatch in checksum on disk and in datapackage.json"
                         })
                     else: 
                         status.append({
                             'target': f,
+                            'rules': "",
+                            'validator': self.name,
+                            'description': self.description,
                             'status': 'OK',
                             'message': ""
                         })
                 elif f in resource_files: 
                     status.append({
-                            'target': f,
-                            'status': 'ERROR',
-                            'message': "In datapackage.json but not in repo"
-                        })
+                        'target': f,
+                        'rules': "",
+                        'validator': self.name,
+                        'description': self.description,
+                        'status': 'ERROR',
+                        'message': "In datapackage.json but not in repo"
+                    })
                 else:
                     status.append({
                         'target': f,
+                        'rules': "",
+                        'validator': self.name, 
+                        'description': self.description,
                         'status': 'ERROR',
                         'message': "In repo but not in datapackage.json"
                         })

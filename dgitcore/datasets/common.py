@@ -21,6 +21,7 @@ from ..plugins.common import get_plugin_mgr
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
 from .detect import get_schema
 from .history import get_history, get_diffs
+from .validation import run_validation
 
 #####################################################    
 # Repo independent commands...
@@ -323,9 +324,9 @@ def annotate_metadata_code(repo, files):
     package['code'] = []
     for p in files:
         matching_files = glob2.glob("**/{}".format(p))
-        # print("Found matching files", matching_files)
         for f in matching_files: 
             absf = os.path.abspath(f)
+            print("Add commit data for {}".format(f))
             package['code'].append(OrderedDict([
                 ('script', f),
                 ('permalink', repo.manager.permalink(repo, absf)),
@@ -346,10 +347,27 @@ def annotate_metadata_platform(repo):
     package['platform'] = repomgr.get_metadata()
 
 def annotate_metadata_diffs(repo): 
-    
+
+    print("Computing diffs")
     with cd(repo.rootdir):     
         get_diffs(repo.package['history'])
 
+def annotate_metadata_validation(repo): 
+    
+    print("Adding validation information")
+    # Collect the validation results by relativepath
+    results = run_validation(repo)    
+    fileresults = {} 
+    for r in results: 
+        filename = r['target'] 
+        if filename not in fileresults:  
+            fileresults[filename] = []
+        fileresults[filename].append(r)
+
+    for r in repo.package['resources']: 
+        path = r['relativepath']
+        if path in fileresults: 
+            r['validation'] = fileresults[path]
     
 def post(repo, args=[]): 
     """
@@ -358,12 +376,12 @@ def post(repo, args=[]):
 
 
     if 'metadata-management' in repo.options:
-
+        
+        print("Collecting all the required metadata to post")
         metadata = repo.options['metadata-management']
         
         # Add data repo history 
         if 'include-data-history' in metadata and metadata['include-data-history']: 
-            print("Including history")
             repo.package['history'] = get_history(repo.rootdir)
 
         # Add data repo history 
@@ -385,6 +403,9 @@ def post(repo, args=[]):
         if 'include-platform' in metadata: 
             annotate_metadata_platform(repo)
 
+        if 'include-validation' in metadata: 
+            annotate_metadata_validation(repo)
+
         history = repo.package.get('history',None)
         if (('include-tab-diffs' in metadata) and 
             metadata['include-tab-diffs'] and 
@@ -398,7 +419,7 @@ def post(repo, args=[]):
         for k in keys: 
             # print("Key", k)
             metadatamgr = mgr.get_by_key('metadata', k)
-            print("Posting to ", metadatamgr)
+            # print("Posting to ", metadatamgr)
             metadatamgr.post(repo)
     except Exception as e:
         traceback.print_exc()

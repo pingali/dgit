@@ -90,9 +90,7 @@ def auto_init(autofile, force_init=False):
             ]))
         ])),
         ('validate' ,OrderedDict([
-            ('checksum-validator', OrderedDict([
-                ('files', ['*.csv', '*.tsv']),                
-            ]))
+            ('metadata-validator', OrderedDict([]))
         ]))
     ])
 
@@ -117,6 +115,7 @@ def auto_init(autofile, force_init=False):
                     ('files', ['*.txt', '*.csv', '*.tsv'])
                     ])),
                 ('include-data-history', True),
+                ('include-validation', True),
                 ('include-schema', ['*.csv', '*.tsv']),
                 ('include-tab-diffs', ['*.csv', '*.tsv']),
                 ('include-platform', True),

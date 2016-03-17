@@ -67,7 +67,7 @@ class PluginManager(object):
                 identifier="Plugin Manager")
 	    
             for plugin_name in source.list_plugins():
-                # print("Loading plugin", plugin_name)
+                # print("Loading plugin", p['base'], plugin_name)
                 plugin = source.load_plugin(plugin_name)
                 plugin.setup(self)
 

@@ -27,8 +27,13 @@ class Repo:
         """
         
         files = [f['relativepath'] for f in self.package['resources']]
-        includes = r'|'.join([fnmatch.translate(x) for x in includes])
-        files = [f for f in files if re.match(includes, os.path.basename(f))]
+        includes = r'|'.join([fnmatch.translate(x) for x in includes])        
+
+        # Match both the file name as well the path..
+        files = [f for f in files if re.match(includes, os.path.basename(f))] + \
+                [f for f in files if re.match(includes, f)]
+        files = list(set(files))
+
         return files 
     
         
