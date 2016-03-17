@@ -81,7 +81,7 @@ def auto_init(autofile, force_init=False):
         ("remoteurl", remoteurl),
         ("working-directory", "."),
         ('track' ,OrderedDict([
-            ('includes', ['*.csv', '*.tsv', '*.txt','*.json']),
+            ('includes', ['*.csv', '*.tsv', '*.txt','*.json', '*.xlsx']),
             ('excludes', ['.git', '.svn', os.path.basename(autofile)]),
         ])),
         ('import' ,OrderedDict([
@@ -90,7 +90,9 @@ def auto_init(autofile, force_init=False):
             ]))
         ])),
         ('validate' ,OrderedDict([
-            ('content-rule-validator', ['*.csv', '*.tsv']),
+            ('checksum-validator', OrderedDict([
+                ('files', ['*.csv', '*.tsv']),                
+            ]))
         ]))
     ])
 
@@ -226,7 +228,8 @@ def auto_add(repo, autooptions, files):
     keys = mapping.keys()     
     keys = sorted(keys, key=lambda k: len(k), reverse=True)
 
-    params = []
+    count = 0 
+    params = []    
     for f in files:         
         
         # Find the destination
@@ -239,10 +242,11 @@ def auto_add(repo, autooptions, files):
                 break 
 
         # Now add to repository 
-        files_add(repo=repo, 
-            args=[f],
-            targetdir=os.path.dirname(relativepath))
-
+        count += files_add(repo=repo, 
+                           args=[f],
+                           targetdir=os.path.dirname(relativepath))
+        
+    return count 
 
 def collect(autofile, force_init): 
     
@@ -256,12 +260,16 @@ def collect(autofile, force_init):
     files = get_files_to_commit(autooptions) 
 
     # Add the files to the repo
-    auto_add(repo, autooptions, files) 
-
-    # Commit the changes
-    ts = datetime.now().isoformat()
-    repo.run('commit', ['-a', 
-                        '-m', "Automatic commit on {}".format(ts)])
+    count = auto_add(repo, autooptions, files) 
+    if count == 0: 
+        print("There is no change in repo")
+    else: 
+        # Commit the changes
+        ts = datetime.now().isoformat()
+        message = input("Quick summary of changes? ")
+        if message in [None, '']: 
+            message = "Automatic commit on {}".format(ts)
+        repo.run('commit', ['-a', '-m', message])
     
     # Push to server 
     repo.run('push', ['origin', 'master'])

@@ -217,11 +217,7 @@ def add(repo, targetdir, args, execute,
                  targetdir=targetdir, 
                  includes=includes)
 
-@repo_specific.command('validation',context_settings=CONTEXT_SETTINGS)
-@click.argument('action',
-                type=click.Choice(['add', 'remove', 'list', 'show', 'test', 'evaluate']))
-@click.option('--name', '-n',
-              help="Name of the ruleset")
+@repo_specific.command('validate',context_settings=CONTEXT_SETTINGS)
 @click.option('--validator', '-v',
               help="Name of the validator")
 @click.option('--target', '-t',
@@ -229,41 +225,13 @@ def add(repo, targetdir, args, execute,
 @click.option('--rules', '-r',
               help="File with validation rules")
 @common_options
-def validation(repo, action, name, target, rules): 
+def validate(repo, validator, target, rules): 
     """
-    Add validation rules
-    
-    filename: Filename pattern to which the rule must be applied 
-    rules: jsonfile with rules specificied in the LIVR format (`Language Independent Validation Rules <https://github.com/koorchik/LIVR>`_)
+    Validate the content of the repository
     """
-
-    if dataset is None: 
-        dataset = config.get_default_dataset() 
-
-    # Extract the correct dataset name
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None: 
-        return
-
-    checks = {
-        "name must be specified": {
-            'test': name is not None,
-            'action': ['add', 'remove']
-        },
-        "rules file to be specified": {
-            'test': not os.path.exists(rules),
-            'action': ['add', 'test']
-        }
-    }
-
-    invalid = False
-    for c in checks: 
-        if action in checks[c]['action'] and checks[c]['test']:
-            print(c) 
-            invalid = True 
     
-    if invalid: 
-        return 
+    datasets.validate(repo, validator, target, rules)
+
 
 @repo_specific.command('remote', context_settings=CONTEXT_SETTINGS)
 @click.argument("op",
@@ -277,14 +245,8 @@ def remote(repo, op, shortname, url):
     Manage remote 
     """
 
-    (username, dataset) = helper.parse_dataset_name(dataset)    
-    if dataset is None or username is None: 
-        print("Could not find the dataset. Please specify exact repo to be stashed")
-        return
-    
-    
     # git remote add pb https://github.com/paulboone/ticgit
-    datasets.remote(op, username, dataset, shortname, url) 
+    datasets.remote(repo, op, shortname, url) 
     return 
 
 ##############################################################

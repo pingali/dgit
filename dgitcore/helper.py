@@ -9,6 +9,7 @@ from datetime import datetime
 import getpass 
 import uuid 
 import subprocess 
+from chardet import detect as detect_encoding 
 
 class bcolors:
     HEADER = '\033[95m'
@@ -108,15 +109,22 @@ def clean_name(n):
     n = "".join([x if (x.isalnum() or x == "-") else "_" for x in n])    
     return n
 
-def compute_sha256(filename):    
-    h = sha256()
-    fd = open(filename) 
-    while True: 
-        buf = fd.read(0x1000000)
-        if buf in [None, ""]:
-            break 
-        h.update(buf.encode('utf-8')) 
-    return h.hexdigest() 
+def compute_sha256(filename):        
+    """
+    Try the library. If it doesnt work, use the command line..
+    """
+    try: 
+        h = sha256()
+        fd = open(filename, 'rb') 
+        while True: 
+            buf = fd.read(0x1000000)
+            if buf in [None, ""]:
+                break 
+            h.update(buf.encode('utf-8')) 
+        return h.hexdigest() 
+    except:
+        output = run(["sha256sum", "-b", filename])
+        return output.split(" ")[0]
 
 def run(cmd):
     """

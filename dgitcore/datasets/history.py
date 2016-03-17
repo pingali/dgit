@@ -40,7 +40,7 @@ def get_change():
             }
             continue
         
-        r =  parse.parse("{added:d}\t{deleted:d}\t{path}", l)
+        r =  parse.parse("{added}\t{deleted}\t{path}", l)
         if r is not None: 
             h['changes'].append({
                 'added': r['added'],

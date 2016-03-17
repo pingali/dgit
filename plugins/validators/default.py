@@ -37,29 +37,20 @@ class ChecksumValidator(ValidatorBase):
         else:
             self.enable = params['checksum-validator']['enable']
 
-    def evaluate(self, repomanager, key): 
+    def evaluate(self, repo, files, rules): 
         """
-        Evaluate the repo
-        
-        Parameters
-        ----------
-
-        repo manager
-        repo
+        Evaluate the files identified for checksum. 
         """
-        repo = repomanager.get_repo_details(key)    
-        rootdir = repo['rootdir']    
-        package = repo['package'] 
         
-        files = package['resources'] 
-        print('files', len(files))
+        print(self.name)
         for f in files: 
-            print(f['relativepath'])
-            coded_sha256 = f['sha256'] 
-            computed_sha256 = compute_sha256(os.path.join(rootdir,
-                                                          f['relativepath']))
+            r = repo.get_resource(f)
+            coded_sha256 = r['sha256']             
+            computed_sha256 = compute_sha256(r['localfullpath'])
             if computed_sha256 != coded_sha256: 
                 print("Sha 256 mismatch between file and datapackage")
+            else: 
+                print(f,": OK")
     
 
 

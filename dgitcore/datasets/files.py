@@ -362,20 +362,29 @@ def add(repo, args, targetdir,
         return repo 
 
 
-    # Copy the files 
-    repo.manager.add_files(repo, files) 
+    # Update the repo package but with only those that have changed.
 
-    # Update the repo package...
+    filtered_files = []
     package = repo.package             
     for h in files: 
         found = False
         for i, r in  enumerate(package['resources']):
             if h['relativepath'] == r['relativepath']: 
-                package['resources'][i] = h
                 found = True
+                if h['sha256'] == r['sha256']: 
+                    continue
+                filtered_files.append(h)
+                package['resources'][i] = h
                 break 
         if not found: 
+            filtered_files.append(h)
             package['resources'].append(h) 
+
+    if len(filtered_files) == 0: 
+        return 0 
+
+    # Copy the files 
+    repo.manager.add_files(repo, filtered_files) 
 
     # Write to disk...
     rootdir = repo.rootdir 
@@ -384,5 +393,5 @@ def add(repo, args, targetdir,
         with open(datapath, 'w') as fd: 
             fd.write(json.dumps(package, indent=4))
         
-    return 
+    return len(filtered_files)
 

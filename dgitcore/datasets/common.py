@@ -253,7 +253,6 @@ def clone(url):
 
     return repo 
 
-
 def status(repo, details, args): 
 
     result = generic_repo_cmd(repo, 'status', False, args)
@@ -397,7 +396,7 @@ def post(repo, args=[]):
         keys = mgr.search(what='metadata')
         keys = keys['metadata']
         for k in keys: 
-            print("Key", k)
+            # print("Key", k)
             metadatamgr = mgr.get_by_key('metadata', k)
             print("Posting to ", metadatamgr)
             metadatamgr.post(repo)
