@@ -16,7 +16,7 @@ class MetadataValidator(ValidatorBase):
         self.enable = 'y'
         super(MetadataValidator, self).__init__('metadata-validator', 
                                                'v0', 
-                                               "Validate integrity of the repository")
+                                               "Validate integrity of the dataset metadata")
 
     def config(self, what='get', params=None): 
         
@@ -28,20 +28,20 @@ class MetadataValidator(ValidatorBase):
                 'defaults': { 
                     'enable': {
                         'value': "y",
-                        "description": "Enable repository metadata"
+                        "description": "Enable repository metadata integrity check"
                     },            
                 }
             }
         else:
-            if (('checksum-validator' in params) and 
-                'enable' in params['checksum-validator']): 
-                self.enable = params['checksum-validator']['enable']
+            if (('metadata-validator' in params) and 
+                'enable' in params['metadata-validator']): 
+                self.enable = params['metadata-validator']['enable']
             else: 
                 self.enable = 'y'
 
     def evaluate(self, repo, files, rules): 
         """
-        Evaluate the files identified for checksum. 
+        Check the integrity of the datapackage.json
         """
 
         status = []
