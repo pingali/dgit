@@ -116,6 +116,7 @@ def auto_init(autofile, force_init=False):
                     ])),
                 ('include-data-history', True),
                 ('include-validation', True),
+                ('include-dependencies', True),
                 ('include-schema', ['*.csv', '*.tsv']),
                 ('include-tab-diffs', ['*.csv', '*.tsv']),
                 ('include-platform', True),
@@ -254,7 +255,7 @@ def collect(autofile, force_init):
 
     # Load repo from the dgit.json file 
     repo = auto_get_repo(autooptions)
-    
+
     # find all the files that must be collected
     files = get_files_to_commit(autooptions) 
 
