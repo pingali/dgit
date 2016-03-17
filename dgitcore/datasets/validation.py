@@ -24,7 +24,8 @@ def instantiate(repo, validator_name=None, filename=None, rules=None):
         else: 
             validators = { 
                 validator_name : {
-                    'files': []
+                    'files': [],
+                    'rules': []
                 }
             }
     else: 
@@ -32,8 +33,8 @@ def instantiate(repo, validator_name=None, filename=None, rules=None):
         
     # Insert the file names 
     if filename is not None: 
-        matching_files = repo.find_matching_files(filename)
-        if len(matching_files): 
+        matching_files = repo.find_matching_files([filename])
+        if len(matching_files) == 0: 
             print("Filename could not be found", filename) 
             raise Exception("Invalid filename pattern")
         for v in validators: 
@@ -87,4 +88,10 @@ def validate(repo, validator_name=None, filename=None, rules=None):
         keys = mgr.search(what='validator',name=v)['validator']        
         for k in keys: 
             validator = mgr.get_by_key('validator', k)
-            validator.evaluate(repo, files, rules) 
+            result = validator.evaluate(repo, files, rules) 
+            print(validator.name)
+            print("==========")
+            for r in result: 
+                print("{} : {} {}".format(r['file'], 
+                                          r['status'],
+                                          r['message']))

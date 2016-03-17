@@ -159,7 +159,9 @@ class PluginManager(object):
 
         filtered = self.search(what, name, version) 
         if len(filtered) > 0: 
-            for what in filtered.keys(): 
+            for what in ['backend', 'repomanager',
+                         'instrumentation', 'validator',
+                         'metadata']: 
                 print("========")
                 print(what)
                 print("========")
@@ -167,7 +169,7 @@ class PluginManager(object):
                     print("None")
                 for k in filtered[what]: 
                     obj = self.plugins[what][k]
-                    print("%s (%s) :" % k, obj.name, 
+                    print("%s (%s) :" % k, 
                           obj.description)
                     if details: 
                         print("   Supp:", obj.support)

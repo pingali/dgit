@@ -360,7 +360,7 @@ def profile(action, globalvar):
 @management.command('plugins')
 @click.argument('action',
                 type=click.Choice(['list', 'show', 'new']),
-                default='show')
+                default='list')
 @click.option('--what',
                 type=click.Choice(['backend', 'instrumentation', 'repomanager']))
 @click.option('--name')              

@@ -35,25 +35,38 @@ class ChecksumValidator(ValidatorBase):
                 }
             }
         else:
-            self.enable = params['checksum-validator']['enable']
+            if (('metadata-validator' in params) and 
+                'enable' in params['metadata-validator']): 
+                self.enable = params['metadata-validator']['enable']
+            else: 
+                self.enable = 'y'
 
     def evaluate(self, repo, files, rules): 
         """
         Evaluate the files identified for checksum. 
         """
-        
-        print(self.name)
+
+        status = []
         for f in files: 
             r = repo.get_resource(f)
             coded_sha256 = r['sha256']             
             computed_sha256 = compute_sha256(r['localfullpath'])
+            
             if computed_sha256 != coded_sha256: 
-                print("Sha 256 mismatch between file and datapackage")
+                status.append({
+                    'file': f,
+                    'status': 'ERROR',
+                    'message': "Sha 256 mismatch between file and datapackage"
+                })
             else: 
-                print(f,": OK")
-    
+                status.append({
+                    'file': f,
+                    'status': 'OK',
+                    'message': ""
+                })
 
-
+                
+        return status 
     
 def setup(mgr): 
     
