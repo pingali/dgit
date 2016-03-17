@@ -71,7 +71,7 @@ def datapackage_exists(repo):
 # Repo specific simple commands 
 #####################################################    
 def generic_repo_cmd(repo, cmd, show=True, *args): 
-    print("Running generic command", cmd, args)
+    # print("Running generic command", cmd, args)
     result = repo.run(cmd, *args) 
     if show:
         print("Status:", result['status'])
@@ -324,7 +324,7 @@ def annotate_metadata_code(repo, files):
     package['code'] = []
     for p in files:
         matching_files = glob2.glob("**/{}".format(p))
-        print("Found matching files", matching_files)
+        # print("Found matching files", matching_files)
         for f in matching_files: 
             absf = os.path.abspath(f)
             package['code'].append(OrderedDict([

@@ -96,7 +96,7 @@ def add_files(args, targetdir, generator, source, script):
     seen = []
     files = []
     for f in args: 
-        print("Looking at", f)
+        #print("Looking at", f)
         if "://" not in f:            
             (base, update) = add_file_normal(f=f,
                                              targetdir=targetdir, 

@@ -133,7 +133,7 @@ def auto_init(autofile, force_init=False):
     sys.exit() 
 
 
-def auto_get_repo(autooptions, debug=True): 
+def auto_get_repo(autooptions, debug=False): 
     """
     Clone this repo if exists. Otherwise create one...
     """
@@ -234,7 +234,7 @@ def auto_add(repo, autooptions, files):
         for k in keys: 
             v = mapping[k] 
             if f.startswith(k + "/"): 
-                print("Replacing ", k)
+                #print("Replacing ", k)
                 relativepath = f.replace(k + "/", v)
                 break 
 

@@ -34,7 +34,7 @@ setup(
     scripts=[
         'bin/dgit'
     ],
-    package_dir={'dgit': 'dgit'},
+    package_dir={'dgit': 'dgitcore'},
     include_package_data=True,
     install_requires=requirements,
     license="MIT",

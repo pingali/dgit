@@ -263,7 +263,7 @@ def get_diffs(history):
 
             if path.endswith('tsv') or path.endswith('csv'):
 
-                print(c['path'])
+                # print(c['path'])
 
                 v1_hex = prev['commit']
                 v2_hex = curr['commit']

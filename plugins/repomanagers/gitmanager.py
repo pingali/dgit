@@ -24,7 +24,7 @@ class GitRepoManager(RepoManagerBase):
     # =>  Helper functions
     def run(self, cmd):
 
-        print("Running cmd", cmd)
+        # print("Running cmd", cmd)
         cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd) 
         cmd += "; exit 0"
@@ -281,7 +281,7 @@ class GitRepoManager(RepoManagerBase):
                 project = project[:-4]
             permalink = "https://{}/{}/{}/blob/{}/{}".format(domain, username, project,
                                                         sha1, relpath)
-            print("permalink = ", permalink)
+            # print("permalink = ", permalink)
             return (relpath, permalink)
         else: 
             return (None, None) 
