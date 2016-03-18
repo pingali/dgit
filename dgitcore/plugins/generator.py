@@ -42,7 +42,7 @@ class GeneratorBase(object):
         """
         return 
 
-    def evaluate(self, repo, files, params=None): 
+    def evaluate(self, repo, files, params=None,explain=False): 
         """
         Execute the generator on the files        
         """

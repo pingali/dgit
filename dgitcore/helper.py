@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 
-import os, sys 
+import os, sys, re, unicodedata
 import json 
 import shelve 
 from hashlib import sha256 
@@ -144,3 +144,14 @@ def run(cmd):
     output = output.decode('utf-8')
     output = output.strip() 
     return output
+
+def slugify(value):
+    """
+    Normalizes string, converts to lowercase, removes non-alpha characters,
+    and converts spaces to hyphens.
+    """
+    value = unicodedata.normalize('NFKD', value)
+    value = value.encode('ascii', 'ignore')
+    value = value.decode('utf-8')
+    value = re.sub(r'[^\w\s-]', '-', value).strip().lower()
+    return re.sub(r'[-\s]+', '-', value)

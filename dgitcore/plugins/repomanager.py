@@ -4,6 +4,7 @@ import os, sys
 import json
 import fnmatch, re 
 from collections import namedtuple
+from ..helper import slugify 
 
 Key = namedtuple("Key", ["name","version"])
 
@@ -35,7 +36,36 @@ class Repo:
         files = list(set(files))
 
         return files 
-    
+
+    # Cache for partially computed information
+    def cache_path(self, prefix, objname): 
+        
+        path = os.path.join('.dgit',
+                            prefix, 
+                            slugify(objname))
+        return {
+            'relative': path,
+            'full': os.path.join(self.rootdir, path)
+            }
+        
+    def cache_check(self, prefix, objname):         
+        cache_path = self.cache_path(prefix, objname) 
+        return os.path.exists(cache_path['full'])
+
+    def cache_read(self, prefix, objname):         
+        cache_path = self.cache_path(prefix, objname) 
+        return open(cache_path['full']).read()
+
+    def cache_write(self, prefix, objname, content):         
+        cache_path = self.cache_path(prefix, objname)         
+        path = cache_path['full']
+        try: 
+            os.makedirs(os.path.dirname(path))
+        except:
+            pass 
+        with open(path, 'w') as fd: 
+            fd.write(content)
+
         
     def __str__(self): 
         return "[{}] {}/{}".format(self.manager.name,

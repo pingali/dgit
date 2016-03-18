@@ -84,7 +84,6 @@ def generate(repo, generator_name=None, filename=None, rules=None):
         print("No output") 
         return
 
-    print(results) 
     generators = list(set([r['generator'] for r in results]))
     for g in generators: 
         print(g)
