@@ -150,7 +150,7 @@ def diff(repo, args):
 #####################################################    
 # Initialize a repo 
 #####################################################    
-def bootstrap_datapackage(repo, force=False): 
+def bootstrap_datapackage(repo, force=False, options=None): 
     """ 
     Create the datapackage file..
     """
@@ -174,14 +174,18 @@ def bootstrap_datapackage(repo, force=False):
         ('remote-url', repo.remoteurl)
     ])
 
-    for var in ['title', 'description']: 
-        value = ''
-        while value in ['',None]:
-            value = input('Your Repo ' + var.title() + ": ")
-            if len(value) == 0: 
-                print("{} cannot be empty. Please re-enter.".format(var.title()))
+    if options is not None: 
+        package['title'] = options['title']
+        package['description'] = options['description']
+    else:
+        for var in ['title', 'description']: 
+            value = ''
+            while value in ['',None]:
+                value = input('Your Repo ' + var.title() + ": ")
+                if len(value) == 0: 
+                    print("{} cannot be empty. Please re-enter.".format(var.title()))
                 
-        package[var] = value
+            package[var] = value
 
     
     # Now store the package...
@@ -193,7 +197,7 @@ def bootstrap_datapackage(repo, force=False):
 
     return filename 
 
-def init(username, reponame, setup, force):
+def init(username, reponame, setup, force=False, options=None):
     """
     Given a filename, prepare a datapackage.json for each repo.
     """
@@ -215,7 +219,7 @@ def init(username, reponame, setup, force):
     with open(gitignore, 'w') as fd: 
         fd.write(".dgit")        
 
-    filename = bootstrap_datapackage(repo)
+    filename = bootstrap_datapackage(repo, force, options)
     repo.run('add_files',
              [
                  { 
@@ -416,6 +420,12 @@ def post(repo, args=[]):
     Post to metadata server
     """
 
+    mgr = get_plugin_mgr() 
+    keys = mgr.search(what='metadata')
+    keys = keys['metadata']
+    
+    if len(keys) == 0: 
+        return 
 
     if 'metadata-management' in repo.options:
         
@@ -458,9 +468,6 @@ def post(repo, args=[]):
             annotate_metadata_diffs(repo)
 
     try: 
-        mgr = get_plugin_mgr() 
-        keys = mgr.search(what='metadata')
-        keys = keys['metadata']
         for k in keys: 
             # print("Key", k)
             metadatamgr = mgr.get_by_key('metadata', k)

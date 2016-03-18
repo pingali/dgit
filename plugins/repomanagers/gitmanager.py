@@ -115,7 +115,6 @@ class GitRepoManager(RepoManagerBase):
         # Now clone the filesystem-based repo 
         repodir = self.rootdir(username, reponame, create=False) 
 
-
         # Prepare it if needed 
         if os.path.exists(repodir) and not force: 
             raise Exception("Local repo already exists")
@@ -315,7 +314,8 @@ class GitRepoManager(RepoManagerBase):
                 os.makedirs(os.path.dirname(targetpath))
             except:
                 pass 
-            print(sourcepath," => ", targetpath)
+            # print(sourcepath," => ", targetpath)
+            print("Adding: {}".format(relativepath))
             shutil.copyfile(sourcepath, targetpath) 
             with cd(repo.rootdir):             
                 self.run(['add', relativepath])

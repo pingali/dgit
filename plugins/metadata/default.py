@@ -83,11 +83,16 @@ class BasicMetadata(MetadataBase):
             'Authorization': 'Token {}'.format(token),
             'Content-Type': 'application/json'
         }
-        r = requests.post(url, 
-                          data = json.dumps(datapackage),
-                          headers=headers) 
 
-        return r 
+        try: 
+            r = requests.post(url, 
+                              data = json.dumps(datapackage),
+                              headers=headers) 
+
+            return r 
+        except: 
+            print("Could not post to server") 
+        return ""
     
 def setup(mgr): 
     

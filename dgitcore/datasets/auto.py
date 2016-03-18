@@ -45,7 +45,7 @@ def auto_init(autofile, force_init=False):
     config = get_config() 
     mgr = get_plugin_mgr() 
 
-    print("No dgit repo-specific configuration file found. Creating one.")
+    print("Let us know a few details about your data repository")
     
     # Get the username
     username = getpass.getuser() 
@@ -74,11 +74,23 @@ def auto_init(autofile, force_init=False):
             remoteurl = candidate
         else: 
             remoteurl = revised 
+            
+    # 
+    title = ""
+    while title == "": 
+        title = input("One line summary of your repo:") 
+        if title == "": 
+            print("The repo requires a one line summary") 
+        else:
+            break
+    description = input("Add any more details:")     
 
     autooptions = OrderedDict([
         ("username", username),
         ("reponame", reponame),
         ("remoteurl", remoteurl),
+        ("title", title),
+        ("description", description),
         ("working-directory", "."),
         ('track' ,OrderedDict([
             ('includes', ['*.csv', '*.tsv', '*.txt','*.json', '*.xlsx']),
@@ -125,9 +137,10 @@ def auto_init(autofile, force_init=False):
     with open(autofile, 'w') as fd: 
         fd.write(json.dumps(autooptions, indent=4))
 
-    print("Generated/updated config file: {}".format(autofile))
+    print("")
+    print("Update a dataset specific config file: {}".format(autofile))
     print("Please edit it and rerun dgit auto.")
-    print("You could consider committing dgit.json to the code repository.")
+    print("Tip: Consider committing dgit.json to the code repository.")
         
     #if platform.system() == "Linux": 
     #    subprocess.call(["xdg-open", autofile])
@@ -175,7 +188,9 @@ def auto_get_repo(autooptions, debug=False):
                 repo = common_init(username=autooptions['username'],
                                    reponame=autooptions['reponame'],
                                    setup=setup, 
-                                   force=True)
+                                   force=True,
+                                   options=autooptions)
+
                 if debug: 
                     print("Successfully inited repo") 
             else: 

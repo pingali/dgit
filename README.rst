@@ -1,7 +1,8 @@
 dgit - Lightweight "Git Wrapper for Datasets"
 =============================================
 
-*Note: Code is still pre-alpha. It is being cleanedup and stabilized. Not yet ready for daily use.* 
+*Note: Code is still pre-alpha. It is being cleanedup and
+ stabilized. Not yet ready for daily use.*
 
 dgit is an application on top of git. The application uses git for
 version management but structures the repositories, content, and
@@ -22,24 +23,20 @@ Read `documentation <https://dgit.readthedocs.org>`_
 Contents:
 
 * Usage
-    1. `Command`_
-    2. `Tutorial`_
+    0. `Setup`_
+    1. `Tutorial`_
+    2. `Usage`_
     3. `Plugins`_
     4. `Security and Privacy`_
 * Background
     1. `Dataset Management Problem`_ 
     2. `Usecase`_
 
-Usage
-=====
 
-A major objective of dgit is simplicity. Using dgit should not more
-complex than git itself. And if you dont use it, there is no cost. 
-
-Command
+Setup
 --------
 
-Setup 
+Setup: Only Python 3 and ubuntu are supported for now. 
 ::
    
     # Dependencies (Ubuntu commands for lxml dependency) 
@@ -47,42 +44,8 @@ Setup
     
     # 
     $ pip install dgit 
+    $ pip install dgit-extensions 
 
-    # Add alias for ease of use (note the single quote for bang operator) 
-    $ git config --global alias.data '!dgit'
-
-Usage
-::
-    $ dgit 
-    Usage: dgit [OPTIONS] COMMAND [ARGS]...
-    
-      git wrapper for datasets
-    
-    Options:
-      --help  Show this message and exit.
-    
-    Commands:
-      add-files    Add files to the repo
-      add-preview  Add files preview from files into metadata
-      clone        Clone a git URL
-      commit       Commit the changes made to a dataset
-      config       Create configuration file (~/.dgit.ini)
-      default      Set the default dataset
-      diff         Show changes
-      drop         Drop a dataset
-      init         Bootstrap a new dataset (a git repo+s3...
-      list         List datasets
-      log          Commit the changes made to a dataset
-      plugins      Plugin management
-      post         Post to metadata server
-      push         Upload a dataset to origin (github/s3/local)
-      remote       Manage remote
-      rm           Commit the changes made to a dataset
-      sh           Post to metadata server
-      stash        Trash all the changes for a given dataset
-      status       Show all the datasets available
-      validate     Check the integrity of a dataset
-    
 
 Tutorial
 --------
@@ -102,15 +65,12 @@ Installation:
     # install dgit
     pip install dgit
     
-    # Initialize the configuration
-    dgit config init
 
 Create a dataset repository 
 
 ::
     
-    # local repo with s3 backup (default)
-    dgit init --setup dgit+s3 coupon-assignment
+
     
 Add static files or results of execution 
 
