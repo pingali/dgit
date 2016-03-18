@@ -156,7 +156,7 @@ def auto_get_repo(autooptions, debug=False):
     except: 
         # Clone the repo 
         try: 
-
+            print("Checking if the dataset exists on backend")
             url = autooptions['remoteurl']
             if debug:
                 print("Doesnt exist. trying to clone: {}".format(url))
@@ -167,7 +167,7 @@ def auto_get_repo(autooptions, debug=False):
                 print("Cloning successful")
         except:
             # traceback.print_exc()
-            yes = input("Repo doesnt exists and could not clone. Should I create one? [yN]") 
+            yes = input("Repo doesnt exist. Should I create one? [yN]") 
             if yes == 'y': 
                 setup = "git"
                 if autooptions['remoteurl'].startswith('s3://'):

@@ -29,6 +29,7 @@ class MetadataBase(object):
         support different kinds of services.  
 
         """
+        self.enable = 'y' 
         self.name = name
         self.version = version        
         self.description = description  
@@ -43,27 +44,6 @@ class MetadataBase(object):
 
     def post(self, repo): 
         """
-        Post to the metadata server 
-        
-        Parameters
-        ----------
-
-        repo 
+        Post to server
         """
-        
-        datapackage = repo.package 
-
-        url = self.url 
-        token = self.token 
-        headers = {
-            'Authorization': 'Token {}'.format(token),
-            'Content-Type': 'application/json'
-        }
-        r = requests.post(url, 
-                          data = json.dumps(datapackage),
-                          headers=headers) 
-
-        print(r.request.headers)
-        print(r) 
-        print(r.content)
-        return 
+        pass 

@@ -16,12 +16,15 @@ class PluginManager(object):
 
     def __init__(self, paths=[]):
 
+        self.order = ['backend', 'repomanager', 'metadata',
+                      'validator', 'generator', 'instrumentation']
         self.plugins = {
             'backend': {},
             'instrumentation': {},
             'repomanager': {},
             'metadata': {},
             'validator': {},
+            'generator': {},
         }
         self.sources = {} 
 
@@ -53,6 +56,10 @@ class PluginManager(object):
             {
                 'package': 'validator',
                 'base': get_path('validators'),
+            },
+            {
+                'package': 'generator',
+                'base': get_path('generators'),
             },
         ]
 
@@ -95,6 +102,9 @@ class PluginManager(object):
         # print("Registering pattern", name, pattern)
         name = obj.name
         version = obj.version 
+        enable = obj.enable 
+        if enable == 'n': 
+            return 
 
         key = Key(name, version) 
         self.plugins[what][key] = obj
@@ -121,6 +131,8 @@ class PluginManager(object):
                     continue 
                 if version is not None and k_version != version: 
                     continue
+                if self.plugins[what][key].enable == 'n': 
+                    continue 
                 filtered[what].append(key) 
 
         # print(filtered)
@@ -131,9 +143,7 @@ class PluginManager(object):
         Gather configuration requirements of all plugins 
         """
         configs = []
-        for what in ['backend', 'repomanager',
-                     'instrumentation', 'validator',
-                     'metadata']: 
+        for what in self.order: 
             for key in self.plugins[what]: 
                 mgr = self.plugins[what][key]
                 c = mgr.config(what='get')
@@ -159,9 +169,7 @@ class PluginManager(object):
 
         filtered = self.search(what, name, version) 
         if len(filtered) > 0: 
-            for what in ['backend', 'repomanager',
-                         'instrumentation', 'validator',
-                         'metadata']: 
+            for what in self.order: 
                 print("========")
                 print(what)
                 print("========")

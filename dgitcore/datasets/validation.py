@@ -44,11 +44,12 @@ def instantiate(repo, validator_name=None, filename=None, rules=None):
     else: 
         # Instantiate the files from the patterns specified
         for v in validators: 
-            if 'files' not in validators[v]: 
+            if 'files' not in validators[v]:
                 validators[v]['files'] = []
-            else: 
+            elif len(validators[v]['files']) > 0: 
                 matching_files = repo.find_matching_files(validators[v]['files'])
                 validators[v]['files'] = matching_files
+
     #=========================================
     # Insert the rules files..
     #=========================================

@@ -208,17 +208,29 @@ def init(username, reponame, setup, force):
     repo = repomgr.init(username, reponame, force, backendmgr) 
 
     # Now bootstrap the datapackage.json metadata file and copy it in...
+    
+    # Insert a gitignore with .dgit directory in the repo. This
+    # directory will be used to store partial results 
+    (handle, gitignore) = tempfile.mkstemp()    
+    with open(gitignore, 'w') as fd: 
+        fd.write(".dgit")        
+
     filename = bootstrap_datapackage(repo)
     repo.run('add_files',
              [
                  { 
                      'relativepath': 'datapackage.json',
                      'localfullpath': filename, 
-                 }
+                 },
+                 { 
+                     'relativepath': '.gitignore',
+                     'localfullpath': gitignore, 
+                 },                 
              ])
 
+
     os.unlink(filename) 
-    args = ['-a', '-m', 'Bootstrapped the datapackage']
+    args = ['-a', '-m', 'Bootstrapped the repo']
     repo.run('commit', args)
     return repo 
     
@@ -453,10 +465,10 @@ def post(repo, args=[]):
             # print("Key", k)
             metadatamgr = mgr.get_by_key('metadata', k)
             # print("Posting to ", metadatamgr)
-            metadatamgr.post(repo)
+            response = metadatamgr.post(repo)
+            print(response)
     except Exception as e:
         traceback.print_exc()
-        print(e)
-        print("Could not post. Please look at the log files")
+        print("Could not post. Please check the INI file for URL")
         return 
 

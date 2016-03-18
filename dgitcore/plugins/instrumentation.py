@@ -17,6 +17,7 @@ class InstrumentationBase(object):
     Pre-computed patterns 
     """
     def __init__(self, name, version, description, supported=[]):
+        self.enable = 'y' 
         self.name = name
         self.version = version        
         self.description = description  

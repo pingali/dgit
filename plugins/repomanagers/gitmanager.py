@@ -115,17 +115,18 @@ class GitRepoManager(RepoManagerBase):
         # Now clone the filesystem-based repo 
         repodir = self.rootdir(username, reponame, create=False) 
 
+
         # Prepare it if needed 
         if os.path.exists(repodir) and not force: 
             raise Exception("Local repo already exists")
         if os.path.exists(repodir): 
             shutil.rmtree(repodir) 
         os.makedirs(repodir) 
-        
+
         # Now clone...
         with cd(os.path.dirname(repodir)): 
             git.clone(server_repodir, '--no-hardlinks') 
-        
+
         url = server_repodir
         if backend is not None: 
             url = backend.url(username, reponame) 

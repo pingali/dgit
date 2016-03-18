@@ -120,7 +120,7 @@ def update(globalvars):
             },
             'user.fullname': {
                 'value': defaults.get('user.fullname',''),
-                'description': "Full Name",
+                'description': "Short Name",
                 'validator': NonEmptyValidator() 
             },
             'user.name': {

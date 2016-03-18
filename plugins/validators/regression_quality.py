@@ -35,10 +35,10 @@ class RegressionQualityValidator(ValidatorBase):
             }
         else:
             if (('regression-quality-validator' in params) and 
-                'enable' in params['regressio-quality-validator']): 
+                'enable' in params['regression-quality-validator']): 
                 self.enable = params['regression-quality-validator']['enable']
             else: 
-                self.enable = 'y'
+                self.enable = 'n'
 
     def evaluate(self, repo, files, rules): 
         """

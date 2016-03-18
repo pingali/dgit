@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 
-import os, sys
+import os, sys, requests, json 
 from dgitcore.plugins.metadata import MetadataBase
 from dgitcore.config import get_config, ChoiceValidator, URLValidator, NonEmptyValidator
 
@@ -64,6 +64,30 @@ class BasicMetadata(MetadataBase):
                     print("If metadata is enabled, Token should be provided")
                     raise Exception("Invalid configuration")
 
+
+    def post(self, repo): 
+        """
+        Post to the metadata server 
+        
+        Parameters
+        ----------
+
+        repo 
+        """
+        
+        datapackage = repo.package 
+
+        url = self.url 
+        token = self.token 
+        headers = {
+            'Authorization': 'Token {}'.format(token),
+            'Content-Type': 'application/json'
+        }
+        r = requests.post(url, 
+                          data = json.dumps(datapackage),
+                          headers=headers) 
+
+        return r 
     
 def setup(mgr): 
     

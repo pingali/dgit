@@ -30,6 +30,7 @@ class ContentInstrumentation(InstrumentationBase):
 
     """
     def __init__(self): 
+        self.enable = 'y'
         super(ContentInstrumentation, self).__init__('content', 
                                                      'v0', 
                                                      "Basic content analysis")

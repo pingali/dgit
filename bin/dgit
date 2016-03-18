@@ -232,6 +232,19 @@ def validate(repo, validator, target, rules):
     
     datasets.validate(repo, validator, target, rules)
 
+@repo_specific.command('generate',context_settings=CONTEXT_SETTINGS)
+@click.option('--generator', '-g',
+              help="Name of the generator")
+@click.option('--target', '-t',
+              help="Specification for the filename as a pattern")
+@common_options
+def generate(repo, generator, target):
+    """
+    Materialize queries
+    """
+    
+    datasets.generate(repo, generator, target)
+
 
 @repo_specific.command('remote', context_settings=CONTEXT_SETTINGS)
 @click.argument("op",

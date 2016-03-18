@@ -28,6 +28,7 @@ class BackendBase(object):
         support different kinds of services.  
 
         """
+        self.enable = 'y' 
         self.name = name
         self.version = version        
         self.description = description  

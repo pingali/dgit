@@ -4,3 +4,4 @@ from .common import *
 from .files import * 
 from .validation import * 
 from .auto import * 
+from .generation import *

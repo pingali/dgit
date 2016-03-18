@@ -9,7 +9,8 @@ class LocalBackend(BackendBase):
     Filesystem based backend 
     """
     def __init__(self): 
-        
+
+        self.enable = 'y'
         self.workspace = None 
         super(LocalBackend,self).__init__('local', 'v0',
                                           "Local Filesystem Backend")

@@ -7,12 +7,12 @@ import requests
 
 Key = namedtuple("Key", ["name","version"])
 
-class ValidatorContext: 
-    """A helper object passed to Validator computation functions 
+class GeneratorContext: 
+    """A helper object passed to Generator computation functions 
     """
     pass 
 
-class ValidatorBase(object):
+class GeneratorBase(object):
     """
     This is the base class for all backends including 
     """
@@ -20,7 +20,7 @@ class ValidatorBase(object):
         """        
         Parameters: 
         -----------
-        name: Name of the backend service e.g., s3 
+        name: Name of the service e.g., s3 
         version: Version of this implementation 
         description: Text description of this service 
         supported: supported services with including name 
@@ -42,15 +42,8 @@ class ValidatorBase(object):
         """
         return 
 
-    def evaluate(self, repo, files, rules): 
+    def evaluate(self, repo, files, params=None): 
         """
-        Evaluate the repo
-        
-        returns: A list of dictionaries with:
-           target: relative path of the file 
-           rules: rules file used 
-           validator: name of the validator 
-           status: OK/Success/Error
-           Message: Any additional information              
+        Execute the generator on the files        
         """
         return []
