@@ -251,11 +251,7 @@ class RepoManagerBase(object):
 
     def add_files(self, repo, files): 
         """
-        Files is a list with simple structure 
-        {
-           'relativepath': <path-in-repo>,
-           'fullpath': <actual path> 
-        }
+        Files is a list with simple dict structure with relativepath and fullpath 
         """
         pass 
 

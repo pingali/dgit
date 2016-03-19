@@ -323,7 +323,7 @@ class GitRepoManager(RepoManagerBase):
     def config(self, what='get', params=None): 
         """
         Paramers: 
-        --------
+        ---------
 
         """
         if what == 'get': 

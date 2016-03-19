@@ -1,8 +1,15 @@
-Auto Mode
-----------
+
+dgit Configuration File
+-----------------------
+
+A dgit configuration file is automatically generated in the local
+directory to reduce the need for the user to specify preferences each
+time, and work as much as possible in the auto mode.
 
 - username : Name of the user (string)
 - reponame : Name of the dataset (unique for a given user) 
+- title : One line summary 
+- description : Detailed description of the repository 
 - remoteurl : Path to the archive of the repo
     - git@github.com:pingali/dgit.git 
     - https://github.com:pingali/dgit.git 

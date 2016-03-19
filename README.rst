@@ -1,8 +1,7 @@
 dgit - Lightweight "Git Wrapper for Datasets"
 =============================================
 
-*Note: Code is still pre-alpha. It is being cleanedup and
- stabilized. Not yet ready for daily use.*
+*Note: Code is still pre-alpha. It is being cleanedup and stabilized. Not yet ready for daily use.*
 
 dgit is an application on top of git. The application uses git for
 version management but structures the repositories, content, and
@@ -23,11 +22,11 @@ Read `documentation <https://dgit.readthedocs.org>`_
 Contents:
 
 * Usage
-    0. `Setup`_
-    1. `Tutorial`_
-    2. `Usage`_
-    3. `Plugins`_
-    4. `Security and Privacy`_
+    1. `Setup`_
+    2. `Tutorial`_
+    3. `Usage`_
+    4. `Plugins`_
+    5. `Security and Privacy`_
 * Background
     1. `Dataset Management Problem`_ 
     2. `Usecase`_
@@ -41,8 +40,12 @@ Setup: Only Python 3 and ubuntu are supported for now.
    
     # Dependencies (Ubuntu commands for lxml dependency) 
     $ sudo apt-get install libxml2-dev libxslt1-dev python-dev
-    
-    # 
+
+    # Prepare the environment
+    virtualenv -p /usr/bin/python3 env
+    . env/bin/activate
+        
+    # Install dgit 
     $ pip install dgit 
     $ pip install dgit-extensions 
 
@@ -51,27 +54,70 @@ Tutorial
 --------
 
 We show how to create a simple dataset that is a git repo with s3 as
-the backend. The package itself is flexible enough to support multiple
-dataset representations.
+the backend. 
 
-Installation:
+dgit has an *auto* mode in which it tries to do as much work as
+possible using a combination of configuration and intelligent
+defaults. When you run it first time, it asks a few questions that it
+uses to generate a configuration file. The latter is editable any
+time. 
+
+::
+
+   # One command to rule them all!    
+   $ dgit auto 
+
+dgit scans the working directory for changes and automatically commits
+them to the dataset.
 
 ::
 
-    # Prepare the environment
-    virtualenv -p /usr/bin/python3 env
-    . env/bin/activate
-    
-    # install dgit
-    pip install dgit
-    
+   # Clone/create a model directory (may contain scripts and other files)    
+   $ git clone https://gitlab.com/pingali/simple-regression.git
+   $ cd simple-regression
 
-Create a dataset repository 
+   # Create a dgit configuration file 
+   $ dgit auto 
+   Let us know a few details about your data repository
+   Please specify username [pingali]
+   Please specify repo name [simple-regression]
+   Please specify remote URL [s3://mybucket/git/pingali/simple-regression.git]
+   One line summary of your repo: Simple regression model
+   Add any more details:
+   
+   Update a dataset specific config file: dgit.json
+   Please edit it and rerun dgit auto.
+   Tip: Consider committing dgit.json to the code repository.
 
-::
-    
+   # This will bootstrap the dataset repo 
+   $ dgit auto 
+   Repo doesnt exist. Should I create one? [yN]y
+   Wrote to /home/pingali/.dgit/git/pingali/simple-regression.git/hooks/post-receive
+   Adding: datapackage.json
+   Adding: .gitignore
 
-    
+   # Run the model and check the output 
+   $ ./model.py 
+   $ ls
+   dgit.json  model.py  model-results.txt
+
+   # Run dgit again to update the dataset
+   $ dgit auto
+   Adding: model-results.txt
+   Quick summary of changes? One run of the model
+
+   # Update s3 
+   $ dgit push 
+   ...
+   remote: upload: hooks/post-update.sample to s3://appsloka/git/pingali/simple-regression.git/hooks/post-update.sample
+   remote: upload: refs/heads/master to s3://appsloka/git/pingali/simple-regression.git/refs/heads/master
+   remote: upload: ./config to s3://appsloka/git/pingali/simple-regression.git/config
+   To /home/pingali/.dgit/git/pingali/simple-regression.git
+     * [new branch]      master -> master
+
+
+Usage
+-----
 Add static files or results of execution 
 
 ::
@@ -111,44 +157,42 @@ repo. More extensions are part of `dgit-extensions
 
 ::
 
-   # The modules in bold are extensions from this repo 
-   $ dgit plugins 
-   ========
-   metadata
-   ========
-   generic-metadata (v0) : generic-metadata Basic metadata tracker
-      Supp: ['generic-metadata']
-   
-   ========
-   validator
-   ========
-   basic-validator (v0) : basic-validator Basic validator of the content
-      Supp: ['basic-validator']
-   
-   ========
-   instrumentation
-   ========
-   platform (v0) : platform Execution platform information
-      Supp: ['platform']
-   content (v0) : content Basic content analysis
-      Supp: ['content']
-   executable (v0) : executable Executable analysis
-      Supp: ['executable']
-   
+   $ dgit plugins list 
+   dgit plugins list
    ========
    backend
    ========
-   s3 (v0) : s3 S3 backend
-      Supp: ['s3']
-   local (v0) : local Local filesystem backend
-      Supp: ['local']
+   local (v0) : Local Filesystem Backend
+   s3 (v0) : S3 backend
    
    ========
    repomanager
    ========
-   git (v0) : git Git-based repomanager
-      Supp: ['git']
-
+   git (v0) : Git-based Repository Manager
+   
+   ========
+   metadata
+   ========
+   basic-metadata (v0) : Basic metadata server
+   
+   ========
+   validator
+   ========
+   regression-quality-validator (v0) : Check R2 of regression model
+   metadata-validator (v0) : Validate integrity of the dataset metadata
+   
+   ========
+   generator
+   ========
+   mysql-generator (v0) : Materialize queries in dataset
+   
+   ========
+   instrumentation
+   ========
+   content (v0) : Basic content analysis
+   executable (v0) : Executable analysis
+   platform (v0) : Execution platform information
+   
 
 Security and Privacy
 --------------------
