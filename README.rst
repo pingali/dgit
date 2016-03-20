@@ -35,7 +35,7 @@ Contents:
 Setup
 --------
 
-Setup: Only Python 3 and ubuntu are supported for now. 
+Note that only Python 3 and ubuntu are supported for now. 
 ::
    
     # Dependencies (Ubuntu commands for lxml dependency) 
@@ -85,7 +85,7 @@ them to the dataset.
    One line summary of your repo: Simple regression model
    Add any more details:
    
-   Update a dataset specific config file: dgit.json
+   Updated dataset specific config file: dgit.json
    Please edit it and rerun dgit auto.
    Tip: Consider committing dgit.json to the code repository.
 
@@ -106,7 +106,18 @@ them to the dataset.
    Adding: model-results.txt
    Quick summary of changes? One run of the model
 
-   # Update s3 
+   # If a dataset metadata server is enabled, then auto will post to the server as well.. 
+   $ dgit auto
+   Collecting all the required metadata to post
+   Adding preview for  model-results.txt
+   Add commit data for model.py
+   Added platform information
+   Adding validation information
+   No dependencies
+   Computing diffs
+   Posting to XXX 
+    
+   # Update s3. This can be enabled automatically through dgit.json 
    $ dgit push 
    ...
    remote: upload: hooks/post-update.sample to s3://appsloka/git/pingali/simple-regression.git/hooks/post-update.sample

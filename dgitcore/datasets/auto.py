@@ -75,7 +75,7 @@ def auto_init(autofile, force_init=False):
         else: 
             remoteurl = revised 
             
-    # 
+    # Get title...
     title = ""
     while title == "": 
         title = input("One line summary of your repo:") 
@@ -83,7 +83,17 @@ def auto_init(autofile, force_init=False):
             print("The repo requires a one line summary") 
         else:
             break
-    description = input("Add any more details:")     
+
+    # Get description
+    description = ""
+    while description == "": 
+        description = input("Detailed description:")     
+        if description == "": 
+            print("The repo requires a one line summary") 
+        else:
+            break
+
+    description = input("
 
     autooptions = OrderedDict([
         ("username", username),
@@ -138,7 +148,7 @@ def auto_init(autofile, force_init=False):
         fd.write(json.dumps(autooptions, indent=4))
 
     print("")
-    print("Update a dataset specific config file: {}".format(autofile))
+    print("Updated dataset specific config file: {}".format(autofile))
     print("Please edit it and rerun dgit auto.")
     print("Tip: Consider committing dgit.json to the code repository.")
         

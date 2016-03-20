@@ -16,6 +16,10 @@ import uuid, shutil
 import boto3, glob2 
 import subprocess 
 from dateutil import parser 
+try:
+    from urllib.parse import urlparse
+except:
+    from urlparse import urlparse
 from ..config import get_config
 from ..plugins.common import get_plugin_mgr 
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
@@ -325,7 +329,7 @@ def annotate_metadata_data(repo, task, patterns, size=0):
         if relativepath in matching_files: 
             path = os.path.join(rootdir, relativepath) 
             if task == 'preview': 
-                print("Adding preview for ", path)
+                print("Adding preview for ", relativepath)
                 f['content'] = open(path).read()[:size]            
             elif task == 'schema': 
                 print("Adding schema for ", path)
@@ -471,9 +475,15 @@ def post(repo, args=[]):
         for k in keys: 
             # print("Key", k)
             metadatamgr = mgr.get_by_key('metadata', k)
-            # print("Posting to ", metadatamgr)
+            url = metadatamgr.url 
+            o = urlparse(url)
+            print("Posting to ", o.netloc)
             response = metadatamgr.post(repo)
-            print(response)
+            if response.status_code in [400]: 
+                content = response.json()
+                print("Error while posting:")
+                for k in content: 
+                    print("   ", k,"- ", ",".join(content[k]))
     except Exception as e:
         traceback.print_exc()
         print("Could not post. Please check the INI file for URL")
