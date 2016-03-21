@@ -68,9 +68,8 @@ def datapackage_exists(repo):
     """
     Check if the datapackage exists...
     """
-    datapath = os.path.join(repo.rootdir,
-                            "datapackage.json")
-    return os.path.exists(os.path.dirname(datapath))
+    datapath = os.path.join(repo.rootdir, "datapackage.json")
+    return os.path.exists(datapath)
 
 #####################################################    
 # Repo specific simple commands 
@@ -158,7 +157,9 @@ def bootstrap_datapackage(repo, force=False, options=None):
     """ 
     Create the datapackage file..
     """
-    
+
+    print("Bootstrapping datapackage") 
+
     # get the directory 
     tsprefix = datetime.now().date().isoformat()  
 
@@ -268,9 +269,17 @@ def clone(url):
     # Insert a datapackage if it doesnt already exist...
     repo = repomgr.lookup(key=key)    
     if not datapackage_exists(repo):
-        bootstrap_datapackage(repo)
-        args = ['-a', '-m', 'Bootstrapped cloned repo']
-        repomgr.commit(key, args)
+        filename = bootstrap_datapackage(repo)
+        repo.run('add_files',
+                 [
+                     { 
+                         'relativepath': 'datapackage.json',
+                         'localfullpath': filename, 
+                    },
+                 ])
+        os.unlink(filename)                         
+        args = ['-a', '-m', 'Bootstrapped the repo']
+        repo.run('commit', args)
 
     return repo 
 

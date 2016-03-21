@@ -108,10 +108,11 @@ def auto_init(autofile, force_init=False):
             ('directory-mapping' ,OrderedDict([
                 ('.', '')
             ]))
-        ])),
+        ])),        
         ('validate' ,OrderedDict([
             ('metadata-validator', OrderedDict([]))
-        ]))
+        ])),
+        ('dependencies' ,[])
     ])
 
     keys = mgr.search('metadata') 
@@ -182,12 +183,12 @@ def auto_get_repo(autooptions, debug=False):
             if debug:
                 print("Doesnt exist. trying to clone: {}".format(url))
             common_clone(url)        
-            repo = remgr.lookup(username=autooptions['username'],
-                                reponame=autooptions['reponame'])
+            repo = repomgr.lookup(username=autooptions['username'],
+                                  reponame=autooptions['reponame'])
             if debug: 
                 print("Cloning successful")
         except:
-            # traceback.print_exc()
+            traceback.print_exc()
             yes = input("Repo doesnt exist. Should I create one? [yN]") 
             if yes == 'y': 
                 setup = "git"

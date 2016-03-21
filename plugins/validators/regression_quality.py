@@ -45,10 +45,17 @@ class RegressionQualityValidator(ValidatorBase):
         Evaluate the files identified for checksum. 
         """
 
+
         status = []
         
         with cd(repo.rootdir): 
             rules = dict([(r, json.loads(open(r).read())) for r in rules])
+            
+            if len(rules) == 0: 
+                print("Regression quality validation has been enabled but no rules file has been specified") 
+                print("Example: { 'min-r2': 0.25 }")
+                return 
+
             files = dict([(f, open(f).read()) for f in files])
             
             for r in rules: 

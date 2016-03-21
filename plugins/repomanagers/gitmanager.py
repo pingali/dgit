@@ -24,16 +24,17 @@ class GitRepoManager(RepoManagerBase):
     # =>  Helper functions
     def run(self, cmd):
 
-        # print("Running cmd", cmd)
         cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd) 
         cmd += "; exit 0"
+        # print("Running cmd", cmd)
         try: 
             output = subprocess.check_output(cmd,
                                              stderr=subprocess.STDOUT,
                                              shell=True)
         except subprocess.CalledProcessError as e:
             output = e.output 
+
         output = output.decode('utf-8')
         output = output.strip() 
         # print("Output of command", output)
@@ -63,8 +64,7 @@ class GitRepoManager(RepoManagerBase):
 
     # =>  Simple commands ...
     def push(self, repo, args=[]): 
-        return self.run_generic_command(repo, 
-                                        ["push", "origin","master"] + args)
+        return self.run_generic_command(repo, ["push"] + args)
 
     def status(self, repo, args=[]): 
         return self.run_generic_command(repo, ["status"] + args)
@@ -159,22 +159,23 @@ class GitRepoManager(RepoManagerBase):
         if backend is None: 
             print("Backend is standard git server") 
             with cd(os.path.dirname(rootdir)): 
-                self.run(['clone', '--no-hardlinks'])
+                self.run(['clone', '--no-hardlinks', url])
         else: 
-            if os.path.exists(server_repodir): 
-                raise Exception("Local copy already exists") 
 
-            # s3 -> .dgit/git/pingali/hello.git -> .dgit/datasets/pingali/hello 
-            backend.clone_repo(url, server_repodir)
+            # Sync if needed. 
+            if not os.path.exists(server_repodir): 
+                # s3 -> .dgit/git/pingali/hello.git -> .dgit/datasets/pingali/hello 
+                backend.clone_repo(url, server_repodir)
+
             with cd(os.path.dirname(rootdir)): 
-                self.run(['clone', '--no-hardlinks'])
+                self.run(['clone', '--no-hardlinks', server_repodir])
 
         r = Repo(username, reponame)
-        r.rootdir = repodir
+        r.rootdir = rootdir 
         r.remoteurl = url 
         r.manager = self 
 
-        return self.add(repo)
+        return self.add(r)
 
 
     def delete(self, repo, args): 
@@ -349,10 +350,11 @@ class GitRepoManager(RepoManagerBase):
                         r = Repo(username, reponame) 
                         r.rootdir = os.path.join(repodir, username, reponame)
                         package = os.path.join(r.rootdir, 'datapackage.json')
-                        if not os.path.exists(package): 
-                            print("[Initialization] Invalid dataset: %s/%s at %s " %(username, reponame, r.rootdir))
-                            print("[Initalization] Skipping")
+                        if os.path.exists(package): 
+                            print("datapackage.json does not exist in dataset") 
+                            print("Skipping: {}/{}".format(username, reponame))
                             continue
+
                         packagedata = open(package).read()
                         r.package = json.JSONDecoder(object_pairs_hook=collections.OrderedDict).decode(packagedata)
                         r.manager = self 
