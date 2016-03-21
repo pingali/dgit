@@ -350,7 +350,7 @@ class GitRepoManager(RepoManagerBase):
                         r = Repo(username, reponame) 
                         r.rootdir = os.path.join(repodir, username, reponame)
                         package = os.path.join(r.rootdir, 'datapackage.json')
-                        if os.path.exists(package): 
+                        if not os.path.exists(package): 
                             print("datapackage.json does not exist in dataset") 
                             print("Skipping: {}/{}".format(username, reponame))
                             continue
