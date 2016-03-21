@@ -3,15 +3,14 @@ dgit - Lightweight "Git Wrapper for Datasets"
 
 *Note: Code is still pre-alpha. It is being cleanedup and stabilized. Not yet ready for daily use.*
 
-dgit is an application on top of git. The application uses git for
-version management but structures the repositories, content, and
-interface to suit data management tasks. 
+dgit is an application on top of git. 
 
 A lot of data-scientists' time goes towards generating, shaping, and
 using datasets. dgit enables organizing and using datasets with
-minimal effort. dgit leverages the versioning capability from git. Git
-can be replaced with other versioning backends such as instabase (as
-and when it is released) as needed.
+minimal effort. 
+
+dgit uses git for version management but structures the repository
+content, and interface to suit data management tasks. 
 
 dgit is agnostic to form and content of the datasets and
 post-processing scripts. It tries to adher to `best available dataset

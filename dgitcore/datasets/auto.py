@@ -89,11 +89,9 @@ def auto_init(autofile, force_init=False):
     while description == "": 
         description = input("Detailed description:")     
         if description == "": 
-            print("The repo requires a one line summary") 
+            print("The repo requires some text as well") 
         else:
             break
-
-    description = input("
 
     autooptions = OrderedDict([
         ("username", username),
