@@ -4,6 +4,8 @@
    contain the root `toctree` directive.
 
 
+dgit - Git "Wrapper" for Datasets
+=================================
 
 .. toctree::
    :maxdepth: 2
