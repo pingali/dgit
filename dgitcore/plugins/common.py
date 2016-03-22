@@ -9,6 +9,9 @@ from pluginbase import PluginBase
 
 Key = namedtuple("Key", ["name","version"])
 
+__all__ = ['plugins_get_mgr', 'plugins_load', 
+           'plugins_show', 'plugins_close']
+
 class PluginManager(object):
     """
     Manage the various plugins in the project 
@@ -215,28 +218,50 @@ class PluginManager(object):
 
 pluginmgr = None
 
-def load():
+def plugins_load():
+    """
+    Load plugins from various sources: 
+    
+    - dgit/plugins 
+    - dgit_extensions package 
+
+    """
     global pluginmgr 
     pluginmgr = PluginManager([])
     # pluginmgr.show()
 
-def close(): 
+def plugins_close(): 
     global pluginmgr 
     return pluginmgr.shutdown()
 
-def show(what=None, name=None, version=None, details=False): 
+def plugins_show(what=None, name=None, version=None, details=False): 
+    """
+    Show details of available plugins 
+    
+    Parameters
+    ----------
+    what: Class of plugins e.g., backend 
+    name: Name of the plugin e.g., s3 
+    version: Version of the plugin 
+    details: Show details be shown? 
+
+    """
     global pluginmgr 
     return pluginmgr.show(what, name, version, details) 
 
-def get_plugin_mgr(): 
+def plugins_get_mgr(): 
+    """
+    Get the global plugin manager 
+    """
     global pluginmgr 
     return pluginmgr 
 
-def  get_plugin_configs(): 
+def  plugins_get_config(): 
+
     global pluginmgr 
     return pluginmgr.config() 
 
 if __name__ == '__main__':
-    load()
-    show() 
-    close() 
+    plugins_load()
+    plugins_show() 
+    plugins_close() 

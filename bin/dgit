@@ -34,6 +34,7 @@ def repo_option(f):
 
         # Load the options from a configuration file 
         autooptions = datasets.auto_init(filename) 
+
         repo = datasets.auto_get_repo(autooptions) 
         return repo 
 
@@ -287,7 +288,7 @@ def auto(config, force_init):
     """
     Auto mode of operation 
     """
-    datasets.auto.collect(config, force_init)
+    datasets.auto.auto_update(config, force_init)
 
 
 ##############################################################
@@ -388,9 +389,9 @@ def plugin_cmd(action, what, name, version):
     Plugin management
     """
     if action == "show":
-        plugins.show(what, name, version, details=True)
+        plugins.plugins_show(what, name, version, details=True)
     elif action == "list":
-        plugins.show(what, name, version, details=False)
+        plugins.plugins_show(what, name, version, details=False)
     elif action == "new":
         plugins.generate(what, name, version)
 
@@ -398,12 +399,12 @@ cli = click.CommandCollection(sources=[repo_specific, repo_generic, management, 
 
 if __name__ == "__main__":
 
-    plugins.load() 
+    plugins.plugins_load() 
     try: 
         config.init()
         cli() 
     except Exception as e: 
         traceback.print_exc() 
-    plugins.close() 
+    plugins.plugins_close() 
 
 

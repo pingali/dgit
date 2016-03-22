@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys, json
-from ..plugins.common import get_plugin_mgr 
+from ..plugins.common import plugins_get_mgr 
 
 #####################################################    
 # Exports 
@@ -63,7 +63,7 @@ def run_generate(repo, generator_name=None, filename=None):
     Materialize
     """
 
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
 
     # Expand the specification. Now we have full file paths 
     generator_specs = instantiate(repo, generator_name, filename) 

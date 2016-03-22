@@ -21,7 +21,7 @@ try:
 except:
     from urlparse import urlparse
 from ..config import get_config
-from ..plugins.common import get_plugin_mgr 
+from ..plugins.common import plugins_get_mgr 
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
 from .detect import get_schema
 from .history import get_history, get_diffs
@@ -47,7 +47,7 @@ def lookup(username, reponame):
     """
     Lookup a repo based on username reponame
     """
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
     
     # XXX This should be generalized to all repo managers. 
     repomgr = mgr.get(what='repomanager', name='git') 
@@ -64,7 +64,7 @@ def list_repos(remote):
     
     remote: Flag 
     """
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
     
     if not remote: 
         repomgr = mgr.get(what='repomanager', name='git') 
@@ -304,7 +304,7 @@ def init(username, reponame, setup, force=False, options=None):
     if setup == 'git+s3':
         backend = 's3'
 
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
     backendmgr = mgr.get(what='backend', name=backend) 
     repo = repomgr.init(username, reponame, force, backendmgr) 
@@ -359,7 +359,7 @@ def clone(url):
     else: 
         backendtype = None
 
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
     backendmgr = mgr.get(what='backend', name=backendtype) 
     
@@ -485,7 +485,7 @@ def annotate_metadata_platform(repo):
 
     print("Added platform information")    
     package = repo.package 
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
     repomgr = mgr.get(what='instrumentation', name='platform') 
     package['platform'] = repomgr.get_metadata()
 
@@ -552,7 +552,7 @@ def post(repo, args=[]):
     repo: Repository object (result of lookup)
     """
 
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
     keys = mgr.search(what='metadata')
     keys = keys['metadata']
     

@@ -3,7 +3,7 @@ import subprocess, time, traceback
 from collections import OrderedDict
 import fnmatch, re
 from ..config import get_config
-from ..plugins.common import get_plugin_mgr 
+from ..plugins.common import plugins_get_mgr 
 from .common import clone as common_clone, init as common_init, post as common_post
 from .files import add as files_add
 from .history import get_history 
@@ -14,7 +14,7 @@ from datetime import datetime
 # Exports 
 #####################################################    
 
-__all__ = ['collect']
+__all__ = ['auto_update', 'auto_init',]
 
 def find_executable_files(): 
     """
@@ -37,6 +37,13 @@ def find_executable_files():
 def auto_init(autofile, force_init=False): 
     """
     Initialize a repo-specific configuration file to execute dgit
+    
+    Parameters
+    ----------
+    
+    autofile: Repo-specific configuration file (dgit.json) 
+    force_init: Flag to force to re-initialization of the configuration file 
+
     """
 
     if os.path.exists(autofile) and not force_init: 
@@ -49,8 +56,9 @@ def auto_init(autofile, force_init=False):
             raise Exception("Invalid configuration file")
 
     config = get_config() 
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
 
+    print("Repo configuration file missing or corrupted. Creating one")
     print("Let us know a few details about your data repository")
     
     # Get the username
@@ -169,7 +177,7 @@ def auto_get_repo(autooptions, debug=False):
     """
 
     # plugin manager
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
 
     # get the repo manager 
     repomgr = mgr.get(what='repomanager', name='git') 
@@ -278,7 +286,7 @@ def auto_add(repo, autooptions, files):
         
     return count 
 
-def collect(autofile, force_init): 
+def auto_update(autofile, force_init): 
     
     # Gather the repo name...
     autooptions = auto_init(autofile, force_init) 

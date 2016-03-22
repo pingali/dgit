@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys, json
-from ..plugins.common import get_plugin_mgr 
+from ..plugins.common import plugins_get_mgr 
 
 #####################################################    
 # Exports 
@@ -87,7 +87,7 @@ def run_validation(repo, validator_name=None, filename=None, rules=None):
     Check the integrity of the dataset
     """
 
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
 
     # Expand the specification. Now we have full file paths 
     validator_specs = instantiate(repo, validator_name, filename, rules) 

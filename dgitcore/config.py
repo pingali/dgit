@@ -18,7 +18,7 @@ except:
     from urlparse import urlparse
 
 import configparser 
-from .plugins.common import get_plugin_mgr 
+from .plugins.common import plugins_get_mgr 
 config = None 
 
 ###################################
@@ -80,7 +80,7 @@ def init(globalvars=None, show=False):
     if os.path.exists(profileini):
         config = configparser.ConfigParser()    
         config.read(profileini)
-        mgr = get_plugin_mgr() 
+        mgr = plugins_get_mgr() 
         mgr.update_configs(config)
 
         if show: 
@@ -140,7 +140,7 @@ def update(globalvars):
     }]
 
     # Gather configuration requirements from all plugins 
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
     extra_configs = mgr.gather_configs()
     allconfigs = generic_configs + extra_configs 
 

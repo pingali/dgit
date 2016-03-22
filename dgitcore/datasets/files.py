@@ -15,7 +15,7 @@ import platform
 import uuid, shutil 
 from dateutil import parser 
 from ..config import get_config
-from ..plugins.common import get_plugin_mgr 
+from ..plugins.common import plugins_get_mgr 
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
 from .detect import get_schema 
 
@@ -292,7 +292,7 @@ def run_executable(repomanager, repo,
     """
 
     # Get platform information
-    mgr = get_plugin_mgr() 
+    mgr = plugins_get_mgr() 
     repomgr = mgr.get(what='instrumentation', name='platform') 
     platform_metadata = repomgr.get_metadata()
 
