@@ -25,7 +25,20 @@ from ..plugins.common import get_plugin_mgr
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
 from .detect import get_schema
 from .history import get_history, get_diffs
-from .validation import run_validation
+from .validation import validate
+
+#####################################################    
+# Exports 
+#####################################################    
+
+__all__ = [
+    'lookup', 
+    'list_repos',
+    'shellcmd', 
+    'log', 'show', 'push', 'commit',
+    'stash', 'drop', 'status', 'post',
+    'clone', 'init'
+]
 
 #####################################################    
 # Repo independent commands...
@@ -35,11 +48,22 @@ def lookup(username, reponame):
     Lookup a repo based on username reponame
     """
     mgr = get_plugin_mgr() 
+    
+    # XXX This should be generalized to all repo managers. 
     repomgr = mgr.get(what='repomanager', name='git') 
-    repo =  repomgr.lookup(username=username, reponame=reponame) 
+    repo =  repomgr.lookup(username=username, 
+                           reponame=reponame) 
     return repo 
 
 def list_repos(remote):
+    """
+    List repos
+    
+    Parameters
+    ----------
+    
+    remote: Flag 
+    """
     mgr = get_plugin_mgr() 
     
     if not remote: 
@@ -48,8 +72,9 @@ def list_repos(remote):
         repos.sort() 
         for r in repos: 
             print("{}/{}".format(*r))
-    else:         
-        repomgr = mgr.get(what='backend', name='s3') 
+        return repos 
+    else:        
+        raise Exception("Not supported yet")
 
 
 #####################################################    
@@ -58,6 +83,12 @@ def list_repos(remote):
 def shellcmd(repo, args):   
     """
     Run a shell command within the repo's context
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Shell command
     """
     with cd(repo.rootdir):
         result = run(args) 
@@ -85,49 +116,106 @@ def generic_repo_cmd(repo, cmd, show=True, *args):
 def log(repo, args): 
     """
     Log of the changes executed until now
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
     """
     return generic_repo_cmd(repo, 'log', True, args)
 
 def show(repo, args): 
     """
     Show commit details
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
     """
     return generic_repo_cmd(repo, 'show', True, args) 
 
 def push(repo, args): 
     """
-    Push to S3 
+    Push changes to the backend 
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
     """
     return generic_repo_cmd(repo, 'push', True, args) 
 
 def commit(repo, args): 
     """
-    Commit the changes made...    
+    Commit changes to the data repository
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
     """
     return generic_repo_cmd(repo, 'commit', True, args) 
 
 def drop(repo, args): 
     """
-    Commit the changes made...    
+    Drop the repository (new to dgit)
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
     """
     return generic_repo_cmd(repo, 'drop', True, args) 
 
 def stash(repo, args): 
     """
     Stash the changes
+    
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
     """
     return generic_repo_cmd(repo, 'stash', True, args) 
+
+def diff(repo, args): 
+    """
+    Diff between versions
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
+    """
+    return generic_repo_cmd(repo, 'diff', True, args) 
 
 def delete(repo, args): 
     """
     Delete files
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
     """
+    print("Delete is not yet implemented completely")
+    print("datapackage.json should be updated to keep in sync with files on disk")
+    raise Exception("Incomplete functionality")
     
     # Cleanup the repo
     generic_repo_cmd(repo, 'delete', False, args)
 
     # Have to sync up repo files and datapackage.json 
-    print("XXXX Update datapackage.json") 
+    # XXX MISSING
     
     # Now sync the metadata 
     (handle, filename) = tempfile.mkstemp()    
@@ -143,11 +231,6 @@ def delete(repo, args):
                  }
              ])
 
-def diff(repo, args): 
-    """
-    Delete files
-    """
-    return generic_repo_cmd(repo, 'diff', True, args) 
 
 
 #####################################################    
@@ -204,7 +287,17 @@ def bootstrap_datapackage(repo, force=False, options=None):
 
 def init(username, reponame, setup, force=False, options=None):
     """
-    Given a filename, prepare a datapackage.json for each repo.
+    Initialize an empty repository with datapackage.json 
+    
+    Parameters
+    ----------
+    
+    username: Name of the user
+    reponame: Name of the repo
+    setup: Specify the 'configuration' (git only, git+s3 backend etc)
+    force: Force creation of the files 
+    options: Dictionary with content of dgit.json, if available. 
+
     """
 
     backend = None 
@@ -245,7 +338,17 @@ def init(username, reponame, setup, force=False, options=None):
     
 def clone(url): 
     """
-    Clone a S3/Other URL 
+    Clone a URL. Examples include: 
+        
+        - git@github.com:pingali/dgit.git
+        - https://github.com:pingali/dgit.git
+        - s3://mybucket/git/pingali/dgit.git
+    
+    Parameters
+    ----------
+    
+    url: URL of the repo
+
     """
     backend = None 
     backendmgr = None
@@ -284,6 +387,17 @@ def clone(url):
     return repo 
 
 def status(repo, details, args): 
+    """
+    Show status of the repo
+    
+    Parameters
+    ----------
+
+    repo: Repository object (result of lookup)
+    details: Show internal details of the repo 
+    args: Parameters to be passed to git status command
+
+    """
 
     result = generic_repo_cmd(repo, 'status', False, args)
 
@@ -385,7 +499,7 @@ def annotate_metadata_validation(repo):
     
     print("Adding validation information")
     # Collect the validation results by relativepath
-    results = run_validation(repo)    
+    results = validate(repo, show=False)    
     fileresults = {} 
     for r in results: 
         filename = r['target'] 
@@ -431,6 +545,11 @@ def annotate_metadata_dependencies(repo):
 def post(repo, args=[]): 
     """
     Post to metadata server
+
+    Parameters
+    ----------
+
+    repo: Repository object (result of lookup)
     """
 
     mgr = get_plugin_mgr() 

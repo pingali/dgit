@@ -48,6 +48,9 @@ Note that only Python 3 and ubuntu are supported for now.
     $ pip install dgit 
     $ pip install dgit-extensions 
 
+    # Generate overall configuration file 
+    $ dgit config init 
+    ...
 
 Tutorial
 --------

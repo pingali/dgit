@@ -91,7 +91,7 @@ Execution
 
 
 Dataset-specific Configuration File (dgit.json)
-----------------------------------------------
+-----------------------------------------------
 
 Summary
 ~~~~~~~
@@ -114,13 +114,30 @@ time, and work as much as possible in the auto mode.
 
     - includes : list of patterns that should be used to include files
     - excludes : list of patterns that should be used to exclude files 
-
         - Example: .git 
 
 - import : Transformations that must be performed while importing
   files from the local directory into the dataset. 
     - directory-mapping: dictionary with local: repo directory mapping
 
+- validate : List of validations that must be performed. This is a
+  dictionary of <validator-name>: <parameters>. Possible parameters include: 
+    - Files: List of patterns of source files on which the validation must be performed 
+    - Rules: List of patterns that specify rules files with validation parameters
+
+- metadata-management: This specifies what should be shared with the metadata server. 
+    - servers: List of domain names to post the metadata 
+    - code-history: git commit information for specified files from
+      the code repository
+
+    - include-preview: List of files/patterns and number of bytes that
+      must be included
+    - include-validation: Validate and share the results 
+    - include-dependencies: Include information on dependent repositories 
+    - include-schema: For csvs and tsvs, detect the schema and share
+    - include-tab-diffs: For csv/tsvs, do an intelligent diff to
+         figure out schema and record changes. 
+    - include-platform: Include the os/system information
 
 Execution
 ~~~~~~~~~

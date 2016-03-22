@@ -4,6 +4,11 @@ Tool to manage growing number of datasets and versions
 """
 
 import os, sys, tempfile
+
+if sys.version_info[0] < 3: 
+    print("only version 3 of python supported") 
+    sys.exit() 
+
 import json
 import getpass 
 import traceback 
@@ -392,7 +397,7 @@ def plugin_cmd(action, what, name, version):
 cli = click.CommandCollection(sources=[repo_specific, repo_generic, management, automatic])
 
 if __name__ == "__main__":
-    
+
     plugins.load() 
     try: 
         config.init()

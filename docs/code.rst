@@ -1,8 +1,10 @@
 Code
 ====
 
+.. image:: images/dgit-structure.jpg
+
 Repo Manager
----------------
+------------
 
 dgit supports multiple ways to store datasets. It could be git itself,
 local filesystem (possibly, with s3 backend). We expect to support
@@ -84,7 +86,7 @@ supported for now.
     :show-inheritance:
 
 Validation
---------
+----------
 
 .. autoclass:: dgitcore.plugins.validator.ValidatorBase 
     :members: 

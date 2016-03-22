@@ -9,6 +9,7 @@
    README.rst
    auto.rst
    config.rst
+   api.rst 
    code.rst 
    faq.rst
 

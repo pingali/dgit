@@ -3,6 +3,11 @@
 import os, sys, json
 from ..plugins.common import get_plugin_mgr 
 
+#####################################################    
+# Exports 
+#####################################################    
+
+__all__ = ['generate']
 #####################################################
 # Validate content
 #####################################################
@@ -76,21 +81,36 @@ def run_generate(repo, generator_name=None, filename=None):
 
     return allresults
     
-def generate(repo, generator_name=None, filename=None, rules=None): 
-            
+def generate(repo, generator_name=None, filename=None, rules=None,show=True): 
+    """
+    Materialize queries/other content within the repo. 
+    
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    generator_name: Name of generator, if any. If none, then all validators specified in dgit.json will be included. 
+    filename: Pattern that specifies files that must be processed by the validators selected. If none, then the default specification in dgit.json is used. 
+    rules: Pattern specifying the files that have rules that validators will use 
+
+    """            
     results = run_generate(repo, generator_name, filename)
+
+    if not show: 
+        return results
 
     if len(results) == 0: 
         print("No output") 
-        return
+    else: 
+        generators = list(set([r['generator'] for r in results]))
+        for g in generators: 
+            print(g)
+            print("==========")
+            for r in results: 
+                if r['generator'] == g: 
+                    print("{} : {} {}".format(r['target'], 
+                                              r['status'],
+                                              r['message']))
+            print("")
 
-    generators = list(set([r['generator'] for r in results]))
-    for g in generators: 
-        print(g)
-        print("==========")
-        for r in results: 
-            if r['generator'] == g: 
-                print("{} : {} {}".format(r['target'], 
-                                          r['status'],
-                                          r['message']))
-        print("")
+    return results 

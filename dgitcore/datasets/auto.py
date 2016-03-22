@@ -10,6 +10,12 @@ from .history import get_history
 from .detect import get_schema 
 from datetime import datetime 
 
+#####################################################    
+# Exports 
+#####################################################    
+
+__all__ = ['collect']
+
 def find_executable_files(): 
     """
     Find max 5 executables that are responsible for this repo. 

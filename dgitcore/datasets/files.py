@@ -19,6 +19,12 @@ from ..plugins.common import get_plugin_mgr
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
 from .detect import get_schema 
 
+#####################################################    
+# Exports 
+#####################################################    
+
+__all__ = ['add']
+
 ############################################################
 # Add files and links...
 ############################################################
@@ -344,7 +350,28 @@ def add(repo, args, targetdir,
         includes=[], script=False, 
         source=None): 
     """
-    Add files to the repository
+    Add files to the repository by explicitly specifying them or by
+    specifying a pattern over files accessed during execution of an
+    executable. 
+    
+    Parameters
+    ----------
+
+    repo: Repository 
+
+    args: files or command line 
+         (a) If simply adding files, then the list of files that must
+         be added (including any additional arguments to be passed to
+         git
+         (b) If files to be added are an output of a command line, then
+         args is the command lined 
+    targetdir: Target directory to store the files 
+    execute: Args are not files to be added but scripts that must be run. 
+    includes: patterns used to select files to 
+    script: Is this a script? 
+    generator: Is this a generator 
+    source: Link to the original source of the data
+
     """
 
     # Gather the files...
