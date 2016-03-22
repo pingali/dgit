@@ -14,7 +14,7 @@ from datetime import datetime
 # Exports 
 #####################################################    
 
-__all__ = ['auto_update', 'auto_init',]
+__all__ = ['auto_update', 'auto_init', 'auto_get_repo']
 
 def find_executable_files(): 
     """
@@ -173,7 +173,13 @@ def auto_init(autofile, force_init=False):
 
 def auto_get_repo(autooptions, debug=False): 
     """
-    Clone this repo if exists. Otherwise create one...
+    Automatically get repo 
+    
+    Parameters
+    ----------
+    
+    autooptions: dgit.json content 
+    
     """
 
     # plugin manager
@@ -296,6 +302,12 @@ def auto_update(autofile, force_init):
 
     # find all the files that must be collected
     files = get_files_to_commit(autooptions) 
+
+    if len(files) > 10: 
+        print("Large number ({}) files are being added.".format(len(files)))
+        proceed = input("Do you wish to proceed? [yN] ")
+        if proceed != 'y': 
+            return 
 
     # Add the files to the repo
     count = auto_add(repo, autooptions, files) 
