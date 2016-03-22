@@ -1,9 +1,21 @@
 #!/usr/bin/env python 
+"""Implements the s3-based storage service for the repositories. Uses a
+command line tool such as aws cli and s3cmd instead of boto3 library
+for simplicity.
 
+[S3] section: 
+
+* enable: Enable this storage service
+* client: s3cmd or aws cli 
+* s3cfg: Optional configuration file to be specified is s3cmd is the client
+* bucket: s3 bucket to store the repositories 
+* prefix: Prefix within the bucket
+
+"""
 import os, sys, stat, subprocess 
 import boto3 
 import getpass 
-from dgitcore.plugins.backend import BackendBase, BackendContext
+from dgitcore.plugins.backend import BackendBase
 from dgitcore.config import get_config, ChoiceValidator, NonEmptyValidator
 from dgitcore.helper import cd
 

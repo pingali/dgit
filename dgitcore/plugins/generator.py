@@ -7,11 +7,6 @@ import requests
 
 Key = namedtuple("Key", ["name","version"])
 
-class GeneratorContext: 
-    """A helper object passed to Generator computation functions 
-    """
-    pass 
-
 class GeneratorBase(object):
     """
     This is the base class for all backends including 

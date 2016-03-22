@@ -112,7 +112,7 @@ def auto_init(autofile, force_init=False):
         ('validate' ,OrderedDict([
             ('metadata-validator', OrderedDict([]))
         ])),
-        ('dependencies' ,[])
+        ('dependencies' ,[]),
     ])
 
     keys = mgr.search('metadata') 

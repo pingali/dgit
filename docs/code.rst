@@ -15,7 +15,7 @@ Instabase in future .
 
 .. autoclass:: plugins.repomanagers.gitmanager.GitRepoManager
     :members: 
-    :undoc-members: update
+    :undoc-members: 
     :show-inheritance:
 
 

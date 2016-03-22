@@ -1,5 +1,12 @@
 #!/usr/bin/env python 
+"""Adapter to a metadata server that provides dataset tracking and other
+services.
 
+* enable: Enable this adapter 
+* url: URL to which the metadata must be posted 
+* token: Authentication token for the server 
+
+"""
 import os, sys, requests, json 
 from dgitcore.plugins.metadata import MetadataBase
 from dgitcore.config import get_config, ChoiceValidator, URLValidator, NonEmptyValidator

@@ -6,14 +6,9 @@ from collections import namedtuple
 
 Key = namedtuple("Key", ["name","version"])
 
-class BackendContext: 
-    """A helper object passed to Backend computation functions 
-    """
-    pass 
-
 class BackendBase(object):
     """
-    This is the base class for all backends including 
+    Backend object implements 
     """
     def __init__(self, name, version, description, supported=[]):
         """        

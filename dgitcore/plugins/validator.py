@@ -7,11 +7,6 @@ import requests
 
 Key = namedtuple("Key", ["name","version"])
 
-class ValidatorContext: 
-    """A helper object passed to Validator computation functions 
-    """
-    pass 
-
 class ValidatorBase(object):
     """
     This is the base class for all backends including 

@@ -8,6 +8,7 @@
 
    README.rst
    auto.rst
+   config.rst
    code.rst 
    faq.rst
 

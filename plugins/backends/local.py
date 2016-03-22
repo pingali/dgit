@@ -1,8 +1,15 @@
 #!/usr/bin/env python 
+"""
+Implements a simple filesystem-based backend for dgit. 
 
+[Local] section: 
+
+* workspace: Directory to be used by dgit for storing repositories
+
+"""
 import os, sys
 from dgitcore.config import NonEmptyValidator
-from dgitcore.plugins.backend import BackendBase, BackendContext
+from dgitcore.plugins.backend import BackendBase
 
 class LocalBackend(BackendBase): 
     """

@@ -480,6 +480,9 @@ def post(repo, args=[]):
             history is not None): 
             annotate_metadata_diffs(repo)
 
+        # Insert options as well
+        repo.package['config'] = repo.options 
+
     try: 
         for k in keys: 
             # print("Key", k)

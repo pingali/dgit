@@ -1,18 +1,29 @@
 #!/usr/bin/env python 
+""" 
+GitManager provides the high level interface to git command line
 
+GitManager does not have independent variables but it inherits attributes from 'Local' backend and 'User' definition
+
+* workspace: (from Local) Directory used by gitmanager to store dataset repositories
+* username: (from User) Name of the user
+* email: (from User) Email of the user
+
+"""
 import os, sys, json, subprocess, re, json 
 import pipes, collections
 import shutil 
 from sh import git 
-from dgitcore.plugins.repomanager import RepoManagerBase, RepoManagerHelper, Repo
+from dgitcore.plugins.repomanager import RepoManagerBase, Repo
 from dgitcore.helper import cd 
 
 class GitRepoManager(RepoManagerBase):     
     """
-    Repomanager to extract platform-specific information
+    Git-based versioning service. This implements the RepoManagerBase class. 
     """
+
     def __init__(self): 
         self.username = None
+        
         self.workspace = None
         self.metadatadir = '.git'
         self.repos = {} 
@@ -22,7 +33,15 @@ class GitRepoManager(RepoManagerBase):
                                              "Git-based Repository Manager")
 
     # =>  Helper functions
-    def run(self, cmd):
+    def _run(self, cmd):
+        """
+        Helper function to run commands 
+
+        Parameters
+        ----------
+        cmd : list
+              Arguments to git command
+        """
 
         cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd) 
@@ -40,13 +59,16 @@ class GitRepoManager(RepoManagerBase):
         # print("Output of command", output)
         return output
 
-    def run_generic_command(self, repo, cmd): 
-
+    def _run_generic_command(self, repo, cmd): 
+        """
+        Run a generic command within the repo. Assumes that you are 
+        in the repo's root directory 
+        """
         result = None
         with cd(repo.rootdir): 
             # Dont use sh. It is not collecting the stdout of all
             # child processes.
-            output = self.run(cmd)
+            output = self._run(cmd)
             try: 
                 result = {
                     'cmd': cmd, 
@@ -64,31 +86,102 @@ class GitRepoManager(RepoManagerBase):
 
     # =>  Simple commands ...
     def push(self, repo, args=[]): 
-        return self.run_generic_command(repo, ["push"] + args)
+        """
+        Push to origin master 
+        
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+
+        """
+        return self._run_generic_command(repo, ["push"] + args)
 
     def status(self, repo, args=[]): 
-        return self.run_generic_command(repo, ["status"] + args)
+        """
+        Show status of the repo (pass thru git command) 
+
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+        """
+        return self._run_generic_command(repo, ["status"] + args)
 
     def stash(self, repo, args=[]): 
-        return self.run_generic_command(repo, ["stash"] + args)
+        """
+        Stash all the changes (pass thru git command) 
+
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+        """
+        return self._run_generic_command(repo, ["stash"] + args)
 
     def diff(self, repo, args=[]): 
-        return self.run_generic_command(repo, ["diff"] + args)
+        """
+        diff two repo versions  (pass thru git command) 
+
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+        """        
+        return self._run_generic_command(repo, ["diff"] + args)
 
     def log(self, repo, args=[]): 
-        return self.run_generic_command(repo, ["log"] + args)
+        """
+        Show the log  (pass thru git command) 
+
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+        """
+        return self._run_generic_command(repo, ["log"] + args)
 
     def commit(self, repo, args): 
-        return self.run_generic_command(repo, ["commit"] + args)
+        """
+        Commit the changes to the repo (pass thru git command) 
+
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+        """
+        return self._run_generic_command(repo, ["commit"] + args)
 
     def show(self, repo, args): 
-        return self.run_generic_command(repo, ["show"] + args)
+        """
+        Show the content of the repo (pass thru git command) 
+
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+        """
+        return self._run_generic_command(repo, ["show"] + args)
 
         
     # => Run more complex functions to initialize, cleanup 
     def init(self, username, reponame, force, backend=None): 
         """
         Initialize a Git repo 
+
+        Parameters
+        ----------
+
+        username, reponame : Repo name is tuple (name, reponame) 
+        force: force initialization of the repo even if exists 
+        backend: backend that must be used for this (e.g. s3) 
         """
         key = self.key(username, reponame) 
         
@@ -140,8 +233,14 @@ class GitRepoManager(RepoManagerBase):
 
     def clone(self, url, backend=None): 
         """
-        Initialize a Git repo 
+        Clone a URL 
+
+        Parameters
+        ----------
+
+        url : URL of the repo. Supports s3://, git@, http://
         """
+
         
         # s3://bucket/git/username/repo.git 
         username = self.username
@@ -156,20 +255,24 @@ class GitRepoManager(RepoManagerBase):
                                              create=False)         
 
         rootdir = self.rootdir(username,  reponame, create=False)
+        
+        
         if backend is None: 
-            print("Backend is standard git server") 
+            # Backend is standard git repo (https://, git@...)
             with cd(os.path.dirname(rootdir)): 
-                self.run(['clone', '--no-hardlinks', url])
+                self._run(['clone', '--no-hardlinks', url])
         else: 
-
+            # Backend is s3 
             # Sync if needed. 
             if not os.path.exists(server_repodir): 
                 # s3 -> .dgit/git/pingali/hello.git -> .dgit/datasets/pingali/hello 
                 backend.clone_repo(url, server_repodir)
 
+            # After sync clone, 
             with cd(os.path.dirname(rootdir)): 
-                self.run(['clone', '--no-hardlinks', server_repodir])
+                self._run(['clone', '--no-hardlinks', server_repodir])
 
+        # Insert the object into the internal table we maintain...
         r = Repo(username, reponame)
         r.rootdir = rootdir 
         r.remoteurl = url 
@@ -189,7 +292,7 @@ class GitRepoManager(RepoManagerBase):
                 cmd = ['rm'] + list(args)
                 result = {
                     'status': 'success',
-                    'message': self.run(cmd)
+                    'message': self._run(cmd)
                 }
             except Exception as e: 
                 result = {
@@ -241,7 +344,7 @@ class GitRepoManager(RepoManagerBase):
 
         # Find the root of the repo and cd into that directory..
         os.chdir(os.path.dirname(path))    
-        rootdir = self.run(["rev-parse", "--show-toplevel"])    
+        rootdir = self._run(["rev-parse", "--show-toplevel"])    
         os.chdir(rootdir)        
         # print("Rootdir = ", rootdir) 
 
@@ -251,13 +354,13 @@ class GitRepoManager(RepoManagerBase):
 
         # Get the last commit for this file
         #3764cc2600b221ac7d7497de3d0dbcb4cffa2914
-        sha1 = self.run(["log", "-n", "1", "--format=format:%H", relpath])    
+        sha1 = self._run(["log", "-n", "1", "--format=format:%H", relpath])    
         #print("sha1 = ", sha1) 
 
         # Get the repo URL 
         #git@gitlab.com:pingali/simple-regression.git
         #https://gitlab.com/kanban_demo/test_project.git
-        remoteurl = self.run(["config", "--get", "remote.origin.url"])
+        remoteurl = self._run(["config", "--get", "remote.origin.url"])
         #print("remoteurl = ", remoteurl)     
 
         # Go back to the original directory...
@@ -293,7 +396,7 @@ class GitRepoManager(RepoManagerBase):
         result = None
         with cd(repo.rootdir): 
             try: 
-                result = self.run(["add"] + files)
+                result = self._run(["add"] + files)
             except: 
                 pass 
 
@@ -319,13 +422,15 @@ class GitRepoManager(RepoManagerBase):
             print("Adding: {}".format(relativepath))
             shutil.copyfile(sourcepath, targetpath) 
             with cd(repo.rootdir):             
-                self.run(['add', relativepath])
+                self._run(['add', relativepath])
 
     def config(self, what='get', params=None): 
         """
         Paramers: 
         ---------
 
+        workspace: Directory to store the dataset repositories 
+        email: 
         """
         if what == 'get': 
             return {
@@ -337,8 +442,6 @@ class GitRepoManager(RepoManagerBase):
             self.workspace = params['Local']['workspace']
             self.username = params['User']['user.name']
             self.email = params['User']['user.email']
-            if self.enable == 'n': 
-                return 
 
             repodir = os.path.join(self.workspace, 'datasets')
             if not os.path.exists(repodir): 

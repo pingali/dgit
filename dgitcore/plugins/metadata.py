@@ -7,11 +7,6 @@ import requests
 
 Key = namedtuple("Key", ["name","version"])
 
-class MetadataContext: 
-    """A helper object passed to Metadata computation functions 
-    """
-    pass 
-
 class MetadataBase(object):
     """
     This is the base class for all backends including 

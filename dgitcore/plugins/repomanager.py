@@ -96,16 +96,9 @@ class Repo:
         raise Exception("Invalid path")
 
 
-class RepoManagerHelper: 
-    """
-    Miscellaneous helper functions useful for evaluation
-    """
-    pass 
-
 class RepoManagerBase(object):
-    """Various repository backends including simple local filesystem,
-    git, and in future instabase.
-
+    """Repository manager handles the specifics of the version control
+    system. Currently only git manager is supported.
     """
     def __init__(self, name, version, description, supported=[]):
         self.enable = 'y' 

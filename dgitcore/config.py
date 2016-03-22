@@ -1,6 +1,14 @@
 #!/usr/bin/env python 
 """
-Configuration parser 
+dgit default configuration manager
+
+[User] section: 
+
+* user.name: Name of the user 
+* user.email: Email address (to be used when needed) 
+* user.fullname: Full name of the user 
+
+
 """
 import os, sys, json, re, traceback, getpass 
 

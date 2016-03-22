@@ -6,12 +6,6 @@ from collections import namedtuple
 
 Key = namedtuple("Key", ["name","version"])
 
-class InstrumentationHelper: 
-    """
-    Miscellaneous helper functions useful for evaluation
-    """
-    pass 
-
 class InstrumentationBase(object):
     """
     Pre-computed patterns 
