@@ -168,6 +168,9 @@ def extract_files(filename, includes):
 
             for i in includes: 
                 if fnmatch.fnmatch(matchedfile, i):
+                    # Exclude python libraries 
+                    if 'site-packages' in matchedfile: 
+                        continue 
                     if matchedfile not in files: 
                         files[matchedfile] = [action] 
                     else: 
@@ -264,7 +267,7 @@ def extract_files(filename, includes):
     print(json.dumps(result, indent=4))
     return result
 
-def find_executable_commitpath(repomanager, repo, args): 
+def find_executable_commitpath(repo, args): 
 
     print("Finding executable commit path", args)
     # Find the first argument that is a file and is part of a repo
@@ -275,7 +278,7 @@ def find_executable_commitpath(repomanager, repo, args):
             f = os.path.realpath(f) 
 
             # Try getting the permalink 
-            (relpath, permalink) = repomanager.permalink(repo, f)
+            (relpath, permalink) = repo.manager.permalink(repo, f)
             if permalink is not None: 
                 return (relpath, permalink)
     
@@ -285,8 +288,7 @@ def find_executable_commitpath(repomanager, repo, args):
     
     return (None, None) 
 
-def run_executable(repomanager, repo, 
-                   args, includes): 
+def run_executable(repo, args, includes): 
     """
     Run the executable and capture the input and output...
     """
@@ -298,7 +300,7 @@ def run_executable(repomanager, repo,
 
     print("Obtaining Commit Information")
     (executable, commiturl) = \
-            find_executable_commitpath(repomanager, repo, args) 
+            find_executable_commitpath(repo, args) 
 
     # Create a local directory 
     tmpdir = tempfile.mkdtemp()
@@ -382,8 +384,7 @@ def add(repo, args, targetdir,
                           script=script,
                           generator=generator)
     else: 
-        files = run_executable(repomanager, repo, 
-                               args, includes)
+        files = run_executable(repo, args, includes)
 
     if files is None or len(files) == 0: 
         return repo 
