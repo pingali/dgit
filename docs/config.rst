@@ -116,6 +116,11 @@ time, and work as much as possible in the auto mode.
     - excludes : list of patterns that should be used to exclude files 
         - Example: .git 
 
+- pipeline : Data processing pipeline. This is a dictionary with
+  pipeline name mapped to a details dictionary. Each of them has:
+    - files: Ordered list of files 
+    - description: Text summary of the pipeline 
+
 - import : Transformations that must be performed while importing
   files from the local directory into the dataset. 
     - directory-mapping: dictionary with local: repo directory mapping

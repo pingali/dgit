@@ -102,7 +102,7 @@ def add_files(args, targetdir, generator, source, script):
     seen = []
     files = []
     for f in args: 
-        #print("Looking at", f)
+        # print("Looking at", f)
         if "://" not in f:            
             (base, update) = add_file_normal(f=f,
                                              targetdir=targetdir, 
@@ -115,13 +115,13 @@ def add_files(args, targetdir, generator, source, script):
 
         if base not in seen: 
             update['change'] = 'add'
+            ts = datetime.now()
             seen.append(base)
         else: 
             update['change'] = 'update'
-
-        ts = os.path.getmtime(f)
-        ts = datetime.fromtimestamp(ts)
-        update['ts'] = ts.isoformat() 
+            ts = os.path.getmtime(f)
+            ts = datetime.fromtimestamp(ts)
+        update['ts'] = ts.isoformat()         
         files.append(update)          
    
     return files
@@ -400,9 +400,17 @@ def add(repo, args, targetdir,
             if h['relativepath'] == r['relativepath']: 
                 found = True
                 if h['sha256'] == r['sha256']: 
+                    change = False
+                    for attr in ['source']: 
+                        if h[attr] != r[attr]: 
+                            r[attr] = h[attr] 
+                            change = True 
+                    if change: 
+                        filtered_files.append(h)
                     continue
-                filtered_files.append(h)
-                package['resources'][i] = h
+                else: 
+                    filtered_files.append(h)
+                    package['resources'][i] = h
                 break 
         if not found: 
             filtered_files.append(h)

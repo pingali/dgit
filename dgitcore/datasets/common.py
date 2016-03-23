@@ -37,7 +37,7 @@ __all__ = [
     'shellcmd', 
     'log', 'show', 'push', 'commit',
     'stash', 'drop', 'status', 'post',
-    'clone', 'init'
+    'clone', 'init', 'diff'
 ]
 
 #####################################################    
@@ -558,6 +558,19 @@ def post(repo, args=[]):
     
     if len(keys) == 0: 
         return 
+
+    # Incorporate pipeline information...
+    if 'pipeline' in repo.options:         
+        for name, details in repo.options['pipeline'].items(): 
+            patterns = details['files']
+            matching_files = repo.find_matching_files(patterns)
+            matching_files.sort() 
+            details['files'] = matching_files 
+            for i, f in enumerate(matching_files): 
+                r = repo.get_resource(f)
+                if 'pipeline' not in r: 
+                    r['pipeline'] = []
+                r['pipeline'].append(name + " [Step {}]".format(i))
 
     if 'metadata-management' in repo.options:
         

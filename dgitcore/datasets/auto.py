@@ -118,6 +118,7 @@ def auto_init(autofile, force_init=False):
             ('includes', ['*.csv', '*.tsv', '*.txt','*.json', '*.xlsx']),
             ('excludes', ['.git', '.svn', os.path.basename(autofile)]),
         ])),
+        ('pipeline' ,OrderedDict([])),
         ('import' ,OrderedDict([
             ('directory-mapping' ,OrderedDict([
                 ('.', '')

@@ -345,6 +345,9 @@ class GitRepoManager(RepoManagerBase):
         # Find the root of the repo and cd into that directory..
         os.chdir(os.path.dirname(path))    
         rootdir = self._run(["rev-parse", "--show-toplevel"])    
+        if "fatal" in rootdir: 
+            return None
+
         os.chdir(rootdir)        
         # print("Rootdir = ", rootdir) 
 
