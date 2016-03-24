@@ -46,7 +46,7 @@ class GitRepoManager(RepoManagerBase):
         cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd) 
         cmd += "; exit 0"
-        # print("Running cmd", cmd)
+        print("Running cmd", cmd)
         try: 
             output = subprocess.check_output(cmd,
                                              stderr=subprocess.STDOUT,
@@ -56,7 +56,7 @@ class GitRepoManager(RepoManagerBase):
 
         output = output.decode('utf-8')
         output = output.strip() 
-        # print("Output of command", output)
+        print("Output of command", output)
         return output
 
     def _run_generic_command(self, repo, cmd): 
@@ -83,6 +83,20 @@ class GitRepoManager(RepoManagerBase):
                 }
              
         return result         
+
+    # =>  Simple commands ...
+    def notes(self, repo, args=[]): 
+        """
+        Add notes to the commit
+        
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: notes-specific args
+
+        """
+        return self._run_generic_command(repo, ["notes"] + args)
 
     # =>  Simple commands ...
     def push(self, repo, args=[]): 
@@ -272,11 +286,26 @@ class GitRepoManager(RepoManagerBase):
             with cd(os.path.dirname(rootdir)): 
                 self._run(['clone', '--no-hardlinks', server_repodir])
 
+                
+            # Insert the notes push 
+            configfile = os.path.join(rootdir, '.git', 'config')
+            content = open(configfile).read() 
+            original = "fetch = +refs/heads/*:refs/remotes/origin/*"
+            replacement ="""fetch = +refs/heads/*:refs/remotes/origin/*\n        fetch = +refs/notes/*:refs/notes/*"""
+            if "notes" not in content: 
+                content = content.replace(original, replacement) 
+                with open(configfile, 'w') as fd: 
+                    fd.write(content) 
+
         # Insert the object into the internal table we maintain...
         r = Repo(username, reponame)
         r.rootdir = rootdir 
         r.remoteurl = url 
         r.manager = self 
+
+        package = os.path.join(r.rootdir, 'datapackage.json')
+        packagedata = open(package).read()
+        r.package = json.JSONDecoder(object_pairs_hook=collections.OrderedDict).decode(packagedata)
 
         return self.add(r)
 
@@ -422,7 +451,7 @@ class GitRepoManager(RepoManagerBase):
             except:
                 pass 
             # print(sourcepath," => ", targetpath)
-            print("Adding: {}".format(relativepath))
+            print("Updating: {}".format(relativepath))
             shutil.copyfile(sourcepath, targetpath) 
             with cd(repo.rootdir):             
                 self._run(['add', relativepath])

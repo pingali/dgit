@@ -326,6 +326,12 @@ def auto_update(autofile, force_init):
         if message in [None, '']: 
             message = "Automatic commit on {}".format(ts)
         repo.run('commit', ['-a', '-m', message])
+
+    # Add the dgit.json as a note in the dgit_config namespace 
+    print("Posting notes though") 
+    autofile = os.path.abspath(autofile)
+    repo.run('notes', ['--ref', 'dgit_config', 
+                       'add', '-f', '-F', autofile, 'HEAD'])
     
     # Push to server 
     repo.run('push', ['origin', 'master'])

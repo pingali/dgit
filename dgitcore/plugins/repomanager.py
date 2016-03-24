@@ -239,6 +239,9 @@ class RepoManagerBase(object):
     def commit(self, repo, message): 
         pass 
 
+    def notes(self, repo, args): 
+        pass 
+
     def add_raw(self, repo, files): 
         pass 
 
