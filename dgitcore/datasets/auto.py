@@ -204,10 +204,10 @@ def auto_get_repo(autooptions, debug=False):
     except: 
         # Clone the repo 
         try: 
-            print("Checking if the dataset exists on backend")
+            print("Checking and cloning if the dataset exists on backend")
             url = autooptions['remoteurl']
             if debug:
-                print("Doesnt exist. trying to clone: {}".format(url))
+                print("Doesnt exist. trying to clone: {}".format(url))            
             common_clone(url)        
             repo = repomgr.lookup(username=autooptions['username'],
                                   reponame=autooptions['reponame'])

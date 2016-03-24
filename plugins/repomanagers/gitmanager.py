@@ -301,20 +301,20 @@ class GitRepoManager(RepoManagerBase):
                 self._run(['clone', '--no-hardlinks', server_repodir])
 
                 
-            # Insert the notes push 
-            if True: 
-                configfile = os.path.join(rootdir, '.git', 'config')
-                content = open(configfile).read() 
-                original = "fetch = +refs/heads/*:refs/remotes/origin/*"
-                replacement ="""fetch = +refs/heads/*:refs/remotes/origin/*\n        fetch = +refs/notes/*:refs/notes/*"""
-                if "notes" not in content: 
-                    content = content.replace(original, replacement) 
-                    with open(configfile, 'w') as fd: 
-                        fd.write(content) 
+        # Insert the notes push 
+        if True: 
+            configfile = os.path.join(rootdir, '.git', 'config')
+            content = open(configfile).read() 
+            original = "fetch = +refs/heads/*:refs/remotes/origin/*"
+            replacement ="""fetch = +refs/heads/*:refs/remotes/origin/*\n        fetch = +refs/notes/*:refs/notes/*"""
+            if "notes" not in content: 
+                content = content.replace(original, replacement) 
+                with open(configfile, 'w') as fd: 
+                    fd.write(content) 
                 
-                # Pull the notes if any as well..
-                with cd(rootdir):
-                    self._run(['pull','origin'])
+            # Pull the notes if any as well..
+            with cd(rootdir):
+                self._run(['pull','origin'])
                 
         # Insert the object into the internal table we maintain...
         r = Repo(username, reponame)
@@ -366,12 +366,8 @@ class GitRepoManager(RepoManagerBase):
         # the server etc.
         server_repodir = self.server_rootdir_from_repo(repo, 
                                                        create=False)
-        print("Cleaning data from local git 'server': {}".format(server_repodir))
-
-        if not os.path.exists(server_repodir): 
-            raise Exception("Missing local repo directory")
-
         if os.path.exists(server_repodir): 
+            print("Cleaning data from local git 'server': {}".format(server_repodir))
             shutil.rmtree(server_repodir) 
 
         return { 
