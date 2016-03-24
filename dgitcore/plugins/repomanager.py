@@ -65,7 +65,7 @@ class Repo:
             pass 
         with open(path, 'w') as fd: 
             fd.write(content)
-
+            print("Updated", os.path.relpath(path, self.rootdir))
         
     def __str__(self): 
         return "[{}] {}/{}".format(self.manager.name,

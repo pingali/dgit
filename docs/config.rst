@@ -189,6 +189,12 @@ Execution
                ".": ""
            }
        },
+       "pipeline": {
+           "main": {
+             "files": "snapshot/*",
+             "description": "Main pipeline"
+           }
+       },
        "validate": {
            "metadata-validator": {},
            "regression-quality-validator": { 

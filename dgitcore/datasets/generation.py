@@ -58,7 +58,7 @@ def instantiate(repo, generator_name=None, filename=None):
 
     return generators
 
-def run_generate(repo, generator_name=None, filename=None):
+def run_generate(repo, generator_name=None, filename=None, force=False):
     """
     Materialize
     """
@@ -76,12 +76,16 @@ def run_generate(repo, generator_name=None, filename=None):
         keys = mgr.search(what='generator',name=v)['generator'] 
         for k in keys: 
             generator = mgr.get_by_key('generator', k)
-            result = generator.evaluate(repo, files) 
+            result = generator.evaluate(repo, files, force) 
             allresults.extend(result)
 
     return allresults
     
-def generate(repo, generator_name=None, filename=None, rules=None,show=True): 
+def generate(repo, 
+             generator_name=None, 
+             filename=None, 
+             force=False,
+             show=True): 
     """
     Materialize queries/other content within the repo. 
     
@@ -89,12 +93,11 @@ def generate(repo, generator_name=None, filename=None, rules=None,show=True):
     ----------
     
     repo: Repository object 
-    generator_name: Name of generator, if any. If none, then all validators specified in dgit.json will be included. 
-    filename: Pattern that specifies files that must be processed by the validators selected. If none, then the default specification in dgit.json is used. 
-    rules: Pattern specifying the files that have rules that validators will use 
+    generator_name: Name of generator, if any. If none, then all generators specified in dgit.json will be included. 
+    filename: Pattern that specifies files that must be processed by the generators selected. If none, then the default specification in dgit.json is used. 
 
     """            
-    results = run_generate(repo, generator_name, filename)
+    results = run_generate(repo, generator_name, filename, force)
 
     if not show: 
         return results

@@ -243,13 +243,17 @@ def validate(repo, validator, target, rules):
               help="Name of the generator")
 @click.option('--target', '-t',
               help="Specification for the filename as a pattern")
+@click.option('--force', '-f',
+              is_flag=True, 
+              default=False,
+              help="Ignore cached results")
 @common_options
-def generate(repo, generator, target):
+def generate(repo, generator, target, force):
     """
     Materialize queries
     """
     
-    datasets.generate(repo, generator, target)
+    datasets.generate(repo, generator, target, force=force)
 
 
 @repo_specific.command('remote', context_settings=CONTEXT_SETTINGS)

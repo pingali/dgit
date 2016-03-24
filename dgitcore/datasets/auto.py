@@ -115,7 +115,7 @@ def auto_init(autofile, force_init=False):
         ("description", description),
         ("working-directory", "."),
         ('track' ,OrderedDict([
-            ('includes', ['*.csv', '*.tsv', '*.txt','*.json', '*.xlsx']),
+            ('includes', ['*.csv', '*.tsv', '*.txt','*.json', '*.xlsx', "*.sql", "*.hql"]),
             ('excludes', ['.git', '.svn', os.path.basename(autofile)]),
         ])),
         ('pipeline' ,OrderedDict([])),
@@ -127,6 +127,11 @@ def auto_init(autofile, force_init=False):
         ('validate' ,OrderedDict([
             ('metadata-validator', OrderedDict([]))
         ])),
+        ("generate", OrderedDict([
+            ("mysql-generator",OrderedDict([
+                ("files", ["*sql"])
+            ]))
+        ]))
         ('dependencies' ,[]),
     ])
 
@@ -209,7 +214,7 @@ def auto_get_repo(autooptions, debug=False):
             if debug: 
                 print("Cloning successful")
         except:
-            traceback.print_exc()
+            # traceback.print_exc()
             yes = input("Repo doesnt exist. Should I create one? [yN]") 
             if yes == 'y': 
                 setup = "git"
