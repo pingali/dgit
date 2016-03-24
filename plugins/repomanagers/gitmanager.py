@@ -46,7 +46,7 @@ class GitRepoManager(RepoManagerBase):
         cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd) 
         cmd += "; exit 0"
-        print("Running cmd", cmd)
+        # print("Running cmd", cmd)
         try: 
             output = subprocess.check_output(cmd,
                                              stderr=subprocess.STDOUT,
@@ -56,7 +56,7 @@ class GitRepoManager(RepoManagerBase):
 
         output = output.decode('utf-8')
         output = output.strip() 
-        print("Output of command", output)
+        # print("Output of command", output)
         return output
 
     def _run_generic_command(self, repo, cmd): 
