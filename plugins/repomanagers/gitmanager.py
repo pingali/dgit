@@ -46,7 +46,7 @@ class GitRepoManager(RepoManagerBase):
         cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd) 
         cmd += "; exit 0"
-        # print("Running cmd", cmd)
+        #print("Running cmd", cmd)
         try: 
             output = subprocess.check_output(cmd,
                                              stderr=subprocess.STDOUT,
@@ -111,6 +111,20 @@ class GitRepoManager(RepoManagerBase):
 
         """
         return self._run_generic_command(repo, ["push"] + args)
+
+    # =>  Simple commands ...
+    def pull(self, repo, args=[]): 
+        """
+        Pull from origin/filesystem based master
+        
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+
+        """
+        return self._run_generic_command(repo, ["pull"] + args)
 
     def status(self, repo, args=[]): 
         """
@@ -288,15 +302,20 @@ class GitRepoManager(RepoManagerBase):
 
                 
             # Insert the notes push 
-            configfile = os.path.join(rootdir, '.git', 'config')
-            content = open(configfile).read() 
-            original = "fetch = +refs/heads/*:refs/remotes/origin/*"
-            replacement ="""fetch = +refs/heads/*:refs/remotes/origin/*\n        fetch = +refs/notes/*:refs/notes/*"""
-            if "notes" not in content: 
-                content = content.replace(original, replacement) 
-                with open(configfile, 'w') as fd: 
-                    fd.write(content) 
-
+            if True: 
+                configfile = os.path.join(rootdir, '.git', 'config')
+                content = open(configfile).read() 
+                original = "fetch = +refs/heads/*:refs/remotes/origin/*"
+                replacement ="""fetch = +refs/heads/*:refs/remotes/origin/*\n        fetch = +refs/notes/*:refs/notes/*"""
+                if "notes" not in content: 
+                    content = content.replace(original, replacement) 
+                    with open(configfile, 'w') as fd: 
+                        fd.write(content) 
+                
+                # Pull the notes if any as well..
+                with cd(rootdir):
+                    self._run(['pull','origin'])
+                
         # Insert the object into the internal table we maintain...
         r = Repo(username, reponame)
         r.rootdir = rootdir 

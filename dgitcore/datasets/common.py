@@ -35,7 +35,7 @@ __all__ = [
     'lookup', 
     'list_repos',
     'shellcmd', 
-    'log', 'show', 'push', 'commit',
+    'log', 'show', 'push', 'pull', 'commit',
     'stash', 'drop', 'status', 'post',
     'clone', 'init', 'diff'
 ]
@@ -148,6 +148,18 @@ def push(repo, args):
     args: Arguments to git command
     """
     return generic_repo_cmd(repo, 'push', True, args) 
+
+def pull(repo, args): 
+    """
+    Pull changes from the backend 
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
+    """
+    return generic_repo_cmd(repo, 'pull', True, args) 
 
 def commit(repo, args): 
     """

@@ -124,8 +124,16 @@ class S3Backend(BackendBase):
             
         return True
 
-    def init_repo(self, gitdir): 
+    def make_hook_executable(self, filename): 
 
+        # Set the execute permissions 
+        st = os.stat(filename)
+        os.chmod(filename, st.st_mode | stat.S_IEXEC)
+        
+    def init_repo(self, gitdir): 
+        """
+        Insert hook into the repo 
+        """
         hooksdir = os.path.join(gitdir, 'hooks')
         content = postreceive_template % {
             'client': self.client, 
@@ -140,10 +148,6 @@ class S3Backend(BackendBase):
 
         print("Wrote to", postrecv_filename) 
 
-        # Set the execute permissions 
-        st = os.stat(postrecv_filename)
-        os.chmod(postrecv_filename, 
-                 st.st_mode | stat.S_IEXEC)
 
     def url_is_valid(self, url): 
              
@@ -177,8 +181,18 @@ class S3Backend(BackendBase):
                 cmd = ["s3cmd", "-c", self.s3cfg, "sync", url + "/", "."]
             # print("CMD", cmd) 
             output = self.run(cmd) 
-            print(output) 
+            #print(output) 
+            print("Sync'd dataset with s3")
+            
 
+        # Make sure that hook is has correct permissions 
+        hooksdir = os.path.join(gitdir, 'hooks')        
+        postrecv_filename =os.path.join(hooksdir, 'post-receive')
+        if os.path.exists(postrecv_filename): 
+            self.make_hook_executable(postrecv_filename) 
+        else: 
+            self.init_repo(gitdir) 
+            
     
 def setup(mgr): 
     

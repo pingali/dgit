@@ -328,12 +328,15 @@ def auto_update(autofile, force_init):
         repo.run('commit', ['-a', '-m', message])
 
     # Add the dgit.json as a note in the dgit_config namespace 
-    print("Posting notes though") 
     autofile = os.path.abspath(autofile)
     repo.run('notes', ['--ref', 'dgit_config', 
-                       'add', '-f', '-F', autofile, 'HEAD'])
+                       'add', 
+                       '-F', autofile, 
+                       'HEAD'])
     
-    # Push to server 
+    # Push notes and commits to server 
+    print("Sync'ing with backend")
+    repo.run('push', ['origin', "refs/notes/*"])
     repo.run('push', ['origin', 'master'])
 
     # Collect all the metadata and post
