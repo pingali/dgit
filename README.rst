@@ -103,7 +103,6 @@ them to the dataset.
 
    $ dgit auto 
    Repo doesnt exist. Should I create one? [yN]y
-   Wrote to /home/pingali/.dgit/git/pingali/simple-regression.git/hooks/post-receive
    Adding: datapackage.json
    Adding: .gitignore
 

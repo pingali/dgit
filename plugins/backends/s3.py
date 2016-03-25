@@ -146,7 +146,8 @@ class S3Backend(BackendBase):
         with open(postrecv_filename,'w') as fd:
             fd.write(content) 
 
-        print("Wrote to", postrecv_filename) 
+        self.make_hook_executable(postrecv_filename) 
+        # print("Wrote to", postrecv_filename) 
 
 
     def url_is_valid(self, url): 

@@ -118,6 +118,7 @@ def auto_init(autofile, force_init=False):
             ('includes', ['*.csv', '*.tsv', '*.txt','*.json', '*.xlsx', "*.sql", "*.hql"]),
             ('excludes', ['.git', '.svn', os.path.basename(autofile)]),
         ])),
+        ('auto-push', False),
         ('pipeline' ,OrderedDict([])),
         ('import' ,OrderedDict([
             ('directory-mapping' ,OrderedDict([
@@ -131,8 +132,8 @@ def auto_init(autofile, force_init=False):
             ("mysql-generator",OrderedDict([
                 ("files", ["*sql"])
             ]))
-        ]))
-        ('dependencies' ,[]),
+        ])),
+        ('dependencies' ,OrderedDict([]))
     ])
 
     keys = mgr.search('metadata') 
@@ -336,8 +337,9 @@ def auto_update(autofile, force_init):
     
     # Push notes and commits to server 
     print("Sync'ing with backend")
-    repo.run('push', ['origin', "refs/notes/*"])
-    repo.run('push', ['origin', 'master'])
+    if 'auto-push' in autooptions and autooptions['auto-push']: 
+        repo.run('push', ['origin', "refs/notes/*"])
+        repo.run('push', ['origin', 'master'])
 
     # Collect all the metadata and post
     common_post(repo)

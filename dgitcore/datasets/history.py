@@ -73,6 +73,9 @@ def get_tree(gitdir="."):
             revisedcontent = content + l
             if revisedcontent.count('"') % 2 == 0:
                 j = json.loads(revisedcontent[:-1])
+                if "Notes added by" in j['subject']: 
+                    content = ""
+                    continue 
                 history.append(j) 
                 content = "" 
             else:
@@ -256,8 +259,10 @@ def get_diffs(history):
         prev = history[i]
         curr = history[i+1]
 
+        #print(prev['subject'], "==>", curr['subject']) 
+        #print(curr['changes'])
         for c in curr['changes']: 
-
+            
             path = c['path'].lower()
             delimiter = "," if path.endswith("csv") else "\t"
 
