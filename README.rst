@@ -13,8 +13,8 @@ dgit uses git for version management but structures the repository
 content, and interface to suit data management tasks. 
 
 dgit is agnostic to form and content of the datasets and
-post-processing scripts. It tries to adher to `best available dataset
-standards <http://dataprotocols.org>`_
+post-processing scripts. It tries to be sync with `best available
+dataset standards <http://dataprotocols.org>`_ (WIP)
 
 Read `documentation <https://dgit.readthedocs.org>`_ 
 
