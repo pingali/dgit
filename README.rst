@@ -18,13 +18,15 @@ dataset standards <http://dataprotocols.org>`_ (WIP)
 
 Read `documentation <https://dgit.readthedocs.org>`_ 
 
+Slides on a `Scaling Data Science with dgit <http://www.slideshare.net/pingali/r-meetup-talk-scaling-data-science-with-dgit>`_ at R Data Science Meetup, Bangalore
+
 Contents:
 
 * Usage
     1. `Setup`_
     2. `Tutorial`_
     3. `Usage`_
-    4. `Plugins`_
+    4. `Available Plugins`_
     5. `Security and Privacy`_
 * Background
     1. `Dataset Management Problem`_ 
@@ -179,8 +181,8 @@ Usage
       status     Status of the repo
       validate   Validate the content of the repository
     
-Plugins
--------
+Available Plugins
+-----------------
 
 This is the base set of plugins supported by the default dgit
 repo. More extensions are part of `dgit-extensions
