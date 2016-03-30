@@ -385,6 +385,8 @@ class GitRepoManager(RepoManagerBase):
             print("Cleaning data from local git 'server': {}".format(server_repodir))
             shutil.rmtree(server_repodir) 
 
+        super(GitRepoManager, self).drop(repo)
+        
         return { 
             'status': 'success',
             'message': "successful cleanup"

@@ -348,11 +348,9 @@ def init(username, reponame, setup,
     mgr = plugins_get_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
 
-    backend = None 
     backendmgr = None 
     if setup == 'git+s3':
-        backend = 's3'
-        backendmgr = mgr.get(what='backend', name=backend) 
+        backendmgr = mgr.get(what='backend', name='s3') 
 
     repo = repomgr.init(username, reponame, force, backendmgr) 
 

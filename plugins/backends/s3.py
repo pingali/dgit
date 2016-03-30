@@ -134,6 +134,7 @@ class S3Backend(BackendBase):
         """
         Insert hook into the repo 
         """
+
         hooksdir = os.path.join(gitdir, 'hooks')
         content = postreceive_template % {
             'client': self.client, 
@@ -147,7 +148,7 @@ class S3Backend(BackendBase):
             fd.write(content) 
 
         self.make_hook_executable(postrecv_filename) 
-        # print("Wrote to", postrecv_filename) 
+        print("Wrote to", postrecv_filename) 
 
 
     def url_is_valid(self, url): 

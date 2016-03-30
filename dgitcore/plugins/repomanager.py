@@ -222,8 +222,13 @@ class RepoManagerBase(object):
         self.repos[key] = repo 
         return key 
 
-    def drop(self, repo, args): 
-        pass 
+    def drop(self, repo):
+        """
+        Drop repository 
+        """
+        key = repo.key 
+        del self.repos[key]
+
 
     def push(self, repo, args): 
         pass 

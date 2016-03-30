@@ -33,7 +33,18 @@ def clean_workspace():
     """
     Clean the working space 
     """    
-    workspace = os.path.join(thisdir, 'workspace') 
+
+    # Run the dgit config show to the workspace directory 
+    result = runner.invoke(dgitmod.profile, ['show'])
+    output = result.output         
+    output = output.split("\n") 
+    workspaces = [o.strip() for o in output if "workspace :" in o]
+    if len(workspaces) > 0: 
+        workspace = workspaces[0]
+        workspace = workspace.replace("workspace : ","")
+    else: 
+        workspace = os.path.join(os.getcwd(), 'workspace')
+
     default_workspace = os.path.expanduser("~/.dgit")
     if ((workspace != default_workspace) and 
         os.path.exists(workspace)): 
