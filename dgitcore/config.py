@@ -66,8 +66,13 @@ class URLValidator(object):
 # Main helper functions...
 ###################################
 def getprofileini():
-    homedir = os.path.abspath(os.environ['HOME'])
-    profileini = os.path.join(homedir,'.dgit.ini') 
+    
+    if 'DGIT_INI' in os.environ: 
+        profileini = os.environ['DGIT_INI']
+    else: 
+        homedir = os.path.abspath(os.environ['HOME'])
+        profileini = os.path.join(homedir,'.dgit.ini') 
+
     return profileini
 
 def init(globalvars=None, show=False):

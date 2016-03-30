@@ -5,6 +5,7 @@ import json
 import fnmatch, re 
 from collections import namedtuple
 from ..helper import slugify 
+from ..exceptions import * 
 
 Key = namedtuple("Key", ["name","version"])
 
@@ -160,7 +161,7 @@ class RepoManagerBase(object):
         if key is None: 
             key = self.key(username, reponame) 
         if key not in self.repos: 
-            raise Exception("Unknown repository") 
+            raise UnknownRepository()
 
         return self.repos[key]
 

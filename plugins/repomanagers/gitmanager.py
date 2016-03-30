@@ -15,6 +15,7 @@ import shutil
 from sh import git 
 from dgitcore.plugins.repomanager import RepoManagerBase, Repo
 from dgitcore.helper import cd 
+from dgitcore.exceptions import * 
 
 class GitRepoManager(RepoManagerBase):     
     """
@@ -113,6 +114,20 @@ class GitRepoManager(RepoManagerBase):
         return self._run_generic_command(repo, ["push"] + args)
 
     # =>  Simple commands ...
+    def remote(self, repo, args=[]): 
+        """
+        Check remote URL
+        
+        Parameters
+        ----------
+
+        repo: Repository object
+        args: git-specific args
+
+        """
+        return self._run_generic_command(repo, ["remote"] + args)
+
+    # =>  Simple commands ...
     def pull(self, repo, args=[]): 
         """
         Pull from origin/filesystem based master
@@ -174,7 +189,7 @@ class GitRepoManager(RepoManagerBase):
         """
         return self._run_generic_command(repo, ["log"] + args)
 
-    def commit(self, repo, args): 
+    def commit(self, repo, args=[]): 
         """
         Commit the changes to the repo (pass thru git command) 
 
@@ -186,7 +201,7 @@ class GitRepoManager(RepoManagerBase):
         """
         return self._run_generic_command(repo, ["commit"] + args)
 
-    def show(self, repo, args): 
+    def show(self, repo, args=[]): 
         """
         Show the content of the repo (pass thru git command) 
 
@@ -220,7 +235,7 @@ class GitRepoManager(RepoManagerBase):
 
         # Force cleanup if needed 
         if os.path.exists(server_repodir) and not force: 
-            raise Exception("Repo already exists")
+            raise RepositoryExists()
 
         if os.path.exists(server_repodir): 
             shutil.rmtree(server_repodir) 
@@ -329,7 +344,7 @@ class GitRepoManager(RepoManagerBase):
         return self.add(r)
 
 
-    def delete(self, repo, args): 
+    def delete(self, repo, args=[]): 
         """
         Delete files from the repo
         """
@@ -351,7 +366,7 @@ class GitRepoManager(RepoManagerBase):
             # print(result) 
             return result 
 
-    def drop(self, repo, args): 
+    def drop(self, repo, args=[]): 
         """
         Cleanup the repo 
         """
@@ -487,6 +502,7 @@ class GitRepoManager(RepoManagerBase):
             }
         elif what == 'set': 
             self.workspace = params['Local']['workspace']
+            self.workspace = os.path.abspath(self.workspace)
             self.username = params['User']['user.name']
             self.email = params['User']['user.email']
 

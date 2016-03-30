@@ -28,6 +28,45 @@ CONTEXT_SETTINGS=dict(allow_extra_args=True,ignore_unknown_options=True)
 ##############################################################
 # Helper functions..
 ##############################################################
+def show_result(r): 
+    """
+    Helper function to show output of command
+    """
+    print("Status:", result['status'])
+    print(result['message'])
+
+def show_status(result):
+    """
+    Helper function to show the status in readable fashion.
+    """
+    print("Status: ", result['status'])
+    print("Message:") 
+    print(result['message']) 
+
+    if 'dirty' in result and not result['dirty']: 
+        print("Nothing to commit, working directory clean")
+
+    if 'deleted-files' in result and len(result['deleted-files']) > 0: 
+        print("Deleted files:")
+        for x in result['deleted-files']: 
+            print(bcolors.FAIL + "    deleted: " +x + bcolors.ENDC)
+
+    if 'new-files' in result and len(result['new-files']) > 0: 
+        print("New files:")
+        for x in result['new-files']: 
+            print(bcolors.OKGREEN + "    new: " +x + bcolors.ENDC)
+
+    if 'renamed-files' in result and len(result['renamed-files']) > 0: 
+        print("Renamed files:")
+        for x in result['renamed-files']: 
+            print(bcolors.OKGREEN + "    renamed: %s -> %s " %(x['from'],x['to']) + bcolors.ENDC)
+                
+    if (('untracked-files' in result) and 
+        (len(result['untracked-files']) > 0)): 
+        print("Untracked files:")
+        for f in result['untracked-files']: 
+            print("   untracked:", f)
+
 
 def repo_option(f):
     def callback(ctx, param, filename):
@@ -66,7 +105,8 @@ def commit(repo, args):
         print("Use -m <message>")
         return 
 
-    datasets.commit(repo, list(args))
+    result = datasets.commit(repo, list(args))
+    show_result(result) 
 
 @repo_specific.command('log', context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
@@ -75,7 +115,8 @@ def log(repo, args):
     """
     Gather the log details
     """
-    datasets.log(repo, list(args))
+    result = datasets.log(repo, list(args))
+    show_result(result) 
 
 @repo_specific.command('push', context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
@@ -106,7 +147,8 @@ def sh(repo, args):
         print("Atleast one command should be provided") 
         return 
 
-    datasets.shellcmd(repo, list(args))
+    output = datasets.shellcmd(repo, list(args))
+    print(output) 
 
 @repo_specific.command('post',context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
@@ -127,17 +169,14 @@ def stash(repo, args):
     datasets.stash(repo, list(args))
 
 @repo_specific.command('status',context_settings=CONTEXT_SETTINGS)
-@click.option('--details', 
-              is_flag=True, 
-              default=False,
-              help="Show repo details")
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @common_options 
-def status(repo, details, args): 
+def status(repo, args): 
     """
     Status of the repo
     """
-    datasets.status(repo, details, list(args))
+    result = datasets.status(repo, list(args))
+    show_status(result) 
 
 @repo_specific.command('diff',context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
@@ -155,7 +194,8 @@ def show(repo, args):
     """
     Show details of commit
     """
-    datasets.show(repo, list(args))
+    result = datasets.show(repo, list(args))
+    show_result(result) 
 
 @repo_specific.command('drop', context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
@@ -164,7 +204,8 @@ def drop(repo, args):
     """
     Drop dataset
     """
-    datasets.drop(repo, list(args))
+    result = datasets.drop(repo, list(args))
+    show_result(result) 
 
 ##############################################################
 # Repo specific but more complicated commands 
@@ -236,7 +277,8 @@ def validate(repo, validator, target, rules):
     Validate the content of the repository
     """
     
-    datasets.validate(repo, validator, target, rules)
+    result = datasets.validate(repo, validator, target, rules)
+    show_result(result) 
 
 @repo_specific.command('generate',context_settings=CONTEXT_SETTINGS)
 @click.option('--generator', '-g',
@@ -253,8 +295,8 @@ def generate(repo, generator, target, force):
     Materialize queries
     """
     
-    datasets.generate(repo, generator, target, force=force)
-
+    result = datasets.generate(repo, generator, target, force=force)
+    show_result(result) 
 
 @repo_specific.command('remote', context_settings=CONTEXT_SETTINGS)
 @click.argument("op",
@@ -269,8 +311,8 @@ def remote(repo, op, shortname, url):
     """
 
     # git remote add pb https://github.com/paulboone/ticgit
-    datasets.remote(repo, op, shortname, url) 
-    return 
+    result = datasets.remote(repo, op, shortname, url) 
+    show_result(result) 
 
 ##############################################################
 # Repo generic commands commands 
@@ -312,7 +354,9 @@ def list_repos(remote):
     """
     List datasets
     """
-    datasets.list_repos(remote)
+    repos = datasets.list_repos(remote)
+    for r in repos: 
+        print("{}/{}".format(*r))
 
 @repo_generic.command()
 @click.argument("url")
@@ -320,9 +364,8 @@ def clone(url):
     """
     Clone a git URL 
     """
-    datasets.clone(url) 
-    return 
-
+    result = datasets.clone(url) 
+    show_result(result) 
 
 @repo_generic.command('init', context_settings=CONTEXT_SETTINGS)
 @click.argument('dataset')
@@ -352,7 +395,8 @@ def init(dataset, setup, force):
         return
 
     # Get the command that must be run 
-    datasets.init(username, dataset, setup, force)
+    result = datasets.init(username, dataset, setup, force)
+    show_result(result) 
 
 ##############################################################
 # Management commands 

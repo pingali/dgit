@@ -23,6 +23,7 @@ except:
 from ..config import get_config
 from ..plugins.common import plugins_get_mgr 
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
+from ..exceptions import * 
 from .detect import get_schema
 from .history import get_history, get_diffs
 from .validation import validate
@@ -37,7 +38,8 @@ __all__ = [
     'shellcmd', 
     'log', 'show', 'push', 'pull', 'commit',
     'stash', 'drop', 'status', 'post',
-    'clone', 'init', 'diff'
+    'clone', 'init', 'diff', 
+    'remote' 
 ]
 
 #####################################################    
@@ -47,6 +49,7 @@ def lookup(username, reponame):
     """
     Lookup a repo based on username reponame
     """
+    
     mgr = plugins_get_mgr() 
     
     # XXX This should be generalized to all repo managers. 
@@ -55,7 +58,7 @@ def lookup(username, reponame):
                            reponame=reponame) 
     return repo 
 
-def list_repos(remote):
+def list_repos(remote=False):
     """
     List repos
     
@@ -70,8 +73,6 @@ def list_repos(remote):
         repomgr = mgr.get(what='repomanager', name='git') 
         repos = repomgr.get_repo_list() 
         repos.sort() 
-        for r in repos: 
-            print("{}/{}".format(*r))
         return repos 
     else:        
         raise Exception("Not supported yet")
@@ -92,7 +93,7 @@ def shellcmd(repo, args):
     """
     with cd(repo.rootdir):
         result = run(args) 
-        print(result)
+        return result 
 
 
 def datapackage_exists(repo): 
@@ -105,15 +106,12 @@ def datapackage_exists(repo):
 #####################################################    
 # Repo specific simple commands 
 #####################################################    
-def generic_repo_cmd(repo, cmd, show=True, *args): 
+def generic_repo_cmd(repo, cmd, *args): 
     # print("Running generic command", cmd, args)
-    result = repo.run(cmd, *args) 
-    if show:
-        print("Status:", result['status'])
-        print(result['message'])
-    return result 
+    return repo.run(cmd, *args) 
+
     
-def log(repo, args): 
+def log(repo, args=[]): 
     """
     Log of the changes executed until now
 
@@ -123,9 +121,9 @@ def log(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    return generic_repo_cmd(repo, 'log', True, args)
+    return generic_repo_cmd(repo, 'log', args)
 
-def show(repo, args): 
+def show(repo, args=[]): 
     """
     Show commit details
 
@@ -135,9 +133,21 @@ def show(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    return generic_repo_cmd(repo, 'show', True, args) 
+    return generic_repo_cmd(repo, 'show', args) 
 
-def push(repo, args): 
+def remote(repo, args=[]): 
+    """
+    Show remote 
+
+    Parameters
+    ----------
+    
+    repo: Repository object 
+    args: Arguments to git command
+    """
+    return generic_repo_cmd(repo, 'remote', args) 
+
+def push(repo, args=[]): 
     """
     Push changes to the backend 
 
@@ -147,9 +157,9 @@ def push(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    return generic_repo_cmd(repo, 'push', True, args) 
+    return generic_repo_cmd(repo, 'push', args) 
 
-def pull(repo, args): 
+def pull(repo, args=[]): 
     """
     Pull changes from the backend 
 
@@ -159,9 +169,9 @@ def pull(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    return generic_repo_cmd(repo, 'pull', True, args) 
+    return generic_repo_cmd(repo, 'pull', args) 
 
-def commit(repo, args): 
+def commit(repo, args=[]): 
     """
     Commit changes to the data repository
 
@@ -171,9 +181,9 @@ def commit(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    return generic_repo_cmd(repo, 'commit', True, args) 
+    return generic_repo_cmd(repo, 'commit', args) 
 
-def drop(repo, args): 
+def drop(repo, args=[]): 
     """
     Drop the repository (new to dgit)
 
@@ -183,9 +193,9 @@ def drop(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    return generic_repo_cmd(repo, 'drop', True, args) 
+    return generic_repo_cmd(repo, 'drop', args) 
 
-def stash(repo, args): 
+def stash(repo, args=[]): 
     """
     Stash the changes
     
@@ -195,9 +205,9 @@ def stash(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    return generic_repo_cmd(repo, 'stash', True, args) 
+    return generic_repo_cmd(repo, 'stash', args) 
 
-def diff(repo, args): 
+def diff(repo, args=[]): 
     """
     Diff between versions
 
@@ -207,9 +217,26 @@ def diff(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    return generic_repo_cmd(repo, 'diff', True, args) 
+    return generic_repo_cmd(repo, 'diff', args) 
 
-def delete(repo, args): 
+def status(repo, args=[]): 
+    """
+    Show status of the repo
+    
+    Parameters
+    ----------
+
+    repo: Repository object (result of lookup)
+    details: Show internal details of the repo 
+    args: Parameters to be passed to git status command
+
+    """
+
+    result = generic_repo_cmd(repo, 'status', args)
+    return result 
+
+
+def delete(repo, args=[]): 
     """
     Delete files
 
@@ -219,12 +246,12 @@ def delete(repo, args):
     repo: Repository object 
     args: Arguments to git command
     """
-    print("Delete is not yet implemented completely")
-    print("datapackage.json should be updated to keep in sync with files on disk")
-    raise Exception("Incomplete functionality")
+    
+    message = """Delete is not yet implemented completely. datapackage.json should be updated to keep in sync with files on disk."""
+    raise NotImplemented() 
     
     # Cleanup the repo
-    generic_repo_cmd(repo, 'delete', False, args)
+    generic_repo_cmd(repo, 'delete', args)
 
     # Have to sync up repo files and datapackage.json 
     # XXX MISSING
@@ -248,7 +275,8 @@ def delete(repo, args):
 #####################################################    
 # Initialize a repo 
 #####################################################    
-def bootstrap_datapackage(repo, force=False, options=None): 
+def bootstrap_datapackage(repo, force=False, 
+                          options=None, noinput=False): 
     """ 
     Create the datapackage file..
     """
@@ -278,6 +306,9 @@ def bootstrap_datapackage(repo, force=False, options=None):
         package['title'] = options['title']
         package['description'] = options['description']
     else:
+        if noinput: 
+            raise IncompleteParameters("Option field with title and description") 
+
         for var in ['title', 'description']: 
             value = ''
             while value in ['',None]:
@@ -297,7 +328,9 @@ def bootstrap_datapackage(repo, force=False, options=None):
 
     return filename 
 
-def init(username, reponame, setup, force=False, options=None):
+def init(username, reponame, setup, 
+         force=False, options=None, 
+         noinput=False):
     """
     Initialize an empty repository with datapackage.json 
     
@@ -309,16 +342,18 @@ def init(username, reponame, setup, force=False, options=None):
     setup: Specify the 'configuration' (git only, git+s3 backend etc)
     force: Force creation of the files 
     options: Dictionary with content of dgit.json, if available. 
-
+    noinput: Automatic operation with no human interaction 
     """
-
-    backend = None 
-    if setup == 'git+s3':
-        backend = 's3'
 
     mgr = plugins_get_mgr() 
     repomgr = mgr.get(what='repomanager', name='git') 
-    backendmgr = mgr.get(what='backend', name=backend) 
+
+    backend = None 
+    backendmgr = None 
+    if setup == 'git+s3':
+        backend = 's3'
+        backendmgr = mgr.get(what='backend', name=backend) 
+
     repo = repomgr.init(username, reponame, force, backendmgr) 
 
     # Now bootstrap the datapackage.json metadata file and copy it in...
@@ -329,7 +364,14 @@ def init(username, reponame, setup, force=False, options=None):
     with open(gitignore, 'w') as fd: 
         fd.write(".dgit")        
 
-    filename = bootstrap_datapackage(repo, force, options)
+    # Try to bootstrap. If you cant, cleanup and return 
+    try:
+        filename = bootstrap_datapackage(repo, force, options, noinput)
+    except Exception as e: 
+        repomgr.drop(repo,[]) 
+        os.unlink(gitignore)
+        raise e 
+
     repo.run('add_files',
              [
                  { 
@@ -343,7 +385,10 @@ def init(username, reponame, setup, force=False, options=None):
              ])
 
 
+    # Cleanup temp files 
     os.unlink(filename) 
+    os.unlink(gitignore) 
+
     args = ['-a', '-m', 'Bootstrapped the repo']
     repo.run('commit', args)
     return repo 
@@ -377,7 +422,7 @@ def clone(url):
     
     # print("Testing {} with backend {}".format(url, backendmgr))
     if backendmgr is not None and not backendmgr.url_is_valid(url): 
-        raise Exception("Invalid URL") 
+        raise InvalidParameters("Invalid URL") 
         
     key = repomgr.clone(url, backendmgr) 
 
@@ -397,52 +442,6 @@ def clone(url):
         repo.run('commit', args)
 
     return repo 
-
-def status(repo, details, args): 
-    """
-    Show status of the repo
-    
-    Parameters
-    ----------
-
-    repo: Repository object (result of lookup)
-    details: Show internal details of the repo 
-    args: Parameters to be passed to git status command
-
-    """
-
-    result = generic_repo_cmd(repo, 'status', False, args)
-
-    if details: 
-        print("Repo: %s" %(str(repo)))
-        print("Backend: %s" %(repo.package['remote-url']))
-    print("Status: ", result['status'])
-    print("Message:") 
-    print(result['message']) 
-
-    if 'dirty' in result and not result['dirty']: 
-        print("Nothing to commit, working directory clean")
-
-    if 'deleted-files' in result and len(result['deleted-files']) > 0: 
-        print("Deleted files:")
-        for x in result['deleted-files']: 
-            print(bcolors.FAIL + "    deleted: " +x + bcolors.ENDC)
-
-    if 'new-files' in result and len(result['new-files']) > 0: 
-        print("New files:")
-        for x in result['new-files']: 
-            print(bcolors.OKGREEN + "    new: " +x + bcolors.ENDC)
-
-    if 'renamed-files' in result and len(result['renamed-files']) > 0: 
-        print("Renamed files:")
-        for x in result['renamed-files']: 
-            print(bcolors.OKGREEN + "    renamed: %s -> %s " %(x['from'],x['to']) + bcolors.ENDC)
-                
-    if (('untracked-files' in result) and 
-        (len(result['untracked-files']) > 0)): 
-        print("Untracked files:")
-        for f in result['untracked-files']: 
-            print("   untracked:", f)
 
 
 

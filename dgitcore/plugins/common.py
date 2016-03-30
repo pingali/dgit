@@ -227,12 +227,18 @@ def plugins_load():
 
     """
     global pluginmgr 
+    
+    # Auto clone if they have not been already shutdown 
+    if pluginmgr is not None: 
+        plugins_close() 
+
     pluginmgr = PluginManager([])
     # pluginmgr.show()
 
 def plugins_close(): 
     global pluginmgr 
-    return pluginmgr.shutdown()
+    pluginmgr.shutdown()
+    pluginmgr = None 
 
 def plugins_show(what=None, name=None, version=None, details=False): 
     """
