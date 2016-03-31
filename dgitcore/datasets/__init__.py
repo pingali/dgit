@@ -13,10 +13,10 @@ def _reexport(mod):
     for var in mod.__all__:
         globals()[var] = getattr(mod, var)
 
-from ..datasets import common, files, validation, auto, generation
+from ..datasets import common, files, validation, auto, transformation
 
 _reexport(common)
 _reexport(files)
 _reexport(validation)
 _reexport(auto)
-_reexport(generation)
+_reexport(transformation)

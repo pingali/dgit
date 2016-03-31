@@ -7,7 +7,7 @@ import requests
 
 Key = namedtuple("Key", ["name","version"])
 
-class GeneratorBase(object):
+class TransformerBase(object):
     """
     This is the base class for all backends including 
     """
@@ -37,7 +37,13 @@ class GeneratorBase(object):
         """
         return 
 
-    def evaluate(self, repo, files, params=None,explain=False): 
+    def autooptions(self): 
+        """
+        Get default options
+        """
+        return None 
+
+    def evaluate(self, repo, files, spec, force): 
         """
         Execute the generator on the files        
         """

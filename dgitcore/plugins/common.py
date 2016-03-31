@@ -20,14 +20,15 @@ class PluginManager(object):
     def __init__(self, paths=[]):
 
         self.order = ['backend', 'repomanager', 'metadata',
-                      'validator', 'generator', 'instrumentation']
+                      'validator', 'transformer', 
+                      'instrumentation']
         self.plugins = {
             'backend': {},
             'instrumentation': {},
             'repomanager': {},
             'metadata': {},
             'validator': {},
-            'generator': {},
+            'transformer': {},
         }
         self.sources = {} 
 
@@ -61,8 +62,8 @@ class PluginManager(object):
                 'base': get_path('validators'),
             },
             {
-                'package': 'generator',
-                'base': get_path('generators'),
+                'package': 'transformer',
+                'base': get_path('transformers'),
             },
         ]
 

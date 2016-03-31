@@ -39,27 +39,28 @@ class Repo:
         return files 
 
     # Cache for partially computed information
-    def cache_path(self, prefix, objname): 
+    def cache_path(self, prefix, objname, ext=""): 
         
         path = os.path.join('.dgit',
                             prefix, 
                             slugify(objname))
+        if ext != "": 
+            ext = slugify(ext) # clean this up as well
+            path += ".{}".format(ext)
+
         return {
             'relative': path,
             'full': os.path.join(self.rootdir, path)
             }
         
-    def cache_check(self, prefix, objname):         
-        cache_path = self.cache_path(prefix, objname) 
-        return os.path.exists(cache_path['full'])
+    def cache_check(self, cachepath):         
+        return os.path.exists(cachepath['full'])
 
-    def cache_read(self, prefix, objname):         
-        cache_path = self.cache_path(prefix, objname) 
-        return open(cache_path['full']).read()
+    def cache_read(self, cachepath):         
+        return open(cachepath['full']).read()
 
-    def cache_write(self, prefix, objname, content):         
-        cache_path = self.cache_path(prefix, objname)         
-        path = cache_path['full']
+    def cache_write(self, cachepath, content):
+        path = cachepath['full']
         try: 
             os.makedirs(os.path.dirname(path))
         except:

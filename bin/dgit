@@ -35,7 +35,7 @@ def setup():
 def teardown(): 
     plugins.plugins_close() 
 
-def show_result(r): 
+def show_result(result): 
     """
     Helper function to show output of command
     """
@@ -74,6 +74,21 @@ def show_status(result):
         for f in result['untracked-files']: 
             print("   untracked:", f)
 
+def show_transformer_results(results): 
+    if len(results) == 0: 
+        print("No output") 
+    else: 
+        generators = list(set([r['transformer'] for r in results]))
+        for g in generators: 
+            print(g)
+            print("==========")
+            for r in results: 
+                if r['transformer'] == g: 
+                    print("{} : {} {}".format(r['target'], 
+                                              r['status'],
+                                              r['message']))
+            print("")
+    return 
 
 def repo_option(f):
     def callback(ctx, param, filename):
@@ -84,7 +99,7 @@ def repo_option(f):
         repo = datasets.auto_get_repo(autooptions) 
         return repo 
 
-    return click.option('--repo', '-r',
+    return click.option('--repo',
                         default='dgit.json',
                         help="dataset repository configuration file",
                         callback=callback)(f)
@@ -287,23 +302,27 @@ def validate(repo, validator, target, rules):
     result = datasets.validate(repo, validator, target, rules)
     show_result(result) 
 
-@repo_specific.command('generate',context_settings=CONTEXT_SETTINGS)
-@click.option('--generator', '-g',
-              help="Name of the generator")
+@repo_specific.command('transform',context_settings=CONTEXT_SETTINGS)
+@click.option('--name', '-n',
+              help="Name of the transformer")
 @click.option('--target', '-t',
-              help="Specification for the filename as a pattern")
-@click.option('--force', '-f',
+              help="Target of transform (filename/pattern")
+@click.option('--force', 
               is_flag=True, 
               default=False,
               help="Ignore cached results")
 @common_options
-def generate(repo, generator, target, force):
+def transform(repo, name, target, force):
     """
-    Materialize queries
+    Transform content of the repo
     """
     
-    result = datasets.generate(repo, generator, target, force=force)
-    show_result(result) 
+    results = datasets.transform(repo, 
+                                 name, 
+                                 target, 
+                                 force=force)
+    show_transformer_results(results) 
+
 
 @repo_specific.command('remote', context_settings=CONTEXT_SETTINGS)
 @click.argument("op",

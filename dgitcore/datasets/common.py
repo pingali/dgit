@@ -632,13 +632,20 @@ def post(repo, args=[]):
             o = urlparse(url)
             print("Posting to ", o.netloc)
             response = metadatamgr.post(repo)
-            if response.status_code in [400]: 
+            if isinstance(response, str): 
+                print("Error while posting:", response) 
+            elif response.status_code in [400]: 
                 content = response.json()
                 print("Error while posting:")
                 for k in content: 
                     print("   ", k,"- ", ",".join(content[k]))
+    except NetworkError as e: 
+        print("Unable to reach metadata server!") 
+    except NetworkInvalidConfiguration as e: 
+        print("Invalid network configuration in the INI file") 
+        print(e.message) 
     except Exception as e:
-        traceback.print_exc()
-        print("Could not post. Please check the INI file for URL")
-        return 
+        print("Could not post. Unknown error")
+        print(e)
+
 

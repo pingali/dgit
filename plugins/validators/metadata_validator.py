@@ -1,6 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys, glob2 
+from collections import OrderedDict 
 from dgitcore.plugins.validator import ValidatorBase
 from dgitcore.config import get_config 
 from dgitcore.helper import compute_sha256, cd 
@@ -38,6 +39,9 @@ class MetadataValidator(ValidatorBase):
                 self.enable = params['metadata-validator']['enable']
             else: 
                 self.enable = 'y'
+
+    def autooptions(self): 
+        return OrderedDict([])
 
     def evaluate(self, repo, files, rules): 
         """

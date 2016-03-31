@@ -37,6 +37,12 @@ class ValidatorBase(object):
         """
         return 
 
+    def autooptions(self): 
+        """
+        Get default options
+        """
+        return None 
+
     def evaluate(self, repo, files, rules): 
         """
         Evaluate the repo

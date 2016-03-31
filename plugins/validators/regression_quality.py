@@ -1,6 +1,7 @@
 #!/usr/bin/env python 
 
 import os, sys, glob2, json 
+from collections import OrderedDict 
 import re 
 from dgitcore.plugins.validator import ValidatorBase
 from dgitcore.config import get_config 
@@ -40,6 +41,11 @@ class RegressionQualityValidator(ValidatorBase):
             else: 
                 self.enable = 'n'
 
+    def autooptions(self): 
+        return OrderedDict([
+            ("files", ["*.txt"])
+        ])
+        
     def evaluate(self, repo, files, rules): 
         """
         Evaluate the files identified for checksum. 

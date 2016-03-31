@@ -56,7 +56,7 @@ def auto_init(autofile, force_init=False):
             raise Exception("Invalid configuration file")
 
     config = get_config() 
-    mgr = plugins_get_mgr() 
+    pluginmgr = plugins_get_mgr() 
 
     print("Repo configuration file missing or corrupted. Creating one")
     print("Let us know a few details about your data repository")
@@ -75,13 +75,13 @@ def auto_init(autofile, force_init=False):
         reponame = revised 
 
     # Get the default backend URL     
-    keys = mgr.search('backend') 
+    keys = pluginmgr.search('backend') 
     keys = keys['backend']     
     keys = [k for k in keys if k[0] != "local"]
     remoteurl = ""
     backend = None 
     if len(keys) > 0: 
-        backend = mgr.get_by_key('backend', keys[0])
+        backend = pluginmgr.get_by_key('backend', keys[0])
         candidate = backend.url(username, reponame)
         revised = input("Please specify remote URL [{}]".format(candidate))
         if revised in ["", None]: 
@@ -125,29 +125,35 @@ def auto_init(autofile, force_init=False):
                 ('.', '')
             ]))
         ])),        
-        ('validate' ,OrderedDict([
-            ('metadata-validator', OrderedDict([]))
-        ])),
-        ("generate", OrderedDict([
-            ("mysql-generator",OrderedDict([
-                ("files", ["*sql"])
-            ]))
-        ])),
         ('dependencies' ,OrderedDict([]))
     ])
 
-    keys = mgr.search('metadata') 
+    # Gather options from each of the enabled plugins 
+    for p in ['validator', 'transformer']: 
+        keys = pluginmgr.search(p) 
+        keys = keys[p] 
+        options = OrderedDict()
+        for k in keys:   
+            if k.name in options: 
+                continue 
+            mgr = pluginmgr.get_by_key(p, k)
+            options[k.name] = mgr.autooptions()
+        autooptions[p] = options 
+
+    keys = pluginmgr.search('metadata') 
     keys = keys['metadata']     
     if len(keys) > 0: 
         
         # => Select domains that be included.
         servers = [] 
         for k in keys: 
-            server = mgr.get_by_key('metadata', k)        
+            server = pluginmgr.get_by_key('metadata', k)        
             server = server.url.split("/")[2] 
             servers.append(server)
     
-        # Specify what should be included 
+        # Specify what should be included. Some of these should go ino
+        # the metadata modules 
+
         autooptions.update(OrderedDict([
             ('metadata-management', OrderedDict([
                 ('servers', servers),
@@ -190,10 +196,10 @@ def auto_get_repo(autooptions, debug=False):
     """
 
     # plugin manager
-    mgr = plugins_get_mgr() 
+    pluginmgr = plugins_get_mgr() 
 
     # get the repo manager 
-    repomgr = mgr.get(what='repomanager', name='git') 
+    repomgr = pluginmgr.get(what='repomanager', name='git') 
 
     repo = None
 

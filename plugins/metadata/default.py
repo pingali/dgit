@@ -9,6 +9,7 @@ services.
 """
 import os, sys, requests, json 
 from dgitcore.plugins.metadata import MetadataBase
+from dgitcore.exceptions import * 
 from dgitcore.config import get_config, ChoiceValidator, URLValidator, NonEmptyValidator
 
 class BasicMetadata(MetadataBase):     
@@ -65,11 +66,9 @@ class BasicMetadata(MetadataBase):
             self.url        = metadata.get('url', None) 
             if self.enable == 'y': 
                 if self.token is None:
-                    print("If metadata is enabled, Token should be provided")
-                    raise Exception("Invalid configuration")
+                    raise NetworkInvalidConfiguration("Missing token")
                 if self.url is None:
-                    print("If metadata is enabled, Token should be provided")
-                    raise Exception("Invalid configuration")
+                    raise NetworkInvalidConfiguration("Missing URL")
 
 
     def post(self, repo): 
@@ -98,7 +97,7 @@ class BasicMetadata(MetadataBase):
 
             return r 
         except: 
-            print("Could not post to server") 
+            raise NetworkError()
         return ""
     
 def setup(mgr): 
