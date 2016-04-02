@@ -7,23 +7,44 @@ try:
 except ImportError:
     from distutils.core import setup
 
+readme = """dgit is an application on top of git. 
 
-with open('README.rst') as readme_file:
-    readme = readme_file.read()
+A lot of data-scientists' time goes towards generating, shaping, and
+using datasets. dgit enables organizing and using datasets with
+minimal effort. 
+
+dgit uses git for version management but structures the repository
+content, and interface to suit data management tasks. 
+
+Read `documentation <https://dgit.readthedocs.org>`_ 
+
+Note: Only Python 3 supported for now
+
+"""
 
 with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
-requirements = []
+requirements = [    
+    'boto3',
+    'click',
+    'PyYAML',
+    'glob2',
+    'pluginbase',
+    'messytables',
+    'parse',
+    'daff',
+    'sh',
+]
 
-test_requirements = [
-    # TODO: put package test requirements here
+dependency_links = [
+    'git+https://github.com/pingali/pluginbase.git@master#egg=pluginbase'
 ]
 
 setup(
     name='dgit',
     version='0.1.0',
-    description="Git for datasets with support for multiple backends",
+    description="Git wrapper for Managing Datasets",
     long_description=readme + '\n\n' + history,
     author="Venkata Pingali",
     author_email='pingali@gmail.com',
@@ -37,11 +58,12 @@ setup(
     package_dir={'dgit': 'dgitcore'},
     include_package_data=True,
     install_requires=requirements,
+    dependency_links=dependency_links,
     license="MIT",
     zip_safe=False,
-    keywords='dgit',
+    keywords='git data datasets versioning cvs',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'License :: OSI Approved :: MIT License',

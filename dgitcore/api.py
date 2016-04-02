@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 
-from .config import init as config_init, get_config 
-from .plugins import plugins_load 
+from .config import init as config_init, get_config
+from .plugins import plugins_load
+from dgitcore import datasets, plugins 
+
+__all__ = ['get_config', 'initialize']
+def _reexport(mod):
+    __all__.extend(mod.__all__)
+    for var in mod.__all__:
+        globals()[var] = getattr(mod, var)
 
 # Load available repos 
 def initialize(): 
     plugins_load() 
     config_init()
 
-__all__ = ['get_config', 'initialize']
-
-def _reexport(mod):
-    __all__.extend(mod.__all__)
-    for var in mod.__all__:
-        globals()[var] = getattr(mod, var)
-
+# What all should be exported
 initialize()
-
-from dgitcore import datasets, plugins 
 _reexport(datasets)
 _reexport(plugins)

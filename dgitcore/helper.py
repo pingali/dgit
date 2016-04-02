@@ -9,7 +9,6 @@ from datetime import datetime
 import getpass 
 import uuid 
 import subprocess 
-from chardet import detect as detect_encoding 
 
 class bcolors:
     HEADER = '\033[95m'
@@ -121,6 +120,7 @@ def compute_sha256(filename):
             if buf in [None, ""]:
                 break 
             h.update(buf.encode('utf-8')) 
+        fd.close()
         return h.hexdigest() 
     except:
         output = run(["sha256sum", "-b", filename])
