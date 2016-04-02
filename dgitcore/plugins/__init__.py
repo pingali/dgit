@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Interfaces to dgit plugins 
+Interfaces to dgit plugins
 """
 
 __all__ = []

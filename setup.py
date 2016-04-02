@@ -7,16 +7,16 @@ try:
 except ImportError:
     from distutils.core import setup
 
-readme = """dgit is an application on top of git. 
+readme = """dgit is an application on top of git.
 
 A lot of data-scientists' time goes towards generating, shaping, and
 using datasets. dgit enables organizing and using datasets with
-minimal effort. 
+minimal effort.
 
 dgit uses git for version management but structures the repository
-content, and interface to suit data management tasks. 
+content, and interface to suit data management tasks.
 
-Read `documentation <https://dgit.readthedocs.org>`_ 
+Read `documentation <https://dgit.readthedocs.org>`_
 
 Note: Only Python 3 supported for now
 
@@ -25,7 +25,7 @@ Note: Only Python 3 supported for now
 with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
-requirements = [    
+requirements = [
     'boto3',
     'click',
     'PyYAML',

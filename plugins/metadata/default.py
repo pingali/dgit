@@ -1,41 +1,41 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 """Adapter to a metadata server that provides dataset tracking and other
 services.
 
-* enable: Enable this adapter 
-* url: URL to which the metadata must be posted 
-* token: Authentication token for the server 
+* enable: Enable this adapter
+* url: URL to which the metadata must be posted
+* token: Authentication token for the server
 
 """
-import os, sys, requests, json 
+import os, sys, requests, json
 from dgitcore.plugins.metadata import MetadataBase
-from dgitcore.exceptions import * 
+from dgitcore.exceptions import *
 from dgitcore.config import get_config, ChoiceValidator, URLValidator, NonEmptyValidator
 
-class BasicMetadata(MetadataBase):     
+class BasicMetadata(MetadataBase):
     """
     Metadata backend for the datasets.
 
     Parameters
     ----------
-    Configuration (token) 
+    Configuration (token)
     """
-    def __init__(self): 
-        self.enable = False 
-        self.token = None 
-        self.url = None 
-        super(BasicMetadata, self).__init__('basic-metadata', 
-                                              'v0', 
+    def __init__(self):
+        self.enable = False
+        self.token = None
+        self.url = None
+        super(BasicMetadata, self).__init__('basic-metadata',
+                                              'v0',
                                               "Basic metadata server")
 
-    def config(self, what='get', params=None): 
-        
-        if what == 'get': 
+    def config(self, what='get', params=None):
+
+        if what == 'get':
             return {
-                'name': 'basic-metadata', 
+                'name': 'basic-metadata',
                 'nature': 'metadata',
-                'variables': ['enable', 'token', 'url'], 
-                'defaults': { 
+                'variables': ['enable', 'token', 'url'],
+                'defaults': {
                     'enable': {
                         'value': "y",
                         "description": "Enable generic Metadata server?",
@@ -54,55 +54,55 @@ class BasicMetadata(MetadataBase):
                 }
             }
         else:
-            try: 
+            try:
                 self.enable = params['basic-metadata']['enable']
             except:
                 self.enable = 'n'
-                return 
-                
+                return
+
             metadata = params['basic-metadata']
             self.enable     = metadata['enable']
             self.token      = metadata.get('token', None)
-            self.url        = metadata.get('url', None) 
-            if self.enable == 'y': 
+            self.url        = metadata.get('url', None)
+            if self.enable == 'y':
                 if self.token is None:
                     raise NetworkInvalidConfiguration("Missing token")
                 if self.url is None:
                     raise NetworkInvalidConfiguration("Missing URL")
 
 
-    def post(self, repo): 
+    def post(self, repo):
         """
-        Post to the metadata server 
-        
+        Post to the metadata server
+
         Parameters
         ----------
 
-        repo 
+        repo
         """
-        
-        datapackage = repo.package 
 
-        url = self.url 
-        token = self.token 
+        datapackage = repo.package
+
+        url = self.url
+        token = self.token
         headers = {
             'Authorization': 'Token {}'.format(token),
             'Content-Type': 'application/json'
         }
 
-        try: 
-            r = requests.post(url, 
+        try:
+            r = requests.post(url,
                               data = json.dumps(datapackage),
-                              headers=headers) 
+                              headers=headers)
 
-            return r 
-        except: 
+            return r
+        except:
             raise NetworkError()
         return ""
-    
-def setup(mgr): 
-    
-    obj = BasicMetadata() 
+
+def setup(mgr):
+
+    obj = BasicMetadata()
     mgr.register('metadata', obj)
 
 

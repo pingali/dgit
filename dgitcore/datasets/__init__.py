@@ -2,7 +2,7 @@
 """
 dgit datasets API
 
-.. currentmodule:: dgitcore.datasets 
+.. currentmodule:: dgitcore.datasets
 
 """
 
