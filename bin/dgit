@@ -314,17 +314,22 @@ def add(repo, targetdir, args, execute,
 
 @repo_specific.command('validate',context_settings=CONTEXT_SETTINGS)
 @click.option('--validator', '-v',
+              default=None,
               help="Name of the validator")
 @click.option('--target', '-t',
+              default=None, 
               help="Specification for the filename as a pattern")
-@click.option('--rules', '-r',
+@click.option('--rulesfile',
+              default=None,
               help="File with validation rules")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @common_options
-def validate(repo, validator, target, rules): 
+def validate(repo, validator, target, rulesfile, args): 
     """
     Validate the content of the repository
     """
-    result = datasets.validate(repo, validator, target, rules)
+    result = datasets.validate(repo, validator, target, 
+                               rulesfile, args)
     show_validator_results(result) 
 
 @repo_specific.command('transform',context_settings=CONTEXT_SETTINGS)

@@ -508,7 +508,7 @@ def annotate_metadata_validation(repo):
 
     print("Adding validation information")
     # Collect the validation results by relativepath
-    results = validate(repo, show=False)
+    results = validate(repo)
     fileresults = {}
     for r in results:
         filename = r['target']

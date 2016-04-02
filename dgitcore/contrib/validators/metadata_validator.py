@@ -45,14 +45,15 @@ class MetadataValidator(ValidatorBase):
             ("files",["*"])
         ])
 
-    def evaluate(self, repo, files, rules):
+    def evaluate(self, repo, spec, args):
         """
         Check the integrity of the datapackage.json
         """
 
         status = []
         with cd(repo.rootdir):
-            resource_files = repo.find_matching_files("*")
+            files = spec.get('files', ['*'])
+            resource_files = repo.find_matching_files(files)
             files = glob2.glob("**/*")
             disk_files = [f for f in files if os.path.isfile(f) and f != "datapackage.json"]
 

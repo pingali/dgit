@@ -6,6 +6,7 @@ import re
 from dgitcore.plugins.validator import ValidatorBase
 from dgitcore.config import get_config
 from dgitcore.helper import compute_sha256, cd
+from dgitcore.exceptions import * 
 
 class RegressionQualityValidator(ValidatorBase):
     """
@@ -43,31 +44,46 @@ class RegressionQualityValidator(ValidatorBase):
 
     def autooptions(self):
         return OrderedDict([
-            ("files", ["*.txt"])
+            ("files", ["*.txt"]),
+            ("rules", OrderedDict([
+                ("min-r2", 0.25)
+            ])),
+            ("rules-files",[])
         ])
 
-    def evaluate(self, repo, files, rules):
+    def evaluate(self, repo, spec, args):
         """
         Evaluate the files identified for checksum.
         """
 
-
         status = []
 
+        # Do we have to any thing at all? 
+        if len(spec['files']) == 0: 
+            return status 
+
         with cd(repo.rootdir):
-            rules = dict([(r, json.loads(open(r).read())) for r in rules])
-
-            if len(rules) == 0:
+            
+            rules = None 
+            if 'rules-files' in spec and len(spec['rules-files']) > 0: 
+                rulesfiles = spec['rules-files']
+                rules = dict([(f, json.loads(open(f).read())) for f in rulesfiles])
+            elif 'rules' in spec: 
+                rules = {
+                    'inline': spec['rules'] 
+                }
+                
+            if rules is None or len(rules) == 0:
                 print("Regression quality validation has been enabled but no rules file has been specified")
-                print("Example: { 'min-r2': 0.25 }")
-                return
+                print("Example: { 'min-r2': 0.25 }. Put this either in file or in dgit.json")
+                raise InvalidParameters("Regression quality checking rules missing")
 
-            files = dict([(f, open(f).read()) for f in files])
+            files = dict([(f, open(f).read()) for f in spec['files']])
 
             for r in rules:
                 if 'min-r2' not in rules[r]:
                     continue
-                minr2 = rules[r]['min-r2']
+                minr2 = float(rules[r]['min-r2'])
                 for f in files:
                     match = re.search(r"R-squared:\s+(\d.\d+)", files[f])
                     if match is None:
