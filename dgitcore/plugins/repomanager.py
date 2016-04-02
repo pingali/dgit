@@ -65,7 +65,9 @@ class Repo:
             os.makedirs(os.path.dirname(path))
         except:
             pass 
-        with open(path, 'w') as fd: 
+            
+        flag = "wb" if isinstance(content, bytes) else "w"
+        with open(path, flag) as fd: 
             fd.write(content)
             print("Updated", os.path.relpath(path, self.rootdir))
         

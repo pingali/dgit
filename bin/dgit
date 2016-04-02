@@ -311,8 +311,9 @@ def validate(repo, validator, target, rules):
               is_flag=True, 
               default=False,
               help="Ignore cached results")
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @common_options
-def transform(repo, name, target, force):
+def transform(repo, name, target, force, args):
     """
     Transform content of the repo
     """
@@ -320,7 +321,8 @@ def transform(repo, name, target, force):
     results = datasets.transform(repo, 
                                  name, 
                                  target, 
-                                 force=force)
+                                 force,
+                                 args)
     show_transformer_results(results) 
 
 

@@ -65,9 +65,10 @@ def instantiate(repo, name=None, filename=None):
     return transformers
     
 def transform(repo, 
-             name=None, 
-             filename=None, 
-             force=False): 
+              name=None, 
+              filename=None, 
+              force=False, 
+              args=[]): 
     """
     Materialize queries/other content within the repo. 
     
@@ -92,7 +93,8 @@ def transform(repo,
             t = mgr.get_by_key('transformer', k)
             result = t.evaluate(repo, 
                                 specs[s], 
-                                force) 
+                                force,
+                                args)
             allresults.extend(result)
 
     return allresults
