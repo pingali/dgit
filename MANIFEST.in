@@ -4,8 +4,13 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 
-recursive-include tests *
+global-exclude *~
+prune dgit.egg-info
+recursive-include dgitcore *.py
+recursive-include plugins *.py
+recursive-include tests *.py *.ini
 recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
+recursive-exclude * *.py[co] *~
+
 
 recursive-include docs *.rst conf.py Makefile make.bat
