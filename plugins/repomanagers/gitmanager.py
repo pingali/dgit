@@ -44,6 +44,15 @@ class GitRepoManager(RepoManagerBase):
               Arguments to git command
         """
 
+        # This is here in case the .gitconfig is not accessible for
+        # some reason. 
+        environ = os.environ.copy() 
+
+        environ['GIT_COMMITTER_NAME'] = self.fullname
+        environ['GIT_COMMITTER_EMAIL'] = self.email 
+        environ['GIT_AUTHOR_NAME'] = self.fullname
+        environ['GIT_AUTHOR_EMAIL'] = self.email 
+
         cmd = [pipes.quote(c) for c in cmd]
         cmd = " ".join(['/usr/bin/git'] + cmd)
         cmd += "; exit 0"
@@ -51,7 +60,8 @@ class GitRepoManager(RepoManagerBase):
         try:
             output = subprocess.check_output(cmd,
                                              stderr=subprocess.STDOUT,
-                                             shell=True)
+                                             shell=True,
+                                             env=environ)
         except subprocess.CalledProcessError as e:
             output = e.output
 
@@ -65,6 +75,7 @@ class GitRepoManager(RepoManagerBase):
         Run a generic command within the repo. Assumes that you are
         in the repo's root directory
         """
+        
         result = None
         with cd(repo.rootdir):
             # Dont use sh. It is not collecting the stdout of all
@@ -199,6 +210,7 @@ class GitRepoManager(RepoManagerBase):
         repo: Repository object
         args: git-specific args
         """
+        
         return self._run_generic_command(repo, ["commit"] + args)
 
     def show(self, repo, args=[]):
@@ -506,6 +518,7 @@ class GitRepoManager(RepoManagerBase):
             self.workspace = params['Local']['workspace']
             self.workspace = os.path.abspath(self.workspace)
             self.username = params['User']['user.name']
+            self.fullname = params['User']['user.fullname']
             self.email = params['User']['user.email']
 
             repodir = os.path.join(self.workspace, 'datasets')
