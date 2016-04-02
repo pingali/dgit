@@ -7,7 +7,6 @@ include README.rst
 global-exclude *~
 prune dgit.egg-info
 recursive-include dgitcore *.py
-recursive-include plugins *.py
 recursive-include tests *.py *.ini
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co] *~

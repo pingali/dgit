@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from .config import init as config_init, get_config
-from .plugins import plugins_load
-from dgitcore import datasets, plugins
+import dgitcore 
+from dgitcore.config import init as config_init, get_config
+from dgitcore.plugins import plugins_load
 
 __all__ = ['get_config', 'initialize']
 
@@ -19,5 +19,5 @@ def initialize():
 
 # What all should be exported
 initialize()
-_reexport(datasets)
-_reexport(plugins)
+_reexport(dgitcore.datasets)
+_reexport(dgitcore.plugins)

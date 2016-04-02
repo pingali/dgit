@@ -43,19 +43,19 @@ dependency_links = [
 
 setup(
     name='dgit',
-    version='0.1.1',
+    version='0.1.2',
     description="Git wrapper for Managing Datasets",
     long_description=readme + '\n\n' + history,
     author="Venkata Pingali",
     author_email='pingali@gmail.com',
     url='https://github.com/pingali/dgit',
     packages=[
-        'dgit',
+        'dgitcore',
     ],
     scripts=[
         'bin/dgit'
     ],
-    package_dir={'dgit': 'dgitcore'},
+    package_dir={'dgitcore': 'dgitcore'},
     include_package_data=True,
     install_requires=requirements,
     dependency_links=dependency_links,

@@ -37,7 +37,7 @@ class PluginManager(object):
         thisdir = os.path.abspath(os.path.dirname(__file__))
         def get_path(p):
             return os.path.abspath(os.path.join(thisdir,
-                                                "../../plugins",
+                                                "../contrib",
                                                 p))
 
         allplugins = [
