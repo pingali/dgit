@@ -74,12 +74,38 @@ def show_status(result):
         for f in result['untracked-files']: 
             print("   untracked:", f)
 
+
+def show_validator_results(results): 
+
+    # [{'status': 'OK', 'description': 'Validate integrity of the dataset metadata', 'target': 'Mobile_nos_email_list_Eswar_College_of_Engineering.csv', 'rules': '', 'validator': 'metadata-validator', 'message': ''}]
+
+    if len(results) == 0: 
+        print("No output") 
+    else: 
+        validators = list(set([r['validator'] for r in results]))
+        for v in validators: 
+            print(v)
+            print("==========")
+            first = False
+            for r in results: 
+                if r['validator'] == v:
+                    if first: 
+                        print("Description:", r['description'])
+                        first=False
+
+                    print("({}) {} : {} {}".format(r['rules'],
+                                                   r['target'], 
+                                                r['status'],
+                                                   r['message']))
+            print("")
+
+
 def show_transformer_results(results): 
     if len(results) == 0: 
         print("No output") 
     else: 
-        generators = list(set([r['transformer'] for r in results]))
-        for g in generators: 
+        transformers = list(set([r['transformer'] for r in results]))
+        for g in transformers: 
             print(g)
             print("==========")
             for r in results: 
@@ -298,9 +324,8 @@ def validate(repo, validator, target, rules):
     """
     Validate the content of the repository
     """
-    
     result = datasets.validate(repo, validator, target, rules)
-    show_result(result) 
+    show_validator_results(result) 
 
 @repo_specific.command('transform',context_settings=CONTEXT_SETTINGS)
 @click.option('--name', '-n',

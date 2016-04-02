@@ -41,7 +41,9 @@ class MetadataValidator(ValidatorBase):
                 self.enable = 'y'
 
     def autooptions(self):
-        return OrderedDict([])
+        return OrderedDict([
+            ("files",["*"])
+        ])
 
     def evaluate(self, repo, files, rules):
         """

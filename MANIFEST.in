@@ -4,9 +4,11 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 
-global-exclude *~
+global-exclude *~ 
 prune dgit.egg-info
 recursive-include dgitcore *.py
+prune dgitcore/vendor/pluginbase
+include dgitcore/vendor/pluginbase/pluginbase.py
 recursive-include tests *.py *.ini
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co] *~

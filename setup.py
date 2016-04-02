@@ -30,7 +30,6 @@ requirements = [
     'click',
     'PyYAML',
     'glob2',
-    'pluginbase',
     'messytables',
     'parse',
     'daff',
@@ -38,12 +37,11 @@ requirements = [
 ]
 
 dependency_links = [
-    'git+https://github.com/pingali/pluginbase.git@master#egg=pluginbase'
 ]
 
 setup(
     name='dgit',
-    version='0.1.2',
+    version='0.1.3',
     description="Git wrapper for Managing Datasets",
     long_description=readme + '\n\n' + history,
     author="Venkata Pingali",

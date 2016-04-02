@@ -1,0 +1,3 @@
+[submodule "dgitcore/vendor/pluginbase"]
+	path = dgitcore/vendor/pluginbase
+	url = git@github.com:pingali/pluginbase

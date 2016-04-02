@@ -18,7 +18,7 @@ def instantiate(repo, validator_name=None, filename=None, rules=None):
     Instantiate the validation specification
     """
 
-    default_validators = repo.options.get('validate', {})
+    default_validators = repo.options.get('validator', {})
 
     validators = {}
     if validator_name is not None:
@@ -82,9 +82,25 @@ def instantiate(repo, validator_name=None, filename=None, rules=None):
 
     return validators
 
-def run_validation(repo, validator_name=None, filename=None, rules=None):
+def validate(repo, validator_name=None, filename=None, rules=None):
     """
-    Check the integrity of the dataset
+    Validate the content of the files for consistency. Validators can
+    look as deeply as needed into the files. dgit treats them all as
+    black boxes.
+
+    Parameters
+    ----------
+
+    repo: Repository object
+    validator_name: Name of validator, if any. If none, then all validators specified in dgit.json will be included.
+    filename: Pattern that specifies files that must be processed by the validators selected. If none, then the default specification in dgit.json is used.
+    rules: Pattern specifying the files that have rules that validators will use
+    show: Print the validation results on the terminal
+
+    Returns
+    -------
+
+    status: A list of dictionaries, each with target file processed, rules file applied, status of the validation and any error  message.
     """
 
     mgr = plugins_get_mgr()
@@ -107,39 +123,3 @@ def run_validation(repo, validator_name=None, filename=None, rules=None):
 
     return allresults
 
-def validate(repo, validator_name=None, filename=None, rules=None, show=True):
-    """
-    Validate the content of the files for consistency. Validators can
-    look as deeply as needed into the files. dgit treats them all as
-    black boxes.
-
-    Parameters
-    ----------
-
-    repo: Repository object
-    validator_name: Name of validator, if any. If none, then all validators specified in dgit.json will be included.
-    filename: Pattern that specifies files that must be processed by the validators selected. If none, then the default specification in dgit.json is used.
-    rules: Pattern specifying the files that have rules that validators will use
-    show: Print the validation results on the terminal
-
-    Returns
-    -------
-
-    status: A list of dictionaries, each with target file processed, rules file applied, status of the validation and any error  message.
-    """
-    results = run_validation(repo, validator_name, filename, rules)
-
-    if show:
-        validators = list(set([r['validator'] for r in results]))
-        for v in validators:
-            print(v)
-            print("==========")
-            for r in results:
-                if r['validator'] == v:
-                    print("({}) {} : {} {}".format(r['rules'],
-                                                   r['target'],
-                                                   r['status'],
-                                                   r['message']))
-            print("")
-
-    return results
