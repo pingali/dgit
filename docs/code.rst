@@ -15,7 +15,7 @@ Instabase in future .
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.repomanagers.gitmanager.GitRepoManager
+.. autoclass:: dgitcore.contrib.repomanagers.gitmanager.GitRepoManager
     :members: 
     :undoc-members: 
     :show-inheritance:
@@ -32,12 +32,12 @@ filesystem and s3 are supported. We plan to support more in future.
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.backends.s3.S3Backend
+.. autoclass:: dgitcore.contrib.backends.s3.S3Backend
     :members: 
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.backends.local.LocalBackend
+.. autoclass:: dgitcore.contrib.backends.local.LocalBackend
     :members: 
     :undoc-members: 
     :show-inheritance:
@@ -53,17 +53,17 @@ generation of the dataset.
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.instrumentations.content.ContentInstrumentation
+.. autoclass:: dgitcore.contrib.instrumentations.content.ContentInstrumentation
     :members: 
     :undoc-members: update
     :show-inheritance:
 
-.. autoclass:: plugins.instrumentations.platform.PlatformInstrumentation
+.. autoclass:: dgitcore.contrib.instrumentations.platform.PlatformInstrumentation
     :members: 
     :undoc-members: update
     :show-inheritance:
 
-.. autoclass:: plugins.instrumentations.executable.ExecutableInstrumentation
+.. autoclass:: dgitcore.contrib.instrumentations.executable.ExecutableInstrumentation
     :members: 
     :undoc-members: update
     :show-inheritance:
@@ -80,7 +80,7 @@ supported for now.
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.metadata.default.BasicMetadata
+.. autoclass:: dgitcore.contrib.metadata.default.BasicMetadata
     :members: 
     :undoc-members: 
     :show-inheritance:
@@ -93,20 +93,20 @@ Validation
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.validators.metadata_validator.MetadataValidator
+.. autoclass:: dgitcore.contrib.validators.metadata_validator.MetadataValidator
     :members: 
     :undoc-members: 
     :show-inheritance:
 
-.. autoclass:: plugins.validators.regression_quality.RegressionQualityValidator
+.. autoclass:: dgitcore.contrib.validators.regression_quality.RegressionQualityValidator
     :members: 
     :undoc-members: 
     :show-inheritance:
 
-Generator
+Transformer
 ---------
 
-.. autoclass:: dgitcore.plugins.generator.GeneratorBase 
+.. autoclass:: dgitcore.plugins.transformer.TransformerBase 
     :members: 
     :undoc-members: 
     :show-inheritance:

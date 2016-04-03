@@ -30,19 +30,19 @@ the modules.
 
 2) Repository Manager (Git)
 
-.. automodule:: plugins.repomanagers.gitmanager
+.. automodule:: dgitcore.contrib.repomanagers.gitmanager
 
 3) Backend Manager (S3) 
 
-.. automodule:: plugins.backends.s3
+.. automodule:: dgitcore.contrib.backends.s3
 
 4) Backend Manager (Local) 
 
-.. automodule:: plugins.backends.local
+.. automodule:: dgitcore.contrib.backends.local
 
 5) Metadata Server (Local) 
 
-.. automodule:: plugins.metadata.default
+.. automodule:: dgitcore.contrib.metadata.default
 
 Execution
 ~~~~~~~~~

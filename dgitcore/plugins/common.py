@@ -178,7 +178,8 @@ class PluginManager(object):
                 print(what)
                 print("========")
                 if len(filtered[what]) == 0:
-                    print("None")
+                    print("None\n")
+                    continue
                 for k in filtered[what]:
                     obj = self.plugins[what][k]
                     print("%s (%s) :" % k,
