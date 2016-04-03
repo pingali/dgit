@@ -162,75 +162,82 @@ Execution
    Tip: Consider committing dgit.json to the code repository.
 
    $ cat dgit.json 
-   
-   {
-       "username": "pingali",
-       "reponame": "simple-regression",
-       "remoteurl": "s3://appsloka/git/pingali/simple-regression.git",
-       "title": " Simple regression model demo",
-       "description": " Simple regression model demo",
-       "working-directory": ".",
-       "track": {
-           "includes": [
-               "*.csv",
-               "*.tsv",
-               "*.txt",
-               "*.json",
-               "*.xlsx"
-           ],
-           "excludes": [
-               ".git",
-               ".svn",
-               "dgit.json"
-           ]
-       },
-       "import": {
-           "directory-mapping": {
-               ".": ""
-           }
-       },
-       "pipeline": {
-           "main": {
-             "files": "snapshot/*",
-             "description": "Main pipeline"
-           }
-       },
-       "validate": {
-           "metadata-validator": {},
-           "regression-quality-validator": { 
-              "files": ["*.txt"],
-              "rules": ["*.json"]
+    {
+        "username": "pingali",
+        "reponame": "simple-regression",
+        "remoteurl": "s3://appsloka/git/pingali/simple-regression.git",
+        "title": " S",
+        "description": " S",
+        "working-directory": ".",
+        "track": {
+            "includes": [
+                "*.csv",
+                "*.tsv",
+                "*.txt",
+                "*.json",
+                "*.xlsx",
+                "*.sql",
+                "*.hql"
+            ],
+            "excludes": [
+                ".git",
+                ".svn",
+                "dgit.json"
+            ]
+        },
+        "auto-push": false,
+        "pipeline": {},
+        "import": {
+            "directory-mapping": {
+                ".": ""
             }
-       },
-       "dependencies": [ "pingali/simple-regression-rawdata" ],
-       "metadata-management": {
-           "servers": [
-               "localhost:8000"
-           ],
-           "include-code-history": [
-               "regression.py",
-               "regression2.py"
-           ],
-           "include-preview": {
-               "length": 512,
-               "files": [
-                   "*.txt",
-                   "*.csv",
-                   "*.tsv"
-               ]
-           },
-           "include-data-history": true,
-           "include-validation": true,
-           "include-dependencies": true,
-           "include-schema": [
-               "*.csv",
-               "*.tsv"
-           ],
-           "include-tab-diffs": [
-               "*.csv",
-               "*.tsv"
-           ],
-           "include-platform": true
-       }
-   }
-   
+        },
+        "dependencies": {},
+        "validator": {
+            "regression-quality-validator": {
+                "files": [
+                    "*.txt"
+                ],
+                "rules": {
+                    "min-r2": 0.25
+                },
+                "rules-files": [ "rules.json" ]
+            },
+            "metadata-validator": {
+                "files": [
+                    "*"
+                ]
+            }
+        },
+        "transformer": {},
+        "metadata-management": {
+            "servers": [
+                "localhost:8000"
+            ],
+            "include-code-history": [
+                "regression.py",
+                "regression2.py"
+            ],
+            "include-preview": {
+                "length": 512,
+                "files": [
+                    "*.txt",
+                    "*.csv",
+                    "*.tsv"
+                ]
+            },
+            "include-data-history": true,
+            "include-validation": true,
+            "include-dependencies": true,
+            "include-schema": [
+                "*.csv",
+                "*.tsv"
+            ],
+            "include-tab-diffs": [
+                "*.csv",
+                "*.tsv"
+            ],
+            "include-platform": true
+        }
+    }
+    
