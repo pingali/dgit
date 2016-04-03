@@ -41,7 +41,7 @@ dependency_links = [
 
 setup(
     name='dgit',
-    version='0.1.3',
+    version='0.1.4',
     description="Git wrapper for Managing Datasets",
     long_description=readme + '\n\n' + history,
     author="Venkata Pingali",
