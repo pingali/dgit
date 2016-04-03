@@ -34,6 +34,7 @@ requirements = [
     'parse',
     'daff',
     'sh',
+    'numpydoc'
 ]
 
 dependency_links = [
