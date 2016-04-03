@@ -2,6 +2,7 @@
 
 import dgitcore 
 from dgitcore import datasets, plugins, config  
+from dgitcore.config import get_config 
 
 __all__ = ['get_config', 'initialize']
 
@@ -17,7 +18,6 @@ def initialize():
     config.init()
 
 # What all should be exported
-initialize()
 _reexport(datasets)
 _reexport(plugins)
 

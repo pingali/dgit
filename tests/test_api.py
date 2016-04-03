@@ -36,8 +36,8 @@ def clean_workspace():
 
 def workspace_setup():
     print("setup")
-    clean_workspace()
     api.initialize()
+    clean_workspace()
 
 def workspace_teardown():
     print("teardown")
