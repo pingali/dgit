@@ -1,7 +1,7 @@
 dgit - Lightweight "Git Wrapper for Datasets"
 =============================================
 
-*Note: Code is still pre-alpha. It is being cleanedup and stabilized. Not yet ready for daily use.*
+*Note: Code is alpha. It is being improved. Feedback welcome. 
 
 dgit is an application on top of git. 
 
@@ -48,11 +48,13 @@ Note that only Python 3 and ubuntu are supported for now.
         
     # Install dgit 
     $ pip install dgit 
-    $ pip install dgit-extensions 
+    
+    # Optional 
+    $ pip install dgit_extensions 
 
     # Generate overall configuration file 
     $ dgit config init 
-    ...
+
 
 Tutorial
 --------
@@ -150,6 +152,9 @@ them to the dataset.
 Usage
 -----
 
+Read `documentation <https://dgit.readthedocs.org>`_ for details on
+the commands supported.
+
 ::
 
     $ dgit 
@@ -166,7 +171,6 @@ Usage
       config     Create configuration file (~/.dgit.ini)
       diff       Show the diff between two commits
       drop       Drop dataset
-      generate   Materialize queries
       init       Bootstrap a new dataset (a git repo+s3...
       list       List datasets
       log        Gather the log details
@@ -179,7 +183,9 @@ Usage
       show       Show details of commit
       stash      Trash all the changes in the dataset
       status     Status of the repo
+      transform  Transform content of the repo
       validate   Validate the content of the repository
+    
     
 Available Plugins
 -----------------
@@ -191,41 +197,44 @@ repo. More extensions are part of `dgit-extensions
 ::
 
    $ dgit plugins list 
-   dgit plugins list
-   ========
-   backend
-   ========
-   local (v0) : Local Filesystem Backend
-   s3 (v0) : S3 backend
-   
-   ========
-   repomanager
-   ========
-   git (v0) : Git-based Repository Manager
-   
-   ========
-   metadata
-   ========
-   basic-metadata (v0) : Basic metadata server
-   
-   ========
-   validator
-   ========
-   regression-quality-validator (v0) : Check R2 of regression model
-   metadata-validator (v0) : Validate integrity of the dataset metadata
-   
-   ========
-   generator
-   ========
-   mysql-generator (v0) : Materialize queries in dataset
-   
-   ========
-   instrumentation
-   ========
-   content (v0) : Basic content analysis
-   executable (v0) : Executable analysis
-   platform (v0) : Execution platform information
-   
+    ========
+    backend
+    ========
+    local (v0) : Local Filesystem Backend
+    s3 (v0) : S3 backend
+    
+    ========
+    repomanager
+    ========
+    git (v0) : Git-based Repository Manager
+    
+    ========
+    metadata
+    ========
+    basic-metadata (v0) : Basic metadata server
+    
+    ========
+    validator
+    ========
+    metadata-validator (v0) : Validate integrity of the dataset metadata
+    regression-quality-validator (v0) : Check R2 of regression model
+    
+    ========
+    instrumentation
+    ========
+    content (v0) : Basic content analysis
+    platform (v0) : Execution platform information
+    executable (v0) : Executable analysis
+    
+    # from dgit_extensions module 
+    ========
+    transformer
+    ========
+    simple-file-encryptor (v0) : Simple encryptor of files
+    mysql-generator (v0) : Materialize queries in dataset
+    simple-table-anonymizer (v0) : Simple anonymizer for tables
+    
+       
 
 Security and Privacy
 --------------------
