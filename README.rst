@@ -1,7 +1,7 @@
 dgit - Lightweight "Git Wrapper for Datasets"
 =============================================
 
-*Note: Code is alpha. It is being improved. Feedback welcome. 
+*Note: Code is alpha. It is being improved. Feedback welcome.*
 
 dgit is an application on top of git. 
 
