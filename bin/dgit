@@ -173,7 +173,8 @@ def push(repo, args):
     """
     Gather the log details
     """
-    datasets.push(repo, list(args))
+    result = datasets.push(repo, list(args))
+    show_result(result) 
 
 @repo_specific.command('rm',context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
@@ -182,7 +183,8 @@ def rm(repo, args):
     """
     Delete files from repo 
     """
-    datasets.delete(repo, list(args))
+    result = datasets.delete(repo, list(args))
+    show_result(result) 
 
 @repo_specific.command('sh',context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
@@ -233,7 +235,8 @@ def diff(repo, args):
     """
     Show the diff between two commits
     """
-    datasets.diff(repo, list(args))
+    result = datasets.diff(repo, list(args))
+    show_result(result) 
 
 @repo_specific.command('show',context_settings=CONTEXT_SETTINGS)
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)

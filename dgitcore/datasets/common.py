@@ -39,7 +39,7 @@ __all__ = [
     'log', 'show', 'push', 'pull', 'commit',
     'stash', 'drop', 'status', 'post',
     'clone', 'init', 'diff',
-    'remote'
+    'remote', 'delete'
 ]
 
 #####################################################
@@ -248,7 +248,7 @@ def delete(repo, args=[]):
     """
 
     message = """Delete is not yet implemented completely. datapackage.json should be updated to keep in sync with files on disk."""
-    raise NotImplemented()
+    raise NotImplemented("Delete support")
 
     # Cleanup the repo
     generic_repo_cmd(repo, 'delete', args)

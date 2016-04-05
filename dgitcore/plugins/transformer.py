@@ -43,7 +43,7 @@ class TransformerBase(object):
         """
         return None
 
-    def evaluate(self, repo, files, spec, force):
+    def evaluate(self, repo, spec, force, args):
         """
         Execute the generator on the files
         """
