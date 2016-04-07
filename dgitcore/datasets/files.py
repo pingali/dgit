@@ -17,7 +17,6 @@ from dateutil import parser
 from ..config import get_config
 from ..plugins.common import plugins_get_mgr
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
-from .detect import get_schema
 
 #####################################################
 # Exports

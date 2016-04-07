@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
-import os, sys, parse
+import os, sys, parse, shutil 
+import traceback 
 import subprocess, pipes
 from collections import OrderedDict
+import tempfile 
 import json
 import daff
 from ..helper import run, cd
+from ..plugins.common import plugins_get_mgr
 
 def get_change():
 
@@ -189,68 +192,16 @@ def associate_branches(history):
 
     return history
 
-def parse_diff(diff):
-    #http://dataprotocols.org/tabular-diff-format/
-    #@@ 	The header row, giving column names.
-
-    #! 	The schema row, given column differences.
-    #+++ 	An inserted row (present in REMOTE, not present in LOCAL).
-    #--- 	A deleted row (present in LOCAL, not present in REMOTE).
-    #-> 	A row with at least one cell modified cell. -->, --->, ----> etc. have the same meaning.
-    #Blank 	A blank string or NULL marks a row common to LOCAL and REMOTE, given for context.
-    #... 	Declares that rows common to LOCAL and REMOTE are being skipped.
-    #+ 	A row with at least one added cell.
-    #: 	A reordered row.
-
-    #Reference: Schema row tags
-    #Symbol 	Meaning
-    #+++ 	An inserted column (present in REMOTE, not present in LOCAL).
-    #--- 	A deleted column (present in LOCAL, not present in REMOTE).
-    #(<NAME>) 	A renamed column (the name in LOCAL is given in parenthesis, and the name in REMOTE will be in the header row).
-    #Blank 	A blank string or NULL marks a column common to LOCAL and REMOTE, given for context.
-    #... 	Declares that columns common to LOCAL and REMOTE are being skipped.
-    #: 	A reordered column.
-
-    summary = OrderedDict([
-        ('schema', OrderedDict([
-            ("+++", ["New column", 0]),
-            ("---", ["Deleted column", 0]),
-            ("()", ["Renamed column",0]),
-            (":", ["Rordered column",0])
-        ])),
-        ('data',OrderedDict([
-            ("+++", ["New row",0]),
-            ("---", ["Deleted row", 0]),
-            ("+", ["Atleast one cell change",0]),
-            (":", ["Reordered row",0])
-        ]))
-    ])
-
-    diff = diff.getData()
-    # [['!', '', '', '+++'], ['@@', 'State', 'City', 'Metro'], ['+', 'KA', 'Bangalore', '1'], ['+', 'MH', 'Mumbai', '2'], ['+++', 'KL', 'Kottayam', '0']]
-    # print(diff)
-
-    start = 0
-    if diff[0][0] == "!":
-        start = 1
-        # Schema changes
-        for col in diff[0][1:]:
-            if "(" in col:
-                col = "()"
-            if col in summary['schema']:
-                summary['schema'][col][1] += 1
-
-    start += 1 # skip header row...
-    for row in diff[start:]:
-        if row[0] in summary['data']:
-            summary['data'][row[0]][1] += 1
-
-    return summary
 
 def get_diffs(history):
     """
-    Look at csv/tsv and compute the diffs intelligently
+    Look at files and compute the diffs intelligently
     """
+
+    # First get all possible representations
+    mgr = plugins_get_mgr() 
+    keys = mgr.search('representation')['representation']
+    representations = [mgr.get_by_key('representation', k) for k in keys]
 
     for i in range(len(history)):
         if i+1 > len(history) - 1:
@@ -262,53 +213,65 @@ def get_diffs(history):
         #print(prev['subject'], "==>", curr['subject'])
         #print(curr['changes'])
         for c in curr['changes']:
+            
+            path = c['path']
 
-            path = c['path'].lower()
-            delimiter = "," if path.endswith("csv") else "\t"
+            # Find a handler for this kind of file...
+            handler = None 
+            for r in representations: 
+                if r.can_process(path): 
+                    handler = r 
+                    break 
+            
+            if handler is None: 
+                continue 
 
-            if path.endswith('tsv') or path.endswith('csv'):
+            # print(path, "being handled by", handler)
 
-                # print(c['path'])
+            v1_hex = prev['commit']
+            v2_hex = curr['commit']
 
-                v1_hex = prev['commit']
-                v2_hex = curr['commit']
+            temp1 = tempfile.mkdtemp(prefix="dgit-diff-") 
+            
+            try: 
+                for h in [v1_hex, v2_hex]: 
+                    filename = '{}/{}/checkout.tar'.format(temp1, h)
+                    try:
+                        os.makedirs(os.path.dirname(filename))
+                    except:
+                        pass 
+                    extractcmd = ['git', 'archive', '-o', filename, h, path]
+                    output = run(extractcmd)
+                    if 'fatal' in output: 
+                        raise Exception("File not present in commit") 
+                    with cd(os.path.dirname(filename)): 
+                        cmd = ['tar', 'xvf', 'checkout.tar']
+                        output = run(cmd) 
+                        if 'fatal' in output: 
+                            print("Cleaning up - fatal 1", temp1)
+                            shutil.rmtree(temp1)
+                            continue 
 
-                # Read the content of the files
-                cmd1 = ["git", "show", "{}:{}".format(v1_hex, c['path'])]
-                csv1_raw = run(cmd1)
-                cmd2 = ["git", "show", "{}:{}".format(v2_hex, c['path'])]
-                csv2_raw = run(cmd2)
+                # Check to make sure that 
+                path1 = os.path.join(temp1, v1_hex, path) 
+                path2 = os.path.join(temp1, v2_hex, path) 
+                if not os.path.exists(path1) or not os.path.exists(path2): 
+                    # print("One of the two output files is missing") 
+                    shutil.rmtree(temp1)
+                    continue 
 
-                if 'fatal' in csv1_raw or 'fatal' in csv2_raw:
-                    continue
+                #print(path1, path2) 
 
-                #print(v1_hex)
-                #print("csv1_raw", csv1_raw)
-                #print(v2_hex)
-                #print("csv2_raw", csv2_raw)
+                # Now call the handler
+                diff = handler.get_diff(path1, path2)
 
-                # Generate simple list of lists that can be diffd using daff
-                csv1 = csv1_raw.split("\n")
-                csv1 = [c.split(delimiter) for c in csv1]
-                csv2 = csv2_raw.split("\n")
-                csv2 = [c.split(delimiter) for c in csv2]
-
-                table1 = daff.PythonTableView(csv1)
-                table2 = daff.PythonTableView(csv2)
-
-                alignment = daff.Coopy.compareTables(table1,table2).align()
-
-                data_diff = []
-                table_diff = daff.PythonTableView(data_diff)
-
-                flags = daff.CompareFlags()
-                highlighter = daff.TableDiff(alignment,flags)
-                highlighter.hilite(table_diff)
-
-                # Parse the differences
-                diff = parse_diff(table_diff)
-
+                #print("Inserting diff")
                 c['diff'] = diff
+
+            except Exception as e: 
+                #traceback.print_exc() 
+                #print("Cleaning up - Exception ", temp1)
+                shutil.rmtree(temp1)
 
 def get_history(gitdir="."):
 

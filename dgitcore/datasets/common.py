@@ -24,7 +24,6 @@ from ..config import get_config
 from ..plugins.common import plugins_get_mgr
 from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
 from ..exceptions import *
-from .detect import get_schema
 from .history import get_history, get_diffs
 from .validation import validate
 
@@ -452,6 +451,11 @@ def annotate_metadata_data(repo, task, patterns, size=0):
     Update metadata with the content of the files
     """
 
+    mgr = plugins_get_mgr() 
+    keys = mgr.search('representation')['representation']
+    representations = [mgr.get_by_key('representation', k) for k in keys]
+
+
     matching_files = repo.find_matching_files(patterns)
     package = repo.package
     rootdir = repo.rootdir
@@ -465,7 +469,10 @@ def annotate_metadata_data(repo, task, patterns, size=0):
                 f['content'] = open(path).read()[:size]
             elif task == 'schema':
                 print("Adding schema for ", path)
-                f['schema'] = get_schema(path)
+                for r in representations: 
+                    if r.can_process(path): 
+                        f['schema'] = r.get_schema(path)
+                        break 
 
 def annotate_metadata_code(repo, files):
     """

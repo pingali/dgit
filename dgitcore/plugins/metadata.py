@@ -31,6 +31,9 @@ class MetadataBase(object):
         self.support = supported + [name]
         self.initialize()
 
+    def __str__(self): 
+        return self.name 
+
     def initialize(self):
         """
         Called to initialize sessions, internal objects etc.

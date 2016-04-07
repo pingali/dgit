@@ -7,7 +7,6 @@ from ..plugins.common import plugins_get_mgr
 from .common import clone as common_clone, init as common_init, post as common_post
 from .files import add as files_add
 from .history import get_history
-from .detect import get_schema
 from datetime import datetime
 
 #####################################################
@@ -115,7 +114,7 @@ def auto_init(autofile, force_init=False):
         ("description", description),
         ("working-directory", "."),
         ('track' ,OrderedDict([
-            ('includes', ['*.csv', '*.tsv', '*.txt','*.json', '*.xlsx', "*.sql", "*.hql"]),
+            ('includes', ['*.csv', '*.tsv', '*.txt','*.json', '*.xls', '*.xlsx', "*.sql", "*.hql"]),
             ('excludes', ['.git', '.svn', os.path.basename(autofile)]),
         ])),
         ('auto-push', False),
@@ -252,11 +251,14 @@ def get_files_to_commit(autooptions):
     excludes = autooptions['track']['excludes']
 
     # transform glob patterns to regular expressions
+    print("Includes ", includes) 
     includes = r'|'.join([fnmatch.translate(x) for x in includes])
     excludes = r'|'.join([fnmatch.translate(x) for x in excludes]) or r'$.'
 
     matched_files = []
     for root, dirs, files in os.walk(workingdir):
+
+        print("Looking at ", files)
 
         # exclude dirs
         # dirs[:] = [os.path.join(root, d) for d in dirs]
@@ -264,7 +266,10 @@ def get_files_to_commit(autooptions):
 
         # exclude/include files
         files = [f for f in files if not re.match(excludes, f)]
+        print("Files after excludes", files)
+        print(includes) 
         files = [f for f in files if re.match(includes, f)]
+        print("Files after includes", files) 
         files = [os.path.join(root, f) for f in files]
 
         matched_files.extend(files)
@@ -321,6 +326,8 @@ def auto_update(autofile, force_init):
         proceed = input("Do you wish to proceed? [yN] ")
         if proceed != 'y':
             return
+
+    print("To insert", files) 
 
     # Add the files to the repo
     count = auto_add(repo, autooptions, files)
