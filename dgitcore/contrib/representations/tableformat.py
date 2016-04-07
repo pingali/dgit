@@ -34,7 +34,7 @@ class TableRepresentation(RepresentationBase):
 
     def can_process(self, filename): 
         
-        for ext in ['csv', 'tsv', 'xls', 'xlsx']: 
+        for ext in ['csv', 'tsv', 'xls']: 
             if filename.lower().endswith(ext):
                 return True 
         return False 
