@@ -106,8 +106,26 @@ Validation
 Transformer
 ---------
 
+Plugins that process the content of the repository. They turn files of
+one kind into another.
+
 .. autoclass:: dgitcore.plugins.transformer.TransformerBase 
     :members: 
     :undoc-members: 
     :show-inheritance:
 
+Representation
+---------
+
+Plugins to handle various file format for schema extraction and diff
+computation.
+
+.. autoclass:: dgitcore.plugins.representation.RepresentationBase
+    :members: 
+    :undoc-members: 
+    :show-inheritance:
+
+.. autoclass:: dgitcore.contrib.representations.tableformat.TableRepresentation
+    :members: 
+    :undoc-members: 
+    :show-inheritance:
