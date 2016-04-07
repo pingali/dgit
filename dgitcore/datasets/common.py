@@ -612,8 +612,7 @@ def post(repo, args=[]):
                                    patterns=metadata['include-preview']['files'],
                                    size=metadata['include-preview']['length'])
 
-        if (('include-schema' in metadata) and 
-            metadata['include-schema'])
+        if (('include-schema' in metadata) and metadata['include-schema']):
             annotate_metadata_data(repo,  task='schema')
 
         if 'include-code-history' in metadata:
