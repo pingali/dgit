@@ -164,8 +164,8 @@ def auto_init(autofile, force_init=False):
                 ('include-data-history', True),
                 ('include-validation', True),
                 ('include-dependencies', True),
-                ('include-schema', ['*.csv', '*.tsv']),
-                ('include-tab-diffs', ['*.csv', '*.tsv']),
+                ('include-schema', True),
+                ('include-tab-diffs', True),
                 ('include-platform', True),
             ]))]))
 

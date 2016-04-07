@@ -234,7 +234,6 @@ def status(repo, args=[]):
     result = generic_repo_cmd(repo, 'status', args)
     return result
 
-
 def delete(repo, args=[]):
     """
     Delete files
@@ -246,28 +245,38 @@ def delete(repo, args=[]):
     args: Arguments to git command
     """
 
-    message = """Delete is not yet implemented completely. datapackage.json should be updated to keep in sync with files on disk."""
-    raise NotImplemented("Delete support")
+    # Remove the files 
+    result = generic_repo_cmd(repo, 'delete', args)
+    if result['status'] != 'success': 
+        return status 
 
-    # Cleanup the repo
-    generic_repo_cmd(repo, 'delete', args)
+    with cd(repo.rootdir): 
+        
+        package = repo.package 
+        resources = package['resources'] 
 
-    # Have to sync up repo files and datapackage.json
-    # XXX MISSING
+        cleaned_resources = []
+        for r in resources: 
+            relativepath = r['relativepath'] 
+            sha256 = r['sha256'] 
+            if relativepath not in ['', None]: 
+                if not os.path.exists(relativepath): 
+                    # This file does not exist on disk. 
+                    print("Skipping", relativepath) 
+                    continue 
+            cleaned_resources.append(r) 
+            
+        package['resources'] = cleaned_resources 
+        repo.package = package 
+        
+        with open('datapackage.json', 'w') as fd: 
+            fd.write(json.dumps(repo.package, indent=4))
 
-    # Now sync the metadata
-    (handle, filename) = tempfile.mkstemp()
-    with open(filename, 'w') as fd:
-        fd.write(json.dumps(repo.package, indent=4))
+        return {
+            'status': 'success',
+            'message': ''
+        }
 
-    # Update the file..
-    repo.run('add_files',
-             [
-                 {
-                     'relativepath': 'datapackage.json',
-                     'localfullpath': filename,
-                 }
-             ])
 
 
 
@@ -446,7 +455,7 @@ def clone(url):
 # Post metadata to a server
 ###########################################################
 
-def annotate_metadata_data(repo, task, patterns, size=0):
+def annotate_metadata_data(repo, task, patterns=["*"], size=0):
     """
     Update metadata with the content of the files
     """
@@ -454,7 +463,6 @@ def annotate_metadata_data(repo, task, patterns, size=0):
     mgr = plugins_get_mgr() 
     keys = mgr.search('representation')['representation']
     representations = [mgr.get_by_key('representation', k) for k in keys]
-
 
     matching_files = repo.find_matching_files(patterns)
     package = repo.package
@@ -468,9 +476,9 @@ def annotate_metadata_data(repo, task, patterns, size=0):
                 print("Adding preview for ", relativepath)
                 f['content'] = open(path).read()[:size]
             elif task == 'schema':
-                print("Adding schema for ", path)
                 for r in representations: 
                     if r.can_process(path): 
+                        print("Adding schema for ", path)
                         f['schema'] = r.get_schema(path)
                         break 
 
@@ -604,14 +612,12 @@ def post(repo, args=[]):
                                    patterns=metadata['include-preview']['files'],
                                    size=metadata['include-preview']['length'])
 
-        if 'include-schema' in metadata:
-            annotate_metadata_data(repo,
-                                   task='schema',
-                                   patterns=metadata['include-schema'])
+        if (('include-schema' in metadata) and 
+            metadata['include-schema'])
+            annotate_metadata_data(repo,  task='schema')
 
         if 'include-code-history' in metadata:
-            annotate_metadata_code(repo,
-                                   files=metadata['include-code-history'])
+            annotate_metadata_code(repo, files=metadata['include-code-history'])
 
         if 'include-platform' in metadata:
             annotate_metadata_platform(repo)
