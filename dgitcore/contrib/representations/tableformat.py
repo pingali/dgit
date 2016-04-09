@@ -21,7 +21,7 @@ class TableRepresentation(RepresentationBase):
         self.enable = 'y'
         super(TableRepresentation, self).__init__('table-representation',
                                                'v0',
-                                               "Validate integrity of the dataset table")
+                                               "Compute schema and diffs for csv/tsv/xls")
 
     def config(self, what='get', params=None):
 
@@ -76,11 +76,12 @@ class TableRepresentation(RepresentationBase):
         # Get a sample as well..
         sample = next(row_set.sample)
 
+        clean = lambda v: str(v) if not isinstance(v, str) else v 
         schema = []
         for i, h in enumerate(headers):
             schema.append([h,
                            str(types[i]),
-                           sample[i].value])
+                           clean(sample[i].value)])
 
         return schema
 

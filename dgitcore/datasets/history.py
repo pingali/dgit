@@ -216,6 +216,10 @@ def get_diffs(history):
             
             path = c['path']
 
+            # Skip the metadata file
+            if c['path'].endswith('datapackage.json'): 
+                continue 
+
             # Find a handler for this kind of file...
             handler = None 
             for r in representations: 
@@ -269,7 +273,7 @@ def get_diffs(history):
                 c['diff'] = diff
 
             except Exception as e: 
-                #traceback.print_exc() 
+                # traceback.print_exc() 
                 #print("Cleaning up - Exception ", temp1)
                 shutil.rmtree(temp1)
 

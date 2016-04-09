@@ -8,6 +8,7 @@ services.
 
 """
 import os, sys, requests, json
+import traceback 
 from dgitcore.plugins.metadata import MetadataBase
 from dgitcore.exceptions import *
 from dgitcore.config import get_config, ChoiceValidator, URLValidator, NonEmptyValidator
@@ -96,7 +97,9 @@ class BasicMetadata(MetadataBase):
                               headers=headers)
 
             return r
-        except:
+        except Exception as e: 
+            #print(e)
+            #traceback.print_exc()
             raise NetworkError()
         return ""
 
