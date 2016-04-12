@@ -7,10 +7,23 @@ from dgitcore.config import get_config
 __all__ = ['get_config', 'initialize']
 
 
+
+def api_call_action(func): 
+    """
+    API wrapper documentation
+    """
+    def inner(*args, **kwargs):
+        func(*args, **kwargs)
+        return inner
+    return inner 
+
 def _reexport(mod):
     __all__.extend(mod.__all__)
     for var in mod.__all__:
-        globals()[var] = getattr(mod, var)
+        base = getattr(mod, var)
+        f = api_call_action(base)
+        f.__doc__ = base.__doc__
+        globals()[var] = f 
 
 
 def initialize():

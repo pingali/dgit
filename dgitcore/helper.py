@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys, re, unicodedata
-import json
+import json, inspect 
 import shelve
 from hashlib import sha256
 import subprocess, pipes
@@ -9,6 +9,7 @@ from datetime import datetime
 import getpass
 import uuid
 import subprocess
+from collections import OrderedDict
 
 class bcolors:
     HEADER = '\033[95m'
@@ -155,3 +156,86 @@ def slugify(value):
     value = value.decode('utf-8')
     value = re.sub(r'[^\w\s-]', '-', value).strip().lower()
     return re.sub(r'[-\s]+', '-', value)
+
+def log_action(func, result, *args, **kwargs):
+
+    trigger = "unknown"
+    # https://docs.python.org/3/library/inspect.html
+    stack = inspect.stack() 
+    for s in stack: 
+        filename = s[1] 
+        funcname = s[3] 
+        if filename.endswith("bin/dgit"): 
+            trigger = "user" 
+        elif filename.endswith("dgitcore/api.py"):
+            trigger = "api"
+        elif filename.endswith("datasets/common.py") and funcname == "post": 
+            trigger = "auto"
+        else:
+            continue
+        break 
+     
+    # First, find the repo 
+    repo = None         
+    for a in args: 
+        if a.__class__.__name__ == "Repo": 
+            repo = a
+            break
+            
+    if repo is None: 
+        return 
+
+    # Clean the args 
+    cleaned_args = [str(a) for a in args if a != repo]
+    cleaned_kwargs = OrderedDict([(str(k), str(v)) \
+                                  for (k,v) in kwargs.items()])
+
+    # Get platform information...
+    from .plugins import plugins_get_mgr 
+    mgr = plugins_get_mgr()
+    repomgr = mgr.get(what='instrumentation', name='platform')
+    platform = repomgr.get_metadata()
+    
+    absf = os.path.abspath(".") 
+    (relpath, permalink) = repo.manager.permalink(repo, absf)
+    
+    # Defaults...
+    maxlength = 2048
+    funcname = func.__name__
+
+    # Construct a record 
+    record = OrderedDict([
+        ('uuid', str(uuid.uuid1().hex)),
+        ('username', repo.username),
+        ('reponame', repo.reponame),
+        ('trigger', trigger),
+        ('action', funcname),
+        ('ts', datetime.now().replace(microsecond=0).isoformat()),
+        ('args', cleaned_args),
+        ('kwargs', cleaned_kwargs),
+        ('result', result),
+        ('platform', platform),
+        ('code', permalink)
+    ])
+
+    
+    # Now append to the log file...
+    logfile = os.path.join(repo.rootdir, '.dgit', 'log.json')
+    try: 
+        os.makedirs(os.path.dirname(logfile))
+    except:
+        pass 
+        
+    with open(logfile, 'a') as fd: 
+        print(json.dumps(record), file=fd)
+
+def log_repo_action(func): 
+    """
+    Log all repo actions to .dgit/log.json 
+    """
+        
+    def inner(*args, **kwargs):
+        result = func(*args, **kwargs)         
+        log_action(func, result, *args, **kwargs)
+        return result 
+    return inner

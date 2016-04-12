@@ -409,17 +409,21 @@ class GitRepoManager(RepoManagerBase):
         Get the permalink to command that generated the dataset
         """
 
-        if not os.path.exists(path):
-            return None
+        if not os.path.exists(path): 
+            # print("Path does not exist", path)
+            return (None, None) 
 
         # Get this directory
         cwd = os.getcwd()
 
         # Find the root of the repo and cd into that directory..
-        os.chdir(os.path.dirname(path))
+        if os.path.isfile(path):
+            os.chdir(os.path.dirname(path))
+
         rootdir = self._run(["rev-parse", "--show-toplevel"])
         if "fatal" in rootdir:
-            return None
+            # print("fatal", rootdir)
+            return (None, None) 
 
         os.chdir(rootdir)
         # print("Rootdir = ", rootdir)
@@ -431,13 +435,13 @@ class GitRepoManager(RepoManagerBase):
         # Get the last commit for this file
         #3764cc2600b221ac7d7497de3d0dbcb4cffa2914
         sha1 = self._run(["log", "-n", "1", "--format=format:%H", relpath])
-        #print("sha1 = ", sha1)
+        # print("sha1 = ", sha1)
 
         # Get the repo URL
         #git@gitlab.com:pingali/simple-regression.git
         #https://gitlab.com/kanban_demo/test_project.git
         remoteurl = self._run(["config", "--get", "remote.origin.url"])
-        #print("remoteurl = ", remoteurl)
+        # print("remoteurl = ", remoteurl)
 
         # Go back to the original directory...
         os.chdir(cwd)

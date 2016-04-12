@@ -2,6 +2,7 @@
 
 import os, sys, json
 from ..plugins.common import plugins_get_mgr
+from ..helper import log_repo_action
 
 #####################################################
 # Exports
@@ -83,7 +84,9 @@ def instantiate(repo, validator_name=None, filename=None, rulesfiles=None):
 
     return validators
 
-def validate(repo, validator_name=None, 
+@log_repo_action 
+def validate(repo, 
+             validator_name=None, 
              filename=None, 
              rulesfiles=None,
              args=[]):

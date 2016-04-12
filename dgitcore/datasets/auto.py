@@ -162,6 +162,7 @@ def auto_init(autofile, force_init=False):
                     ('files', ['*.txt', '*.csv', '*.tsv'])
                     ])),
                 ('include-data-history', True),
+                ('include-action-history', True),
                 ('include-validation', True),
                 ('include-dependencies', True),
                 ('include-schema', True),

@@ -22,7 +22,7 @@ except:
     from urlparse import urlparse
 from ..config import get_config
 from ..plugins.common import plugins_get_mgr
-from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name
+from ..helper import bcolors, clean_str, cd, compute_sha256, run, clean_name, log_repo_action 
 from ..exceptions import *
 from .history import get_history, get_diffs
 from .validation import validate
@@ -80,6 +80,7 @@ def list_repos(remote=False):
 #####################################################
 # Repo specific generic commands
 #####################################################
+@log_repo_action 
 def shellcmd(repo, args):
     """
     Run a shell command within the repo's context
@@ -110,6 +111,7 @@ def generic_repo_cmd(repo, cmd, *args):
     return repo.run(cmd, *args)
 
 
+@log_repo_action 
 def log(repo, args=[]):
     """
     Log of the changes executed until now
@@ -122,6 +124,7 @@ def log(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'log', args)
 
+@log_repo_action 
 def show(repo, args=[]):
     """
     Show commit details
@@ -134,6 +137,7 @@ def show(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'show', args)
 
+@log_repo_action 
 def remote(repo, args=[]):
     """
     Show remote
@@ -146,6 +150,7 @@ def remote(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'remote', args)
 
+@log_repo_action 
 def push(repo, args=[]):
     """
     Push changes to the backend
@@ -158,6 +163,7 @@ def push(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'push', args)
 
+@log_repo_action 
 def pull(repo, args=[]):
     """
     Pull changes from the backend
@@ -170,6 +176,7 @@ def pull(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'pull', args)
 
+@log_repo_action 
 def commit(repo, args=[]):
     """
     Commit changes to the data repository
@@ -182,6 +189,7 @@ def commit(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'commit', args)
 
+@log_repo_action 
 def drop(repo, args=[]):
     """
     Drop the repository (new to dgit)
@@ -194,6 +202,7 @@ def drop(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'drop', args)
 
+@log_repo_action 
 def stash(repo, args=[]):
     """
     Stash the changes
@@ -206,6 +215,7 @@ def stash(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'stash', args)
 
+@log_repo_action 
 def diff(repo, args=[]):
     """
     Diff between versions
@@ -218,6 +228,7 @@ def diff(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'diff', args)
 
+@log_repo_action 
 def status(repo, args=[]):
     """
     Show status of the repo
@@ -234,6 +245,7 @@ def status(repo, args=[]):
     result = generic_repo_cmd(repo, 'status', args)
     return result
 
+@log_repo_action 
 def delete(repo, args=[]):
     """
     Delete files
@@ -502,6 +514,18 @@ def annotate_metadata_code(repo, files):
             ]))
 
 
+def annotate_metadata_action(repo):
+    """
+    Update metadata with the action history 
+    """
+    package = repo.package    
+    
+    with cd(repo.rootdir): 
+        filename = ".dgit/log.json"
+        actions = open(filename).readlines() 
+        actions = [json.loads(a) for a in actions]
+        package['actions'] = actions
+
 def annotate_metadata_platform(repo):
     """
     Update metadata host information
@@ -604,6 +628,10 @@ def post(repo, args=[]):
         # Add data repo history
         if 'include-data-history' in metadata and metadata['include-data-history']:
             repo.package['history'] = get_history(repo.rootdir)
+
+        # Add action history 
+        if 'include-action-history' in metadata and metadata['include-action-history']:
+            annotate_metadata_action(repo) 
 
         # Add data repo history
         if 'include-preview' in metadata:

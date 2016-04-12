@@ -332,7 +332,7 @@ def validate(repo, validator, target, rulesfile, args):
     Validate the content of the repository
     """
     result = datasets.validate(repo, validator, target, 
-                               rulesfile, args)
+                                    rulesfile, args)
     show_validator_results(result) 
 
 @repo_specific.command('transform',context_settings=CONTEXT_SETTINGS)
