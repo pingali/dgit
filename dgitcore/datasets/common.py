@@ -523,7 +523,12 @@ def annotate_metadata_action(repo):
     with cd(repo.rootdir): 
         filename = ".dgit/log.json"
         actions = open(filename).readlines() 
-        actions = [json.loads(a) for a in actions]
+        actions = []
+        for a in actions: 
+            try: 
+                actions.append(json.loads(a))
+            except:
+                pass 
         package['actions'] = actions
 
 def annotate_metadata_platform(repo):
