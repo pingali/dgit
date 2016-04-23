@@ -480,7 +480,7 @@ def profile(action, globalvar):
     """
     Create configuration file (~/.dgit.ini) 
     """
-    if action in ["update", "init"]:
+    if action in ["update"]:
         config.update(globalvar)
     elif action == "show":
         config.init(globalvar, show=True)
