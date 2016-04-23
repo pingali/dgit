@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os, sys
 import dgitcore 
 from dgitcore import datasets, plugins, config  
 from dgitcore.config import get_config 
@@ -12,17 +13,17 @@ def api_call_action(func):
     """
     API wrapper documentation
     """
-    def inner(*args, **kwargs):
-        func(*args, **kwargs)
-        return inner
-    return inner 
+    def _inner(*args, **kwargs):
+        return func(*args, **kwargs)
+    _inner.__name__ = func.__name__
+    _inner.__doc__ = func.__doc__
+    return _inner 
 
 def _reexport(mod):
     __all__.extend(mod.__all__)
     for var in mod.__all__:
         base = getattr(mod, var)
         f = api_call_action(base)
-        f.__doc__ = base.__doc__
         globals()[var] = f 
 
 

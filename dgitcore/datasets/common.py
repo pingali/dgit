@@ -189,7 +189,6 @@ def commit(repo, args=[]):
     """
     return generic_repo_cmd(repo, 'commit', args)
 
-@log_repo_action 
 def drop(repo, args=[]):
     """
     Drop the repository (new to dgit)
@@ -409,6 +408,7 @@ def init(username, reponame, setup,
 
     args = ['-a', '-m', 'Bootstrapped the repo']
     repo.run('commit', args)
+    
     return repo
 
 def clone(url):

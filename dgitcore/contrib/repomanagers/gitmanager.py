@@ -385,8 +385,8 @@ class GitRepoManager(RepoManagerBase):
 
         # Clean up the rootdir
         rootdir = repo.rootdir
-        print("Cleaning repo directory: {}".format(rootdir))
         if os.path.exists(rootdir):
+            print("Cleaning repo directory: {}".format(rootdir))
             shutil.rmtree(rootdir)
 
         # Cleanup the local version of the repo (this could be on

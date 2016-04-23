@@ -125,7 +125,6 @@ def test_start_group1():
     """
     pass
 
-
 def test_create_repo():
     """
     Init repo
@@ -146,8 +145,6 @@ def test_create_repo():
         for suffix in ["", '.git', '.gitignore', 'datapackage.json']:
             path = os.path.join(rootdir, suffix)
             assert os.path.exists(path)
-
-    print("Completed create repo")
 
 
 def test_sh_command():
@@ -206,17 +203,14 @@ def test_repo_drop():
     """
 
     repos = api.list_repos()
-    print(repos)
     assert len(repos) == 3
 
     repo = basic_repo_lookup('simple1')
     rootdir = repo.rootdir
-    api.drop(repo)
-
+    response = api.drop(repo)
     assert not os.path.exists(rootdir)
 
     repos = api.list_repos()
-    print(repos)
     assert len(repos) == 2
 
 
@@ -248,7 +242,6 @@ def test_simple_add_files():
     # Create a temp file and add it
     (fd, filename) = tempfile.mkstemp()
     try:
-        print("Adding ", filename) 
         api.add(repo, [filename], ".")
 
         # Check if the file exists in git
