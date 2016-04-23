@@ -1,6 +1,10 @@
 dgit - Lightweight "Git Wrapper for Datasets"
 =============================================
 
+.. image:: https://badges.gitter.im/pingali/dgit.svg
+   :alt: Join the chat at https://gitter.im/pingali/dgit
+   :target: https://gitter.im/pingali/dgit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 *Note: Code is alpha. It is being improved. Feedback welcome.*
 
 dgit is an application on top of git. 
