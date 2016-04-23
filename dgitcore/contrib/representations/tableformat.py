@@ -123,7 +123,12 @@ class TableRepresentation(RepresentationBase):
         ])
 
         diff = diff.getData()
-        # [['!', '', '', '+++'], ['@@', 'State', 'City', 'Metro'], ['+', 'KA', 'Bangalore', '1'], ['+', 'MH', 'Mumbai', '2'], ['+++', 'KL', 'Kottayam', '0']]
+        print(diff)
+        # [['!', '', '', '+++'], 
+        #  ['@@', 'State', 'City', 'Metro'], 
+        #  ['+', 'KA', 'Bangalore', '1'], 
+        #  ['+', 'MH', 'Mumbai', '2'], 
+        #  ['+++', 'KL', 'Kottayam', '0']]
         # print(diff)
 
         start = 0
@@ -138,6 +143,7 @@ class TableRepresentation(RepresentationBase):
                         
         start += 1 # skip header row...
         for row in diff[start:]:
+            print(row)
             if row[0] in summary['data']:
                 summary['data'][row[0]][1] += 1
 
@@ -145,7 +151,7 @@ class TableRepresentation(RepresentationBase):
 
     def get_diff(self, filename1, filename2):
 
-        #print("get_diff", filename1, filename2)
+        print("get_diff", filename1, filename2)
 
         ext = filename1.split(".")[-1].lower() 
         if ext not in ['csv', 'tsv', 'xls']: 
@@ -176,7 +182,7 @@ class TableRepresentation(RepresentationBase):
 
         alignment = daff.Coopy.compareTables(table1,table2).align()
 
-        # print("Achieved alignment") 
+        print("Achieved alignment") 
 
         data_diff = []
         table_diff = daff.PythonTableView(data_diff)
@@ -186,10 +192,10 @@ class TableRepresentation(RepresentationBase):
         highlighter.hilite(table_diff)
 
         # Parse the differences
-        #print("Parsing diff") 
+        print("Parsing diff") 
         diff = self.parse_diff(table_diff)
 
-        #print("Computed diff", diff) 
+        print("Computed diff", diff) 
         return diff 
 
 

@@ -210,8 +210,8 @@ def get_diffs(history):
         prev = history[i]
         curr = history[i+1]
 
-        #print(prev['subject'], "==>", curr['subject'])
-        #print(curr['changes'])
+        print(prev['subject'], "==>", curr['subject'])
+        print(curr['changes'])
         for c in curr['changes']:
             
             path = c['path']
@@ -230,7 +230,7 @@ def get_diffs(history):
             if handler is None: 
                 continue 
 
-            # print(path, "being handled by", handler)
+            print(path, "being handled by", handler)
 
             v1_hex = prev['commit']
             v2_hex = curr['commit']
@@ -269,11 +269,11 @@ def get_diffs(history):
                 # Now call the handler
                 diff = handler.get_diff(path1, path2)
 
-                #print("Inserting diff")
+                # print("Inserting diff", diff)
                 c['diff'] = diff
 
             except Exception as e: 
-                # traceback.print_exc() 
+                #traceback.print_exc() 
                 #print("Cleaning up - Exception ", temp1)
                 shutil.rmtree(temp1)
 

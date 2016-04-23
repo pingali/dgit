@@ -40,7 +40,7 @@ Note that only Python 3 and ubuntu are supported for now.
 ::
    
     # Dependencies (Ubuntu commands for lxml dependency) 
-    $ sudo apt-get install libxml2-dev libxslt1-dev python-dev
+    $ sudo apt-get install libxml2-dev libxslt1-dev python3-dev git zlib1g-dev
 
     # Prepare the environment
     virtualenv -p /usr/bin/python3 env
