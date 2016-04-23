@@ -162,7 +162,7 @@ class PluginManager(object):
                     c.update({
                         'description': mgr.description
                     })
-                    print("Gathering configuration from ", c)
+                    # print("Gathering configuration from ", c)
                     configs.append(c)
         return configs
 

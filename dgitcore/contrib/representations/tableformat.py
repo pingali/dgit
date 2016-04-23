@@ -118,6 +118,7 @@ class TableRepresentation(RepresentationBase):
                 ("+++", ["New row",0]),
                 ("---", ["Deleted row", 0]),
                 ("+", ["Atleast one cell change",0]),
+                ("->", ["Changed rows",0]),
                 (":", ["Reordered row",0])
             ]))
         ])

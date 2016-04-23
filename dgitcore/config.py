@@ -100,6 +100,8 @@ def init(globalvars=None, show=False):
         if not show:
             update(globalvars)
 
+    print("Complete init") 
+
 def input_with_default(message, default):
 
     res = input("%s [%s]: " %(message, default))
@@ -134,12 +136,12 @@ def update(globalvars):
             },
             'user.fullname': {
                 'value': defaults.get('user.fullname',''),
-                'description': "Short Name",
+                'description': "Full Name",
                 'validator': NonEmptyValidator()
             },
             'user.name': {
                 'value': defaults.get('user.name', getpass.getuser()),
-                'description': "Full Name",
+                'description': "Name",
                 'validator': NonEmptyValidator()
             },
         }
@@ -200,6 +202,8 @@ def update(globalvars):
 
             config[name][v] = choice
 
+            if v == 'enable' and choice == 'n': 
+                break 
 
     with open(profileini, 'w') as fd:
         config.write(fd)

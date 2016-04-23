@@ -38,8 +38,8 @@ class BasicMetadata(MetadataBase):
                 'variables': ['enable', 'token', 'url'],
                 'defaults': {
                     'enable': {
-                        'value': "y",
-                        "description": "Enable generic Metadata server?",
+                        'value': "n",
+                        "description": "Enable a generic Metadata server? (see documentation)",
                         'validator': ChoiceValidator(['y','n'])
                     },
                     'token': {
