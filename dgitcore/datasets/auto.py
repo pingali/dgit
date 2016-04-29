@@ -252,14 +252,14 @@ def get_files_to_commit(autooptions):
     excludes = autooptions['track']['excludes']
 
     # transform glob patterns to regular expressions
-    print("Includes ", includes) 
+    # print("Includes ", includes) 
     includes = r'|'.join([fnmatch.translate(x) for x in includes])
     excludes = r'|'.join([fnmatch.translate(x) for x in excludes]) or r'$.'
 
     matched_files = []
     for root, dirs, files in os.walk(workingdir):
 
-        print("Looking at ", files)
+        # print("Looking at ", files)
 
         # exclude dirs
         # dirs[:] = [os.path.join(root, d) for d in dirs]
@@ -267,10 +267,10 @@ def get_files_to_commit(autooptions):
 
         # exclude/include files
         files = [f for f in files if not re.match(excludes, f)]
-        print("Files after excludes", files)
-        print(includes) 
+        #print("Files after excludes", files)
+        #print(includes) 
         files = [f for f in files if re.match(includes, f)]
-        print("Files after includes", files) 
+        #print("Files after includes", files) 
         files = [os.path.join(root, f) for f in files]
 
         matched_files.extend(files)
