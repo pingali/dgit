@@ -210,8 +210,8 @@ def get_diffs(history):
         prev = history[i]
         curr = history[i+1]
 
-        print(prev['subject'], "==>", curr['subject'])
-        print(curr['changes'])
+        #print(prev['subject'], "==>", curr['subject'])
+        #print(curr['changes'])
         for c in curr['changes']:
             
             path = c['path']
@@ -230,7 +230,7 @@ def get_diffs(history):
             if handler is None: 
                 continue 
 
-            print(path, "being handled by", handler)
+            # print(path, "being handled by", handler)
 
             v1_hex = prev['commit']
             v2_hex = curr['commit']

@@ -77,9 +77,6 @@ def instantiate(repo, validator_name=None, filename=None, rulesfiles=None):
             else:
                 rulesfiles = validators[v]['rules-files']
                 matching_files = repo.find_matching_files(rulesfiles)
-                if len(matching_files) == 0:
-                    print("Could not find matching rules files ({}) for {}".format(rules,v))
-                    raise Exception("Invalid rules")
                 validators[v]['rules-files'] = matching_files
 
     return validators

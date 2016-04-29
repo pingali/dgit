@@ -550,7 +550,7 @@ def annotate_metadata_platform(repo):
 
 def annotate_metadata_diffs(repo):
 
-    print("Computing diffs")
+    print("Computing schema changes")
     with cd(repo.rootdir):
         get_diffs(repo.package['history'])
 

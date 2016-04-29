@@ -328,7 +328,7 @@ def auto_update(autofile, force_init):
         if proceed != 'y':
             return
 
-    print("To insert", files) 
+    # print("To insert", files) 
 
     # Add the files to the repo
     count = auto_add(repo, autooptions, files)

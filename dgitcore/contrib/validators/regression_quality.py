@@ -67,7 +67,10 @@ class RegressionQualityValidator(ValidatorBase):
             rules = None 
             if 'rules-files' in spec and len(spec['rules-files']) > 0: 
                 rulesfiles = spec['rules-files']
-                rules = dict([(f, json.loads(open(f).read())) for f in rulesfiles])
+                rules = {} 
+                for f in rulesfiles: 
+                    d = json.loads(open(f).read())
+                    rules.update(d)
             elif 'rules' in spec: 
                 rules = {
                     'inline': spec['rules'] 

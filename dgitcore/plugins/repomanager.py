@@ -28,6 +28,9 @@ class Repo:
         For various actions we need files that match patterns
         """
 
+        if len(includes) == 0: 
+            return [] 
+
         files = [f['relativepath'] for f in self.package['resources']]
         includes = r'|'.join([fnmatch.translate(x) for x in includes])
 
