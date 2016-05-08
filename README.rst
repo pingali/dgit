@@ -87,6 +87,11 @@ them to the dataset.
 
    $ git clone https://gitlab.com/pingali/simple-regression.git
    $ cd simple-regression
+   $ ls 
+   regression2.py  regression.py
+
+   # setup for regression 
+   $ pip install numpy pandas statsmodels 
 
 2. Create a dgit configuration file 
 
@@ -118,9 +123,9 @@ them to the dataset.
 
 ::
 
-   $ ./model.py 
+   $ ./regression.py 
    $ ls
-   dgit.json  model.py  model-results.txt
+   dgit.json  regression2.py  regression.py model-results.txt
 
    $ dgit auto
    Adding: model-results.txt
